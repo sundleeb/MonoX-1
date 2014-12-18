@@ -33,10 +33,11 @@ def getNormalizedHist(hist):
 # some globals
 
 def CombinedControlRegionFit(
-  _fin #TDirectory   
-  ,_fOut #and output file 
+  cname # name for the parametric variation templates
+  ,_fin #TDirectory   
+  ,_fout #and output file 
   ,_wspace # RooWorkspace
-  ,_examplehistname # histogram template
+  ,_bins  # just get the bins
   ,_varname	    # name of the variale
   ,_pdfname	    # name of a double exp pdf
   ,_target_datasetname # only for initial fit values
@@ -44,13 +45,11 @@ def CombinedControlRegionFit(
    ):
 
   # Make some output directory
-  _fout = _fOut.mkdir("combined_control_fit") 
+  #_fout = _fOut.mkdir("combined_control_fit") 
 
-  th_ex = _fin.Get(_examplehistname)
+  #th_ex = _fin.Get(_examplehistname)
+  #th_ex.SetName(th_ex.GetName()+cname)
 
-  #_bins = []  # take bins from some histogram
-  for b in range(th_ex.GetNbinsX()+1):
-    _bins.append(th_ex.GetBinLowEdge(b+1))
 
   _var  = _wspace.var(_varname)
 
@@ -128,7 +127,7 @@ def CombinedControlRegionFit(
   #_pdf.plotOn(fr,r.RooFit.LineColor(r.kRed),r.RooFit.Normalization(_norm.getVal(),r.RooAbsReal.NumEvent))
   # Having fit, we can spit out every channel expectation and observation into a histogram!
   c2 = r.TCanvas("compare_models")
-  model_hist = r.TH1F("combined_model","combined_model",len(_bins)-1,array.array('d',_bins))
+  model_hist = r.TH1F("%s_combined_model"%cname,"combined_model",len(_bins)-1,array.array('d',_bins))
   fillModelHist(model_hist,channels)
   channels[0].Print()
   model_hist.SetLineWidth(2)
@@ -170,10 +169,43 @@ def CombinedControlRegionFit(
     crhists.append(da_hist)
     crhists.append(cr_hist)
     crhists.append(mc_hist)
+
+    pad1 = r.TPad("p1","p1",0,0.28,1,1)
+    pad1.SetBottomMargin(0.01)
+    pad1.SetCanvas(c3)
+    pad1.Draw()
+    pad1.cd()
     da_hist.Draw("Pe")
     cr_hist.Draw("samehist")
     mc_hist.Draw("samehist")
     da_hist.Draw("Pesame")
+
+    # Ratio plot
+    c3.cd()
+    pad2 = r.TPad("p2","p2",0,0.068,1,0.28)
+    pad2.SetTopMargin(0.02)
+    pad2.SetCanvas(c3)
+    pad2.Draw()
+    pad2.cd()
+    ratio = da_hist.Clone()
+    ratio.GetYaxis().SetRangeUser(0.01,1.99)
+    ratio.Divide(cr_hist)
+    ratio.GetYaxis().SetTitle("Data/Bkg")
+    ratio.GetYaxis().SetNdivisions(5)
+    ratio.GetYaxis().SetLabelSize(0.1)
+    ratio.GetYaxis().SetTitleSize(0.12)
+    ratio.GetXaxis().SetTitleSize(0.085)
+    ratio.GetXaxis().SetLabelSize(0.12)
+    crhists.append(ratio)
+    ratio.GetXaxis().SetTitle("")
+    ratio.Draw()
+    line = r.TLine(da_hist.GetXaxis().GetXmin(),1,da_hist.GetXaxis().GetXmax(),1)
+    line.SetLineColor(2)
+    line.SetLineWidth(3)
+    line.Draw()
+    ratio.Draw("same")
+
+
     canvs.append(c3)
     _fout.WriteTObject(cr_hist)
     _fout.WriteTObject(da_hist)
@@ -194,8 +226,8 @@ def CombinedControlRegionFit(
   systs = []
 
   for par in range(npars):
-    hist_up = r.TH1F("combined_model_par_%d_Up"%par,"combined_model par %d Up 1 sigma"%par  ,len(_bins)-1,array.array('d',_bins))
-    hist_dn = r.TH1F("combined_model_par_%d_Down"%par,"combined_model par %d Up 1 sigma"%par,len(_bins)-1,array.array('d',_bins))
+    hist_up = r.TH1F("%s_combined_model_par_%d_Up"%(cname,par),"combined_model par %d Up 1 sigma"%par  ,len(_bins)-1,array.array('d',_bins))
+    hist_dn = r.TH1F("%s_combined_model_par_%d_Down"%(cname,par),"combined_model par %d Up 1 sigma"%par,len(_bins)-1,array.array('d',_bins))
  
     diag.setEigenset(par,1)  # up variation
     fillModelHist(hist_up,channels)

@@ -2,7 +2,8 @@ import ROOT as r
 import array, sys
 
 # Configurations Read in from Separate .py files
-x = __import__(sys.argv[1])
+sys.path.append("configs")
+x = __import__(sys.argv[1]) 
 
 # book category should read list of samples and append them to as histograms 
 # expect formats of 
@@ -42,15 +43,17 @@ for cat_id,cat in enumerate(x.categories):
       mb.addSample(sample,entry[0],entry[1],entry[2],entry[3])  # name, region, process, is_mc, is_signal
 
   # Special function to run corrections (need to assume correct datasets were produced in previous step
-#  mb.run_corrections('ZJets','dimuon')  # need contributing data, 'signal' and backgrounds
-#  mb.run_corrections('WJets','singlemuon')  # need contributing data, 'signal' and backgrounds
+  mb.run_corrections('ZJets','dimuon')  # need contributing data, 'signal' and backgrounds
+  mb.run_corrections('WJets','singlemuon')  # need contributing data, 'signal' and backgrounds
 
-#  mb.apply_corrections('ZJets','signal','zjets',True) # name of correction, process to be applied to  # true at the end means run systematics
-#  mb.apply_corrections('WJets','signal','wjets',True) # name of correction, process to be applied to
+  mb.apply_corrections('ZJets','signal','zjets',True) # name of correction, process to be applied to  # true at the end means run systematics
+  mb.apply_corrections('WJets','signal','wjets',True) # name of correction, process to be applied to
 
-#  mb.apply_corrections('ZJets','dimuon','zll',False) # name of correction, process to be applied to  # true at the end means run systemat
-#  mb.apply_corrections('WJets','singlemuon','wjets',False) # name of correction, process to be applied to
+  mb.apply_corrections('ZJets','dimuon','zll',False) # name of correction, process to be applied to  # true at the end means run systemat
+  mb.apply_corrections('WJets','singlemuon','wjets',False) # name of correction, process to be applied to
+
   mb.save()
+
   # Add any 'cutstring' for future reference
   cstr = r.TNamed("cut_category_%s"%cat['name'],cat["cutstring"])
   fdir.cd(); cstr.Write()
