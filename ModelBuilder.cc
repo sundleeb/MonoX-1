@@ -14,7 +14,9 @@ void ModelBuilder::saveHist(TH1F *histogram){
 
 const char * ModelBuilder::powerlaw(RooWorkspace *ws,RooRealVar &x,std::string ext){
    RooRealVar m1(Form("p_%s",ext.c_str()),"p",-4.,-10.,0.);
-   RooGenericPdf *pdf = new RooGenericPdf(Form("powerLaw_%s",ext.c_str()), Form("powerLaw_%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,m1));
+   //RooGenericPdf *pdf = new RooGenericPdf(Form("powerLaw_%s",ext.c_str()), Form("powerLaw_%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,m1));
+   // Same name as exponential for now
+   RooGenericPdf *pdf = new RooGenericPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,m1));
    ws->import(*pdf);
    return pdf->GetName(); 
 }
@@ -117,17 +119,22 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
    RooRealVar *x = wspace->var(varstring.c_str());
    RooRealVar *w = wspace->var(weightname.c_str());
 
+   RooAbsPdf *pdf 	       ;
+   RooAbsPdf *pdf_mc 	       ;
+   RooAbsPdf *pdf_background_mc;
+
    // Build and fit the model for the background
+   if (_usedoubleexp){
+     pdf 	       = wspace->pdf(doubleexp(wspace,*x,Form("%s_data",cr.name.c_str())));
+     pdf_mc 	       = wspace->pdf(doubleexp(wspace,*x,Form("%s_mc",cr.name.c_str())));
+     pdf_background_mc = wspace->pdf(doubleexp(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
+   } else {
    
-   RooAbsPdf *pdf 		= wspace->pdf(doubleexp(wspace,*x,Form("%s_data",cr.name.c_str())));
-   RooAbsPdf *pdf_mc 	   	= wspace->pdf(doubleexp(wspace,*x,Form("%s_mc",cr.name.c_str())));
-   RooAbsPdf *pdf_background_mc = wspace->pdf(doubleexp(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
-   
-   /* Why not use one power law for the resolved (lower stat) case?
-   RooAbsPdf *pdf 		= wspace->pdf(powerlaw(wspace,*x,Form("%s_data",cr.name.c_str())));
-   RooAbsPdf *pdf_mc 	   	= wspace->pdf(powerlaw(wspace,*x,Form("%s_mc",cr.name.c_str())));
-   RooAbsPdf *pdf_background_mc = wspace->pdf(powerlaw(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
-   */
+   // Why not use one power law for the resolved (lower stat) case?
+     pdf 		= wspace->pdf(powerlaw(wspace,*x,Form("%s_data",cr.name.c_str())));
+     pdf_mc 	   	= wspace->pdf(powerlaw(wspace,*x,Form("%s_mc",cr.name.c_str())));
+     pdf_background_mc = wspace->pdf(powerlaw(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
+   }
 
    // Build a dataset which is all data in control region
    RooDataSet all_data(Form("%s_all_data",region.c_str()),Form("%s_all_data",region.c_str()),RooArgSet(*x));
