@@ -40,6 +40,7 @@ def CombinedControlRegionFit(
   ,_bins  # just get the bins
   ,_varname	    # name of the variale
   ,_pdfname	    # name of a double exp pdf
+  ,_pdfname_zvv	    # name of a double exp pdf to use as zvv mc fit
   ,_target_datasetname # only for initial fit values
   ,_control_regions # CRs constructed
    ):
@@ -49,22 +50,31 @@ def CombinedControlRegionFit(
 
   #th_ex = _fin.Get(_examplehistname)
   #th_ex.SetName(th_ex.GetName()+cname)
-
+  r.gROOT.ProcessLine(".L diagonalizer.cc+")
+  from ROOT import diagonalizer
+  diag = diagonalizer(_wspace)
 
   _var  = _wspace.var(_varname)
 
-  _pdf  = _wspace.pdf(_pdfname)
-  _data_mc = _wspace.data(_target_datasetname)
-  _pdf.fitTo(_data_mc)  # Just initialises parameters 
+  _pdf      = _wspace.pdf(_pdfname)
+  _pdf_orig = _wspace.pdf(_pdfname_zvv)
+  _data_mc  = _wspace.data(_target_datasetname)
+
+  diag.freezeParameters(_pdf_orig.getParameters(_data_mc),False)
+  _pdf_orig.fitTo(_data_mc)  # Just initialises parameters 
+  _pdf.fitTo(_data_mc)       # Just initialises parameters 
 
   _norm = r.RooRealVar("%s_norm"%_target_datasetname,"Norm",_wspace.data(_target_datasetname).sumEntries())
+  _norm_orig= r.RooRealVar("%s_norm_orig"%_target_datasetname,"Norm_orig",_wspace.data(_target_datasetname).sumEntries())
   _norm.setConstant(False)
+  _norm_orig.setConstant(True)
+  _wspace._import(_norm)
+  _wspace._import(_norm_orig)
   fr = _var.frame()
   _wspace.data(_target_datasetname).plotOn(fr,r.RooFit.Binning(200))
-  _pdf.plotOn(fr)
-  #_pdf.paramOn(fr)
-  c = r.TCanvas("zjets_signalregion_mc_fit")
-  fr.Draw()
+  diag.freezeParameters(_pdf_orig.getParameters(_data_mc))
+  _pdf_orig.plotOn(fr)
+   
 
   # Setup stuff for the simultaneous fitting, this isn't particularly good since we loop twice without needing to
   sample = r.RooCategory("bin_number","bin_number")
@@ -122,13 +132,30 @@ def CombinedControlRegionFit(
   # NEED to add constrain terms on top -> Nah, don't bother!
   combined_fit_result = combined_pdf.fitTo(combined_obsdata,r.RooFit.Save())
   # #################################################################################
+  # Make the ratio of new/original fits
+  ratioargs = r.RooArgList(_norm,_pdf,_norm_orig,_pdf_orig)
+  pdf_ratio = r.RooFormulaVar("ratio_correction_%s"%cname,"Correction for Zvv from dimuon+photon control regions","@0*@1/(@2*@3)",ratioargs)
+  _wspace._import(pdf_ratio)
+  #
 
   # plot on NEW fit ? 
-  #_pdf.plotOn(fr,r.RooFit.LineColor(r.kRed),r.RooFit.Normalization(_norm.getVal(),r.RooAbsReal.NumEvent))
-  # Having fit, we can spit out every channel expectation and observation into a histogram!
+  _pdf.plotOn(fr,r.RooFit.LineColor(r.kRed),r.RooFit.Normalization(_norm.getVal(),r.RooAbsReal.NumEvent))
+  #_pdf.paramOn(fr)
+  c = r.TCanvas("zjets_signalregion_mc_fit_before_after")
+  fr.Draw()
+  _fout.WriteTObject(c)
+
+  crat = r.TCanvas("ratio_correction")
+  frrat = _var.frame()
+  pdf_ratio.plotOn(frrat)
+  frrat.Draw()
+  _fout.WriteTObject(crat)
+
+  # Having fit, we can spit out every channel expectation, we can correct the MC using it!
   c2 = r.TCanvas("compare_models")
   model_hist = r.TH1F("%s_combined_model"%cname,"combined_model",len(_bins)-1,array.array('d',_bins))
-  fillModelHist(model_hist,channels)
+  #fillModelHist(model_hist,channels)
+  diag.generateWeightedTemplate(model_hist,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
   channels[0].Print()
   model_hist.SetLineWidth(2)
   model_hist.SetLineColor(1)
@@ -138,6 +165,7 @@ def CombinedControlRegionFit(
   # Now plot the control Regions too!
   crhists = []
   canvs   = []
+  
   for j,cr in enumerate(_control_regions):
     c3 = r.TCanvas("c_%s"%cr.ret_name())
     cr_hist = r.TH1F("control_region_%s"%cr.ret_name(),"%s control region"%cr.ret_name(),len(_bins)-1,array.array('d',_bins))
@@ -214,9 +242,6 @@ def CombinedControlRegionFit(
 
   # Ok now the task will be to calculate the uncertainties!, simply diagonalize again and re-calculate histograms given +/- 1 sigmas
   # The first kind are rather straightforward and due to statistical uncertainties
-  r.gROOT.ProcessLine(".L diagonalizer.cc+")
-  from ROOT import diagonalizer
-  diag = diagonalizer(_wspace)
   npars = diag.generateVariations(combined_fit_result)
   h2covar = diag.retCovariance()
   _fout.WriteTObject(h2covar)
@@ -230,10 +255,12 @@ def CombinedControlRegionFit(
     hist_dn = r.TH1F("%s_combined_model_par_%d_Down"%(cname,par),"combined_model par %d Up 1 sigma"%par,len(_bins)-1,array.array('d',_bins))
  
     diag.setEigenset(par,1)  # up variation
-    fillModelHist(hist_up,channels)
+    #fillModelHist(hist_up,channels)
+    diag.generateWeightedTemplate(hist_up,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
 
     diag.setEigenset(par,-1)  # up variation
-    fillModelHist(hist_dn,channels)
+    #fillModelHist(hist_dn,channels)
+    diag.generateWeightedTemplate(hist_dn,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
 
     # Reset parameter values 
     diag.resetPars()
@@ -285,7 +312,8 @@ def CombinedControlRegionFit(
 
     combined_pdf.fitTo(combined_obsdata)
     model_hist_sys_up = r.TH1F("combined_model_%sUp"%syst,"combined_model %s Up 1 sigma"%syst  ,len(_bins)-1,array.array('d',_bins))#Sys_Up
-    fillModelHist(model_hist_sys_up,channels)
+    #fillModelHist(model_hist_sys_up,channels)
+    diag.generateWeightedTemplate(model_hist_sys_up,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
 
     # Reset the scale_factors
     for i,ch in enumerate(channels):
@@ -294,7 +322,8 @@ def CombinedControlRegionFit(
 
     combined_pdf.fitTo(combined_obsdata)
     model_hist_sys_dn = r.TH1F("combined_model_%sDown"%syst,"combined_model %s Sown 1 sigma"%syst  ,len(_bins)-1,array.array('d',_bins))#Sys_Dn
-    fillModelHist(model_hist_sys_dn,channels)
+    #fillModelHist(model_hist_sys_dn,channels)
+    diag.generateWeightedTemplate(model_hist_sys_dn,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
     # remake combined fit!
     _fout.WriteTObject(model_hist_sys_up)
     _fout.WriteTObject(model_hist_sys_dn)
