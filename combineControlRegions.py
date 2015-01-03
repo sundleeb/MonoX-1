@@ -161,7 +161,7 @@ def CombinedControlRegionFit(
   c2 = r.TCanvas("compare_models")
   model_hist = r.TH1F("%s_combined_model"%cname,"combined_model",len(_bins)-1,array.array('d',_bins))
   #fillModelHist(model_hist,channels)
-  diag.generateWeightedTemplate(model_hist,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
+  diag.generateWeightedTemplate(model_hist,_wspace.function(pdf_ratio.GetName()),_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
   channels[0].Print()
   model_hist.SetLineWidth(2)
   model_hist.SetLineColor(1)
