@@ -131,6 +131,19 @@ def CombinedControlRegionFit(
       hasSys=True
       ext_constraints.add(_wspace.pdf("const_%s"%nuis))
   """
+  cr_histos_exp_prefit=[]
+  for j,cr in enumerate(_control_regions):
+  #save the prefit histos
+    cr_pre_hist = r.TH1F("control_region_%s"%cr.ret_name(),"Expected %s control region"%cr.ret_name(),len(_bins)-1,array.array('d',_bins))
+    bc=1
+    for i in range(j*(len(_bins)-1),(j+1)*(len(_bins)-1) ):
+      ch = channels[i]
+      #if i>=len(_bins)-1: break
+      cr_pre_hist.SetBinContent(bc,ch.ret_expected())
+      bc+=1
+    cr_pre_hist.SetLineWidth(2)
+    cr_pre_hist.SetLineColor(r.kGreen+1)
+    cr_histos_exp_prefit.append(cr_pre_hist.Clone())
   # THE FIIIIIIIIIIIIIT!!!!!!!!!!!!!!!!!!!!!!!!!!!! ################################
   # NEED to add constrain terms on top -> Nah, don't bother!
   combined_fit_result = combined_pdf.fitTo(combined_obsdata,r.RooFit.Save())
@@ -179,9 +192,9 @@ def CombinedControlRegionFit(
   
   for j,cr in enumerate(_control_regions):
     c3 = r.TCanvas("c_%s"%cr.ret_name(),"",800,800)
-    cr_hist = r.TH1F("control_region_%s"%cr.ret_name(),"%s control region"%cr.ret_name(),len(_bins)-1,array.array('d',_bins))
+    cr_hist = r.TH1F("control_region_%s"%cr.ret_name(),"Expected %s control region"%cr.ret_name(),len(_bins)-1,array.array('d',_bins))
     da_hist = r.TH1F("data_control_region_%s"%cr.ret_name(),"data %s control region"%cr.ret_name(),len(_bins)-1,array.array('d',_bins))
-    mc_hist = r.TH1F("mc_control_region_%s"%cr.ret_name(),"mc %s control region"%cr.ret_name(),len(_bins)-1,array.array('d',_bins))
+    mc_hist = r.TH1F("mc_control_region_%s"%cr.ret_name(),"Background %s control region"%cr.ret_name(),len(_bins)-1,array.array('d',_bins))
     da_hist.SetTitle("") 
     bc = 1
     for i in range(j*(len(_bins)-1),(j+1)*(len(_bins)-1) ):
@@ -200,6 +213,7 @@ def CombinedControlRegionFit(
     cr_hist = getNormalizedHist(cr_hist)
     da_hist = getNormalizedHist(da_hist)
     mc_hist = getNormalizedHist(mc_hist)
+    pre_hist = getNormalizedHist(cr_histos_exp_prefit[j])
     cr_hist.SetLineColor(1)
     mc_hist.SetLineColor(1)
     da_hist.SetMarkerColor(1)
@@ -208,23 +222,26 @@ def CombinedControlRegionFit(
     crhists.append(da_hist)
     crhists.append(cr_hist)
     crhists.append(mc_hist)
+    crhists.append(pre_hist)
 
     pad1 = r.TPad("p1","p1",0,0.28,1,1)
     pad1.SetBottomMargin(0.01)
     pad1.SetCanvas(c3)
     pad1.Draw()
     pad1.cd()
-    tlg = r.TLegend(0.6,0.7,0.89,0.89)
+    tlg = r.TLegend(0.6,0.67,0.89,0.89)
     tlg.SetFillColor(0)
     tlg.SetTextFont(42)
     tlg.AddEntry(da_hist,"Data - %s"%cr.ret_title(),"PEL") 
-    tlg.AddEntry(cr_hist,"Expected","F") 
-    tlg.AddEntry(mc_hist,"Backgrounds","F")
+    tlg.AddEntry(cr_hist,"Expected (post-fit)","F") 
+    tlg.AddEntry(mc_hist,"Backgrounds Component","F")
+    tlg.AddEntry(pre_hist,"Expected (pre-fit)","L")
     da_hist.GetYaxis().SetTitle("Events/GeV");
     da_hist.GetXaxis().SetTitle("fake MET (GeV)");
     da_hist.Draw("Pe")
     cr_hist.Draw("samehist")
     mc_hist.Draw("samehist")
+    pre_hist.Draw("samehist")
     da_hist.Draw("Pesame")
     tlg.Draw()
     lat.DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
@@ -238,8 +255,10 @@ def CombinedControlRegionFit(
     pad2.Draw()
     pad2.cd()
     ratio = da_hist.Clone()
+    ratio_pre = da_hist.Clone()
     ratio.GetYaxis().SetRangeUser(0.01,1.99)
     ratio.Divide(cr_hist)
+    ratio_pre.Divide(pre_hist)
     ratio.GetYaxis().SetTitle("Data/Bkg")
     ratio.GetYaxis().SetNdivisions(5)
     ratio.GetYaxis().SetLabelSize(0.1)
@@ -247,13 +266,18 @@ def CombinedControlRegionFit(
     ratio.GetXaxis().SetTitleSize(0.085)
     ratio.GetXaxis().SetLabelSize(0.12)
     crhists.append(ratio)
+    crhists.append(ratio_pre)
     ratio.GetXaxis().SetTitle("")
     ratio.Draw()
+    ratio_pre.SetLineColor(pre_hist.GetLineColor())
+    ratio_pre.SetMarkerColor(pre_hist.GetLineColor())
     line = r.TLine(da_hist.GetXaxis().GetXmin(),1,da_hist.GetXaxis().GetXmax(),1)
     line.SetLineColor(2)
     line.SetLineWidth(3)
     line.Draw()
     ratio.Draw("same")
+    ratio_pre.Draw("pelsame")
+    ratio.Draw("samepel")
 
 
     canvs.append(c3)
