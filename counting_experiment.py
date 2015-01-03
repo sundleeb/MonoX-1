@@ -27,8 +27,12 @@ class Bin:
    self.obs	= r.RooRealVar("observed","Observed Events bin",1)
    #self.setup_expect_var(self)
    self.argset = r.RooArgSet(self.var)
-   self.var.setRange("fullRange",200,1000)
+   self.var.setRange("fullRange",self.var.getMin(),self.var.getMax())
+   
    self.pdfFullInt = pdf.createIntegral(self.argset,r.RooFit.Range("fullRange"),r.RooFit.NormSet(self.argset))
+   #if not self.wspace.var(self.pdfFullInt.GetName()) : self.wspace._import(self.pdfFullInt)
+   self.wspace._import(self.pdfFullInt,r.RooFit.RecycleConflictNodes())
+   print self.wspace.function(self.pdfFullInt.GetName())
    self.b  = 0
    self.constBkg = True
 
@@ -50,7 +54,7 @@ class Bin:
    self.wspace._import = getattr(self.wspace,"import") # workaround: import is a python keyword
 
  def set_norm_var(self,v):
-   self.normvar = v
+   self.normvar = self.wspace.var(v.GetName())
 
  def set_sfactor(self,val):
    #print "Scale Factor for " ,self.binid,val
@@ -66,10 +70,14 @@ class Bin:
  def setup_expect_var(self):
    # This will be the RooRealVar containing the value of the number of expected events in this bin
    self.integral = self.pdf.createIntegral(self.argset,r.RooFit.Range(self.rngename),r.RooFit.NormSet(self.argset))
-   if not self.wspace.var("model_mu_%d"%self.id):
-     self.model_mu = r.RooFormulaVar("model_mu_%d"%self.id,"Model of N expected events in %d"%self.id,"@0*@1/@2",r.RooArgList(self.integral,self.normvar,self.pdfFullInt)) # in reality this will be given and depend on the integral of the pdf!
+   self.wspace._import(self.integral,r.RooFit.RecycleConflictNodes())
+   if not self.wspace.function("model_mu_%d"%self.id):
+     self.model_mu = r.RooFormulaVar("model_mu_%d"%self.id,"Model of N expected events in %d"%self.id,"@0*@1/@2",r.RooArgList(
+        self.wspace.function(self.integral.GetName())
+     	,self.wspace.var(self.normvar.GetName())
+	,self.wspace.function(self.pdfFullInt.GetName()))) # in reality this will be given and depend on the integral of the pdf!
      self.wspace._import(self.model_mu,r.RooFit.RecycleConflictNodes())
-   else: self.model_mu = self.wspace.var("model_mu_%d"%self.id)
+   else: self.model_mu = self.wspace.function("model_mu_%d"%self.id)
 
    arglist = r.RooArgList((self.model_mu),self.wspace.var(self.sfactor.GetName()))
    
@@ -139,26 +147,29 @@ class Bin:
 
 class Channel:
   # This class holds a "channel" which is as dumb as saying it holds a dataset and scale factors 
-  def __init__(self,wspace,id,data,scalefactors,bkg):
+  def __init__(self,cname,wspace,id,data,scalefactors,bkg):
     self.chid = id
     self.data = data
     self.scalefactors = scalefactors
-    self.chname = "ControlRegion %d"%self.chid
+    self.chname = "ControlRegion_%d"%self.chid
     self.backgroundname  = bkg
     self.set_wspace(wspace)
     self.nuisances = []
     self.systematics = {}
-
+    self.crname = cname
+  def ret_title(self):
+    return self.crname
   def add_systematic_shape(self,sys,file):
-    sfup = self.scalefactors.GetName()+"_%s_"%sys+"_Up"
-    sfdn = self.scalefactors.GetName()+"_%s_"%sys+"_Down"
+    sfup = self.scalefactors.GetName()+"_%s_"%sys+"Up"
+    sfdn = self.scalefactors.GetName()+"_%s_"%sys+"Down"
+    print "Looking for systematic shapes ... %s,%s"%(sfup,sfdn)
     self.systematics[sys] = [file.Get(sfup),file.Get(sfdn)]
     
   def add_systematic_yield(self,sys,kappa):
-    sfup = self.scalefactors.GetName()+"_%s_"%sys+"_Up"
-    sfdn = self.scalefactors.GetName()+"_%s_"%sys+"_Down"
-    sfup = self.scalefactors.Clone(); sfup.SetName(self.scalefactors.GetName()+"_%s_"%sys+"_Up")
-    sfdn = self.scalefactors.Clone(); sfdn.SetName(self.scalefactors.GetName()+"_%s_"%sys+"_Down")
+    sfup = self.scalefactors.GetName()+"_%s_"%sys+"Up"
+    sfdn = self.scalefactors.GetName()+"_%s_"%sys+"Down"
+    sfup = self.scalefactors.Clone(); sfup.SetName(self.scalefactors.GetName()+"_%s_"%sys+"Up")
+    sfdn = self.scalefactors.Clone(); sfdn.SetName(self.scalefactors.GetName()+"_%s_"%sys+"Down")
     # log-normal scalefactors
     sfup.Scale(1+kappa)
     sfdn.Scale(1./(1+kappa))
