@@ -264,6 +264,7 @@ def CombinedControlRegionFit(
 
   for bl in channels : bl.Print()
   print _wspace.data(_target_datasetname).sumEntries(), _wspace.var(_norm.GetName()).getVal();
+  # Do we really need to re-get the pdf_ratio?dd
   # Ok now the task will be to calculate the uncertainties!, simply diagonalize again and re-calculate histograms given +/- 1 sigmas
   # The first kind are rather straightforward and due to statistical uncertainties
   npars = diag.generateVariations(combined_fit_result)
@@ -280,11 +281,11 @@ def CombinedControlRegionFit(
  
     diag.setEigenset(par,1)  # up variation
     #fillModelHist(hist_up,channels)
-    diag.generateWeightedTemplate(hist_up,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
+    diag.generateWeightedTemplate(hist_up,_wspace.function(pdf_ratio.GetName()),_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
 
     diag.setEigenset(par,-1)  # up variation
     #fillModelHist(hist_dn,channels)
-    diag.generateWeightedTemplate(hist_dn,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
+    diag.generateWeightedTemplate(hist_dn,_wspace.function(pdf_ratio.GetName()),_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
 
     # Reset parameter values 
     diag.resetPars()
@@ -337,7 +338,7 @@ def CombinedControlRegionFit(
     combined_pdf.fitTo(combined_obsdata)
     model_hist_sys_up = r.TH1F("combined_model_%sUp"%syst,"combined_model %s Up 1 sigma"%syst  ,len(_bins)-1,array.array('d',_bins))#Sys_Up
     #fillModelHist(model_hist_sys_up,channels)
-    diag.generateWeightedTemplate(model_hist_sys_up,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
+    diag.generateWeightedTemplate(model_hist_sys_up,_wspace.function(pdf_ratio.GetName()),_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
 
     # Reset the scale_factors
     for i,ch in enumerate(channels):
@@ -347,7 +348,7 @@ def CombinedControlRegionFit(
     combined_pdf.fitTo(combined_obsdata)
     model_hist_sys_dn = r.TH1F("combined_model_%sDown"%syst,"combined_model %s Sown 1 sigma"%syst  ,len(_bins)-1,array.array('d',_bins))#Sys_Dn
     #fillModelHist(model_hist_sys_dn,channels)
-    diag.generateWeightedTemplate(model_hist_sys_dn,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
+    diag.generateWeightedTemplate(model_hist_sys_dn,_wspace.function(pdf_ratio.GetName()),_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
     # remake combined fit!
     _fout.WriteTObject(model_hist_sys_up)
     _fout.WriteTObject(model_hist_sys_dn)
