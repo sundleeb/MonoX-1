@@ -35,9 +35,10 @@ def cmodel(nam,_f,_fOut):
   # First we need to re-build the nominal templates from the datasets modifying the weights
 
   target = _fin.Get("signal_zjets")
-  #Pho = _fin.Get("photon_gjet")
+  Pho = _fin.Get("photon_gjet")
   Zmm = _fin.Get("dimuon_zll")
   ZmmScales = target.Clone(); ZmmScales.SetName("zmm_weights_%s"%nam)
+  PhotonScales = target.Clone(); PhotonScales.SetName("photon_weights_%s"%nam)
 
   # run through 3 datasets, photon, etc and generate a template from histograms 
   # We only nned to make NLO versions of Z(vv) and Photon :) 
@@ -46,6 +47,7 @@ def cmodel(nam,_f,_fOut):
   from ROOT import diagonalizer
   diag = diagonalizer(_wspace)
  
+  """
   #Loop Over Systematics also?
   Pho = target.Clone(); Pho.SetName("photon_weights_denom_%s"%nam)
   for b in range(Pho.GetNbinsX()): Pho.SetBinContent(b+1,0)
@@ -96,11 +98,12 @@ def cmodel(nam,_f,_fOut):
   Zvv_mrDown.Divide(Pho_mrDown); Zvv_mrDown.SetName("photon_weights_%s_mr_Down"%nam);_fOut.WriteTObject(Zvv_mrDown)
   Zvv_mfUp.Divide(Pho_mfUp); 	 Zvv_mfUp.SetName("photon_weights_%s_mf_Up"%nam);_fOut.WriteTObject(Zvv_mfUp)
   Zvv_mfDown.Divide(Pho_mfDown); Zvv_mfDown.SetName("photon_weights_%s_mf_Down"%nam);_fOut.WriteTObject(Zvv_mfDown)
-
+  """
   ZmmScales.Divide(Zmm)
   PhotonScales.Divide(Pho)
 
-  _fOut.WriteTObject(Zvv)
+  #_fOut.WriteTObject(Zvv)
+  _fOut.WriteTObject(PhotonScales)
   _fOut.WriteTObject(ZmmScales)
 
   _bins = []  # take bins from some histogram
@@ -110,8 +113,8 @@ def cmodel(nam,_f,_fOut):
   CRs = [
   # Channel(_wspace,0,_wspace.data(_photon_datasetname),Zvv,"Purity:0.9399+(8.46e-5)*x")  # stupid linear fit of Purities, should move to flat 
   # Channel(_wspace,0,_wspace.data(_photon_datasetname),Zvv,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
-   Channel(_wspace,0,_wspace.data(_photon_datasetname),PhotonScales,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
-  ,Channel(_wspace,1,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
+   Channel("Photon+jet",_wspace,0,_wspace.data(_photon_datasetname),PhotonScales,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
+ , Channel("Dimuon",_wspace,1,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
   ]
   #Add Systematic -> Fit will be re-run once per systematic
 
@@ -126,10 +129,11 @@ def cmodel(nam,_f,_fOut):
   # Still some naming issues so check if mvamet or mvamet_
   CombinedControlRegionFit(nam,_fin,_fOut,_wspace,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs)
 
-_fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
+_fOut = r.TFile("photon_dimuon_combined_model_monojet.root","RECREATE")
 # run once per category
-categories = ["inclusive","resolved","boosted"]
-_f = r.TFile.Open("mono-x-vtagged.root")
+#categories = ["inclusive","resolved","boosted"]
+categories = ["inclusive"]
+_f = r.TFile.Open("mono-jet.root")
 for cn in categories: 
         _fDir = _fOut.mkdir("category_%s"%cn)
 	cmodel(cn,_f,_fDir)

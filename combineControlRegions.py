@@ -65,6 +65,7 @@ def CombinedControlRegionFit(
   _pdf.fitTo(_data_mc)       # Just initialises parameters 
 
   _norm = r.RooRealVar("%s_norm"%_target_datasetname,"Norm",_wspace.data(_target_datasetname).sumEntries())
+  _norm.removeRange()
   _norm_orig= r.RooRealVar("%s_norm_orig"%_target_datasetname,"Norm_orig",_wspace.data(_target_datasetname).sumEntries())
   _norm.setConstant(False)
   _norm_orig.setConstant(True)
@@ -74,7 +75,9 @@ def CombinedControlRegionFit(
   _wspace.data(_target_datasetname).plotOn(fr,r.RooFit.Binning(200))
   diag.freezeParameters(_pdf_orig.getParameters(_data_mc))
   _pdf_orig.plotOn(fr)
-   
+  _pdf.getParameters(_data_mc).Print("v")
+  _pdf_orig.getParameters(_data_mc).Print("v")
+  #sys.exit()
 
   # Setup stuff for the simultaneous fitting, this isn't particularly good since we loop twice without needing to
   sample = r.RooCategory("bin_number","bin_number")
@@ -142,6 +145,9 @@ def CombinedControlRegionFit(
   _pdf.plotOn(fr,r.RooFit.LineColor(r.kRed),r.RooFit.Normalization(_norm.getVal(),r.RooAbsReal.NumEvent))
   #_pdf.paramOn(fr)
   c = r.TCanvas("zjets_signalregion_mc_fit_before_after")
+  fr.GetXaxis().SetTitle("fake MET (GeV)")
+  fr.GetYaxis().SetTitle("Events/GeV")
+  fr.SetTitle("")
   fr.Draw()
   _fout.WriteTObject(c)
 
@@ -165,13 +171,18 @@ def CombinedControlRegionFit(
   # Now plot the control Regions too!
   crhists = []
   canvs   = []
+
+  lat = r.TLatex();
+  lat.SetNDC();
+  lat.SetTextSize(0.04);
+  lat.SetTextFont(42);
   
   for j,cr in enumerate(_control_regions):
-    c3 = r.TCanvas("c_%s"%cr.ret_name())
+    c3 = r.TCanvas("c_%s"%cr.ret_name(),"",800,800)
     cr_hist = r.TH1F("control_region_%s"%cr.ret_name(),"%s control region"%cr.ret_name(),len(_bins)-1,array.array('d',_bins))
     da_hist = r.TH1F("data_control_region_%s"%cr.ret_name(),"data %s control region"%cr.ret_name(),len(_bins)-1,array.array('d',_bins))
     mc_hist = r.TH1F("mc_control_region_%s"%cr.ret_name(),"mc %s control region"%cr.ret_name(),len(_bins)-1,array.array('d',_bins))
-  
+    da_hist.SetTitle("") 
     bc = 1
     for i in range(j*(len(_bins)-1),(j+1)*(len(_bins)-1) ):
       ch = channels[i]
@@ -203,10 +214,21 @@ def CombinedControlRegionFit(
     pad1.SetCanvas(c3)
     pad1.Draw()
     pad1.cd()
+    tlg = r.TLegend(0.6,0.7,0.89,0.89)
+    tlg.SetFillColor(0)
+    tlg.SetTextFont(42)
+    tlg.AddEntry(da_hist,"Data - %s"%cr.ret_title(),"PEL") 
+    tlg.AddEntry(cr_hist,"Expected","F") 
+    tlg.AddEntry(mc_hist,"Backgrounds","F")
+    da_hist.GetYaxis().SetTitle("Events/GeV");
+    da_hist.GetXaxis().SetTitle("fake MET (GeV)");
     da_hist.Draw("Pe")
     cr_hist.Draw("samehist")
     mc_hist.Draw("samehist")
     da_hist.Draw("Pesame")
+    tlg.Draw()
+    lat.DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
+    pad1.SetLogy()
 
     # Ratio plot
     c3.cd()
@@ -240,6 +262,8 @@ def CombinedControlRegionFit(
     _fout.WriteTObject(mc_hist)
     _fout.WriteTObject(c3)
 
+  for bl in channels : bl.Print()
+  print _wspace.data(_target_datasetname).sumEntries(), _wspace.var(_norm.GetName()).getVal();
   # Ok now the task will be to calculate the uncertainties!, simply diagonalize again and re-calculate histograms given +/- 1 sigmas
   # The first kind are rather straightforward and due to statistical uncertainties
   npars = diag.generateVariations(combined_fit_result)

@@ -55,6 +55,7 @@ class ModelBuilder {
   TH1F *lTmp;
   TFile *fIn;
   TDirectory *fOut;
+  bool _usedoubleexp;
 
   private:
   const char * doubleexp(RooWorkspace *ws,RooRealVar &x,std::string ext);

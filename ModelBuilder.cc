@@ -202,18 +202,24 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
    model.plotOn(pl);
    all_bkg_mc.plotOn(pl,RooFit::MarkerStyle(kOpenCircle));
    all_data.plotOn(pl);
-   model.paramOn(pl);
+   //model.paramOn(pl);
    pl->SetMinimum(0.001);
+   pl->SetTitle("");
+   pl->GetXaxis()->SetTitle("fake MET (GeV)");
    pl->Draw();
+   can_datafit.SetLogy();
    can_datafit.Write();
 
    TCanvas can_mcfit(Form("%s_mcfit",region.c_str()),"MC Fit",800,600); 
    RooPlot *plmc = x->frame();
    all_sig_mc.plotOn(plmc,RooFit::MarkerColor(kBlack));
    pdf_mc->plotOn(plmc,RooFit::LineStyle(1),RooFit::LineColor(2));
-   pdf_mc->paramOn(plmc);
+   //pdf_mc->paramOn(plmc);
    plmc->SetMinimum(0.001);
+   plmc->SetTitle("");
+   plmc->GetXaxis()->SetTitle("fake MET (GeV)");
    plmc->Draw();
+   can_mcfit.SetLogy();
    can_mcfit.Write();
 
    TCanvas can_mcdatafit(Form("%s_mcdatafit",region.c_str()),"MC and Data Fits",800,600); 
@@ -221,6 +227,7 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
    pdf_mc->plotOn(plmcdata,RooFit::LineColor(2),RooFit::Normalization(nmontecarlo));
    pdf->plotOn(plmcdata,RooFit::Normalization(ndata));
    plmcdata->SetMinimum(0.001);
+   plmcdata->GetXaxis()->SetTitle("fake MET (GeV)");
    plmcdata->Draw();
    can_mcdatafit.Write();
 
@@ -232,6 +239,8 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
    TCanvas can_ra(Form("%s_ratio",region.c_str()),"MC Fit",800,600); 
    RooPlot *plra = x->frame();
    ratio.plotOn(plra,RooFit::LineStyle(1));
+   plra->SetTitle("");
+   plra->GetYaxis()->SetTitle("r(MET) Correction Data/MC");
    plra->Draw();
    can_ra.Write();
 }
