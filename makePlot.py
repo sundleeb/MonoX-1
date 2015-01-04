@@ -30,6 +30,7 @@ def getNormalizedHist(hist, templatehist):
   thret.GetYaxis().SetTitle("Events/GeV")
   return thret
 
+sys.path.append("configs")
 configs = args[1:]
 canvs = []
 if len(configs) > 1:
