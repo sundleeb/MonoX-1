@@ -16,8 +16,8 @@ backgrounds = {
 		#,"W#rightarrow #mu#nu":   [["signal_wjets"], 		r.kAzure-3, 0]
 		,"W#rightarrow #mu#nu":  [["corrected_signal_wjets"], 	r.kAzure-3, 0]
 		#,"Z#rightarrow #nu#nu":   [["signal_zjets"],		r.kBlue-9,  0]
-		,"Z#rightarrow #nu#nu":  [["corrected_signal_zjets"],	r.kBlue-9,  0]
-		#,"Z#rightarrow #nu#nu":  [["photon_dimuon_combined_model.root:category_inclusive/inclusive_combined_model"],	r.kBlue-9,   0]
+		#,"Z#rightarrow #nu#nu":  [["corrected_signal_zjets"],	r.kBlue-9,  0]
+		,"Z#rightarrow #nu#nu":  [["photon_dimuon_combined_model.root:$DIRECTORY/$CAT_combined_model"],	r.kBlue-9,   0]
 		,"QCD":	  		  [["signal_qcd"],		r.kRed+2,   0]
 
 	      }

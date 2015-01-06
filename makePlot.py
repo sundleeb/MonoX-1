@@ -3,6 +3,7 @@ from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option("-d","--tdir",default='',help="pick histos from a different directory (will be catgeory of course!)")
+parser.add_option("-c","--cat",default='',help="pick up a category name for $CAT")
 parser.add_option("-o","--outext",default='',help="Add Extension to output name")
 parser.add_option("-x","--xlab",default='',help="Set the Label for X-axis")
 parser.add_option("-b","--batch",default=False,action='store_true',help="always run in batch and save .pdf with config name instead of drawing canvas")
@@ -44,6 +45,18 @@ for ic,config in enumerate(configs) :
  print "Run Config", config
  x = __import__(config)
  if options.tdir: x.directory = options.tdir
+
+ # first run through signals, backgrounds and data to check if we need to replace things
+ for s in x.signals.keys():
+  x.signals[s][0] = x.signals[s][0].replace("$CAT",options.cat)
+  x.signals[s][0] = x.signals[s][0].replace("$DIRECTORY",options.tdir)
+ for b in x.backgrounds.keys():
+  for i in range(len(x.backgrounds[b][0])):
+   x.backgrounds[b][0][i]=x.backgrounds[b][0][i].replace("$CAT",options.cat)
+   x.backgrounds[b][0][i]=x.backgrounds[b][0][i].replace("$DIRECTORY",options.tdir)
+ x.dataname = x.dataname.replace("$CAT",options.cat)
+ x.dataname = x.dataname.replace("$DIRECTORY",options.tdir)
+
  if x.directory!="":x.directory+="/"
  if ":" in x.dataname: 
    fi,datnam = x.dataname.split(":")
@@ -85,6 +98,7 @@ for ic,config in enumerate(configs) :
  totalbackground = 0
  for bkgtype_i,bkg in enumerate(x.key_order):
   nullhist = 0; nullc = 0
+
   for thist in x.backgrounds[bkg][0]:
     if ":" in thist:
      fi,datnam = thist.split(":")
@@ -167,6 +181,7 @@ for ic,config in enumerate(configs) :
  pad1.SetLogy()
  pad1.RedrawAxis()
  lat.DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}") 
+ if options.cat : lat.DrawLatex(0.76,0.92,options.cat) 
 
  can.cd()
  pad2 = r.TPad("p2","p2",0,0.068,1,0.28)
