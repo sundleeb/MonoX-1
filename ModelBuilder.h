@@ -34,6 +34,10 @@ class ModelBuilder {
    save_hists.clear();
    save_datas.clear();
   };
+  void addvariable(std::string v, int nb, double mn, double mx){
+   TH1F *var_hist = new TH1F(Form("base_%s",v.c_str()),Form("Base Hist %s",v.c_str()),nb,mn,mx);
+   additional_vars.insert(std::pair<std::string,TH1F*>(v,var_hist));
+  }
   void setvariable(std::string v, double l, double u){
    RooRealVar var(v.c_str(),v.c_str(),l,u);
    wspace->import(var);
@@ -76,5 +80,7 @@ class ModelBuilder {
   std::map<std::string, ControlRegion> v_samples;
   std::map<std::string, TH1F*> save_hists;
   std::map<std::string, RooDataSet*> save_datas;
+
+  std::map<std::string,TH1F*> additional_vars;
 };
 #endif

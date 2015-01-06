@@ -10,6 +10,7 @@ categories = [
 	   ,"cutstring":"mvamet>250 && mvamet<1000"
 	   ,"varstring":["mvamet",250,1000]
 	   ,"weightname":"weight"
+	   ,"additionalvars":[['jet1pt',25,150,1000]]
 	   ,"pdfmodel":1
 	   ,"bins":BINS[:]
 	   ,"samples":
@@ -24,10 +25,10 @@ categories = [
 		  ,"ttbar_signal"   	:['signal','top',1,0]
 		  ,"SingleTop_signal"   :['signal','top',1,0]
 		  ,"QCD_signal"		:['signal','qcd',1,0]
-		  ,"ggH_signal"    	:['signal','ggH',1,1]
-		  ,"VBFH_signal"   	:['signal','vbf',1,1]
-		  ,"WH_signal"   	:['signal','wh',1,1]
-		  ,"ZH_signal"   	:['signal','zh',1,1]
+		  ,"ggH125_signal"    	:['signal','ggH',1,1]
+		  ,"VBFH125_signal"   	:['signal','vbf',1,1]
+		  ,"WH125_signal"   	:['signal','wh',1,1]
+		  ,"ZH125_signal"   	:['signal','zh',1,1]
 		  ,"data_signal"	:['signal','data',0,0]
 
 		  # Di muon-Control
@@ -74,6 +75,7 @@ categories = [
 	   ,"varstring":["mvamet",250,1000]
 	   ,"weightname":"weight"
 	   ,"bins":BINS[:]
+	   ,"additionalvars":[['jet1pt',25,150,1000]]
 	   ,"pdfmodel":2
 	   ,"samples":
 	   	{  # Format is TreeName : ['region','process',isMC,isSignal]  !! Note isSignal means DM/Higgs etc for signal region but Z-jets/W-jets for the di/single-muon regions !!
@@ -87,10 +89,10 @@ categories = [
 		  ,"ttbar_signal"   	:['signal','top',1,0]
 		  ,"SingleTop_signal"   :['signal','top',1,0]
 		  ,"QCD_signal"		:['signal','qcd',1,0]
-		  ,"ggH_signal"    	:['signal','ggH',1,1]
-		  ,"VBFH_signal"   	:['signal','vbf',1,1]
-		  ,"WH_signal"   	:['signal','wh',1,1]
-		  ,"ZH_signal"   	:['signal','zh',1,1]
+		  ,"ggH125_signal"    	:['signal','ggH',1,1]
+		  ,"VBFH125_signal"   	:['signal','vbf',1,1]
+		  ,"WH125_signal"   	:['signal','wh',1,1]
+		  ,"ZH125_signal"   	:['signal','zh',1,1]
 		  #,"GV_signal"   	:['signal','gv',1,0]
 		  ,"data_signal"	:['signal','data',0,0]
 
@@ -139,6 +141,7 @@ categories = [
 	   ,"varstring":["mvamet",200,1000]
 	   ,"weightname":"weight"
 	   ,"bins":[200.0 , 210.0 , 220.0 , 230.0 , 240.0 , 250.0 , 260.0 , 270.0 , 280.0 , 290.0 , 300.0 , 310.0 , 320.0 , 330.0,340,360,380,420,510,1000]
+	   ,"additionalvars":[['jet1pt',25,150,1000]]
 	   ,"pdfmodel":0
 	   ,"samples":
 	   	{  # Format is TreeName : ['region','process',isMC,isSignal]  !! Note isSignal means DM/Higgs etc for signal region but Z-jets/W-jets for the di/single-muon regions !!
@@ -152,10 +155,10 @@ categories = [
 		  ,"ttbar_signal"   	:['signal','top',1,0]
 		  ,"SingleTop_signal"   :['signal','top',1,0]
 		  ,"QCD_signal"		:['signal','qcd',1,0]
-		  ,"ggH_signal"    	:['signal','ggH',1,1]
-		  ,"VBFH_signal"   	:['signal','vbf',1,1]
-		  ,"WH_signal"   	:['signal','wh',1,1]
-		  ,"ZH_signal"   	:['signal','zh',1,1]
+		  ,"ggH125_signal"    	:['signal','ggH',1,1]
+		  ,"VBFH125_signal"   	:['signal','vbf',1,1]
+		  ,"WH125_signal"   	:['signal','wh',1,1]
+		  ,"ZH125_signal"   	:['signal','zh',1,1]
 		  #,"GV_signal"   	:['signal','gv',1,0]
 		  ,"data_signal"	:['signal','data',0,0]
 

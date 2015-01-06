@@ -12,7 +12,7 @@ backgrounds = {
 		,"Dibosons":		  [["singlemuon_dibosons"],		r.kGray,   0]
 		,"W#rightarrow#mu#nu":	  [["corrected_singlemuon_wjets"],				r.kAzure-3,  0]
 		,"QCD":	  		  [["singlemuon_qcd"],		r.kRed+2,   0]
-		,"Z#rightarrow ll":	  [["singlemuon_zll"],		r.kGreen+3,  0]
+		,"Z#rightarrow ll":	  [["corrected_singlemuon_zll"],		r.kGreen+3,  0]
 
 	      }
 

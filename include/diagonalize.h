@@ -82,7 +82,7 @@ TH1F *generateTemplate(TH1F *base, TTree *tree, std::string varname, std::string
   return histNew;
 }
 
-TH1F *generateTemplate(TH1F *base, RooFormulaVar *pdf_num, RooRealVar &var, RooDataSet *data, int dir=1, double weightsf=1., std::string ext=""){
+TH1F *generateTemplate(TH1F *base, RooFormulaVar *pdf_num, RooRealVar &var, RooDataSet *data, int dir=1, double weightsf=1., std::string ext="", std::string pvar=""){
   //assert(pdf_num);
   assert(base);
   // Correction point to point
@@ -94,7 +94,10 @@ TH1F *generateTemplate(TH1F *base, RooFormulaVar *pdf_num, RooRealVar &var, RooD
   const char *varname = var.GetName();
   for (int ev=0;ev<nevents;ev++){
     const RooArgSet *vw = data->get(ev);
-    double val    = vw->getRealValue(varname);
+    double val;
+    if (pvar!="") val = vw->getRealValue(pvar.c_str());
+    else val = vw->getRealValue(varname);
+
     double weight = data->weight();
     //std::cout << val << ", " << weight <<std::endl;
     var.setVal(val);
@@ -103,9 +106,9 @@ TH1F *generateTemplate(TH1F *base, RooFormulaVar *pdf_num, RooRealVar &var, RooD
       if (dir>=0){
     	cweight *= pdf_num->getVal(var);
 //	std::cout << "EVT - " << ev << " Corrected " <<var.getVal() << ", orig = " << weight*weightsf << ", new = " << cweight << std::endl;  
-      } else {
+      } else if (dir<0){
     	cweight /= pdf_num->getVal(var);  // Uncorrect!
-      }
+      } // if ==0, do nothing
     }
     histNew->Fill(val,cweight);
   }

@@ -28,6 +28,8 @@ for cat_id,cat in enumerate(x.categories):
   mb.setweight(cat['weightname'])
   mb._pdfmodel=cat['pdfmodel']
 
+  for avar in cat['additionalvars']: mb.addvariable(avar[0],avar[1],avar[2],avar[3])
+
   # create a template histogram from bins
   bins = cat["bins"]
   histo_base = r.TH1F("base_%d"%cat_id,"base"
@@ -51,6 +53,7 @@ for cat_id,cat in enumerate(x.categories):
   mb.apply_corrections('WJets','signal','wjets',True) # name of correction, process to be applied to
 
   mb.apply_corrections('ZJets','dimuon','zll',False) # name of correction, process to be applied to  # true at the end means run systemat
+  mb.apply_corrections('ZJets','singlemuon','zll',False) # name of correction, process to be applied to  # true at the end means run systemat
   mb.apply_corrections('WJets','singlemuon','wjets',False) # name of correction, process to be applied to
 
   mb.save()

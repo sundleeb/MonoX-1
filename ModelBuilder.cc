@@ -24,7 +24,7 @@ const char * ModelBuilder::turnon(RooWorkspace *ws,RooRealVar &x,std::string ext
    RooProdPdf *pdf = new RooProdPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),RooArgList(*pdf_pow,*eff));
    */
    RooRealVar eff_mu(Form("eff_mu_%s",ext.c_str()),"eff decay param mu",250,200.,400.);
-   RooRealVar eff_sig(Form("eff_sig_%s",ext.c_str()),"eff decay param sigma ",3,0.,10.);
+   RooRealVar eff_sig(Form("eff_sig_%s",ext.c_str()),"eff decay param sigma ",5,0.,20.);
    RooRealVar frac(Form("frac_%s",ext.c_str()),"Fraction",0.8,0,1);
 
    RooRealVar m1(Form("plaw_p_%s",ext.c_str()),"p",-4.,-15.,0.);
@@ -67,7 +67,20 @@ void ModelBuilder::save(){
 
   std::map<std::string, RooDataSet*>::iterator itd = save_datas.begin();
   for (;itd!=save_datas.end();itd++){
-    wspace->import(*((*itd).second));
+    if (!wspace->data((*itd).second->GetName())) wspace->import(*((*itd).second));
+    // should also make the basic dataset into a histogram for each additional var
+    for (std::map<std::string,TH1F*>::iterator additional_var = additional_vars.begin()
+        ; additional_var!=additional_vars.end()
+	; additional_var++){
+    	std::string var = additional_var->first;
+    	TH1F *tmph = additional_var->second;
+    	TH1F *hist_c = (TH1F*)generateTemplate(tmph,(RooFormulaVar*) 0
+   	  , *(wspace->var(varstring.c_str()))
+	  , (*itd).second
+	  ,0,1, var, var); // extension is var name
+     //fOut->WriteTObject(hist_corrected);
+    	saveHist(hist_c);
+    }
   }
 
   fOut->cd();
@@ -101,14 +114,28 @@ void ModelBuilder::apply_corrections(std::string correction, std::string region,
    std::map<std::string,RooDataSet*>::iterator it = save_datas.find(region+std::string("_")+process);
 
    wspace->import(*(*it).second);
-
    TH1F *hist_corrected = (TH1F*)generateTemplate(lTmp, (RooFormulaVar*)wspace->function(correction.c_str())
    	, *(wspace->var(varstring.c_str()))
 	, (RooDataSet*) wspace->data(Form("%s_%s",region.c_str(),process.c_str()))
 	,1,1);
-   //fOut->WriteTObject(hist_corrected);
+     //fOut->WriteTObject(hist_corrected);
    saveHist(hist_corrected);
-   save_datas.erase(it);
+
+
+   for (std::map<std::string,TH1F*>::iterator additional_var = additional_vars.begin()
+        ; additional_var!=additional_vars.end()
+	; additional_var++){
+     std::string var = additional_var->first;
+     TH1F *tmph = additional_var->second;
+     TH1F *hist_c = (TH1F*)generateTemplate(tmph,(RooFormulaVar*)wspace->function(correction.c_str())
+   	, *(wspace->var(varstring.c_str()))
+	, (RooDataSet*) wspace->data(Form("%s_%s",region.c_str(),process.c_str()))
+	,1,1,var, var); // extension is same name as var
+     //fOut->WriteTObject(hist_corrected);
+     saveHist(hist_c);
+   }
+
+   //save_datas.erase(it);
 
    if (! run_systematics) return;
    // Systematics
