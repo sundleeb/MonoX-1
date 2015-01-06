@@ -26,6 +26,7 @@ for cat_id,cat in enumerate(x.categories):
   mb.cutstring  = cat['cutstring']
   mb.setvariable(cat['varstring'][0],cat['varstring'][1],cat['varstring'][2])
   mb.setweight(cat['weightname'])
+  mb._pdfmodel=cat['pdfmodel']
 
   # create a template histogram from bins
   bins = cat["bins"]

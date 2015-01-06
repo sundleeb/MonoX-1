@@ -11,6 +11,30 @@ void ModelBuilder::saveHist(TH1F *histogram){
    RooHistPdf tmp_pdf(Form("hpdf_%s",histogram->GetName()),histogram->GetTitle(),RooArgSet(*(wspace->var(varstring.c_str()))),*((RooDataHist*)(wspace->data(tmp_hist.GetName()))));
    wspace->import(tmp_pdf);
 }
+const char * ModelBuilder::turnon(RooWorkspace *ws,RooRealVar &x,std::string ext){
+   /*
+   RooRealVar m1(Form("plaw_p_%s",ext.c_str()),"p",-4.,-10.,0.);
+   RooRealVar eff_mu(Form("eff_mu_%s",ext.c_str()),"eff decay param mu",250,200.,1000.);
+   RooRealVar eff_sig(Form("eff_sig_%s",ext.c_str()),"eff decay param sigma ",1,0.,10.);
+   //RooGenericPdf *pdf = new RooGenericPdf(Form("powerLaw_%s",ext.c_str()), Form("powerLaw_%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,m1));
+   // Same name as exponential for now
+   RooGenericPdf *pdf_pow = new RooGenericPdf(Form("doubleExponential_powerlaw%s",ext.c_str()), Form("doubleExponential_powerlaw%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,m1));
+   RooGenericPdf *eff = new RooGenericPdf(Form("doubleExponential_efficiency%s",ext.c_str()),"Efficiency thing","0.5*(TMath::Erf((@0-@1)/@2)+1)",RooArgList(x,eff_mu,eff_sig));
+   //RooEffProd *pdf = new RooEffProd(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),*pdf_pow,eff);
+   RooProdPdf *pdf = new RooProdPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),RooArgList(*pdf_pow,*eff));
+   */
+   RooRealVar eff_mu(Form("eff_mu_%s",ext.c_str()),"eff decay param mu",250,200.,400.);
+   RooRealVar eff_sig(Form("eff_sig_%s",ext.c_str()),"eff decay param sigma ",3,0.,10.);
+   RooRealVar frac(Form("frac_%s",ext.c_str()),"Fraction",0.8,0,1);
+
+   RooRealVar m1(Form("plaw_p_%s",ext.c_str()),"p",-4.,-15.,0.);
+   RooGenericPdf *pdf_pow = new RooGenericPdf(Form("doubleExponential_powerlaw%s",ext.c_str()), Form("doubleExponential_powerlaw%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,m1));
+   //RooProdPdf *pdf = new RooProdPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),RooArgList(*pdf_pow,eff));
+   RooLognormal *pdf_l = new RooLognormal(Form("doubleExponential_log%s",ext.c_str()), Form("doubleExponential_log%s",ext.c_str()),x,eff_mu,eff_sig);
+   RooAddPdf *pdf = new RooAddPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),RooArgList(*pdf_pow,*pdf_l),RooArgList(frac));
+   ws->import(*pdf);
+   return pdf->GetName(); 
+}
 
 const char * ModelBuilder::powerlaw(RooWorkspace *ws,RooRealVar &x,std::string ext){
    RooRealVar m1(Form("p_%s",ext.c_str()),"p",-4.,-10.,0.);
@@ -124,16 +148,28 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
    RooAbsPdf *pdf_background_mc;
 
    // Build and fit the model for the background
-   if (_usedoubleexp){
+   if (_pdfmodel==0){  // Double exponential
+    std::cout << "Using Double Exponential for fitting functions -- " << _pdfmodel << std::endl;
      pdf 	       = wspace->pdf(doubleexp(wspace,*x,Form("%s_data",cr.name.c_str())));
      pdf_mc 	       = wspace->pdf(doubleexp(wspace,*x,Form("%s_mc",cr.name.c_str())));
      pdf_background_mc = wspace->pdf(doubleexp(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
-   } else {
+   } else if (_pdfmodel==1) {
    
    // Why not use one power law for the resolved (lower stat) case?
+    std::cout << "Using PowerLaw for fitting functions -- " <<  _pdfmodel <<std::endl;
+   
      pdf 		= wspace->pdf(powerlaw(wspace,*x,Form("%s_data",cr.name.c_str())));
      pdf_mc 	   	= wspace->pdf(powerlaw(wspace,*x,Form("%s_mc",cr.name.c_str())));
      pdf_background_mc = wspace->pdf(powerlaw(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
+   
+   } else if (_pdfmodel==2) {
+    std::cout << "Using PowerLaw + Log-normal for fitting functions -- " << _pdfmodel <<std::endl;
+     pdf 		= wspace->pdf(turnon(wspace,*x,Form("%s_data",cr.name.c_str())));
+     pdf_mc 	   	= wspace->pdf(turnon(wspace,*x,Form("%s_mc",cr.name.c_str())));
+     pdf_background_mc = wspace->pdf(turnon(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
+   } else {
+	std::cout << "! No Pdf Model for type " << _pdfmodel << std::endl;
+	assert(0);
    }
 
    // Build a dataset which is all data in control region

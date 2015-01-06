@@ -10,7 +10,7 @@ categories = [
 	   ,"cutstring":"mvamet>250 && mvamet<1000"
 	   ,"varstring":["mvamet",250,1000]
 	   ,"weightname":"weight"
-	   ,"usedoubleexp":0
+	   ,"pdfmodel":1
 	   ,"bins":BINS[:]
 	   ,"samples":
 	   	{  # Format is TreeName : ['region','process',isMC,isSignal]  !! Note isSignal means DM/Higgs etc for signal region but Z-jets/W-jets for the di/single-muon regions !!
@@ -69,12 +69,12 @@ categories = [
 	}, 
 	{
 	    'name':"boosted"
-	   ,'in_file_name':"boosted.root"
-	   ,"cutstring":"mvamet_>250 && mvamet_<1000"
-	   ,"varstring":["mvamet_",250,1000]
-	   ,"weightname":"weight_"
+	   ,'in_file_name':"boosted-combo.root"
+	   ,"cutstring":"mvamet>250 && mvamet<1000"
+	   ,"varstring":["mvamet",250,1000]
+	   ,"weightname":"weight"
 	   ,"bins":BINS[:]
-	   ,"usedoubleexp":0
+	   ,"pdfmodel":2
 	   ,"samples":
 	   	{  # Format is TreeName : ['region','process',isMC,isSignal]  !! Note isSignal means DM/Higgs etc for signal region but Z-jets/W-jets for the di/single-muon regions !!
 		  # Signal Region
@@ -91,7 +91,7 @@ categories = [
 		  ,"VBFH_signal"   	:['signal','vbf',1,1]
 		  ,"WH_signal"   	:['signal','wh',1,1]
 		  ,"ZH_signal"   	:['signal','zh',1,1]
-		  ,"GV_signal"   	:['signal','gv',1,0]
+		  #,"GV_signal"   	:['signal','gv',1,0]
 		  ,"data_signal"	:['signal','data',0,0]
 
 		  # Di muon-Control
@@ -104,7 +104,7 @@ categories = [
 		  ,"ttbar_di_muon_control"   	:['dimuon','top',1,0]
 		  ,"SingleTop_di_muon_control"  :['dimuon','top',1,0]
 		  #,"QCD_di_muon_control"	:['dimuon','qcd',1,0]
-		  ,"GV_di_muon_control"   	:['dimuon','gv',1,0]
+		  #,"GV_di_muon_control"   	:['dimuon','gv',1,0]
 		  ,"data_di_muon_control"	:['dimuon','data',0,0]
 
 		  # Single muon control
@@ -134,11 +134,12 @@ categories = [
 	{
 	    'name':"inclusive"
 	   ,'in_file_name':"monojet-combo.root"
+	   #,'in_file_name':"inclusive-combo.root"
 	   ,"cutstring":"mvamet>200 && mvamet<1000"
 	   ,"varstring":["mvamet",200,1000]
 	   ,"weightname":"weight"
 	   ,"bins":[200.0 , 210.0 , 220.0 , 230.0 , 240.0 , 250.0 , 260.0 , 270.0 , 280.0 , 290.0 , 300.0 , 310.0 , 320.0 , 330.0,340,360,380,420,510,1000]
-	   ,"usedoubleexp":1
+	   ,"pdfmodel":0
 	   ,"samples":
 	   	{  # Format is TreeName : ['region','process',isMC,isSignal]  !! Note isSignal means DM/Higgs etc for signal region but Z-jets/W-jets for the di/single-muon regions !!
 		  # Signal Region

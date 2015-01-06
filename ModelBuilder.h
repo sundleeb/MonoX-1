@@ -10,6 +10,13 @@
 #include "RooAbsReal.h"
 #include "RooDataHist.h"
 #include "RooHistPdf.h"
+#include "RooEffProd.h"
+#include "RooProdPdf.h"
+#include "RooLandau.h"
+#include "RooGaussian.h"
+#include "RooLognormal.h"
+#include "RooBernstein.h"
+#include "RooFormulaVar.h"
 #include <cstring>
 
 using namespace std;
@@ -55,11 +62,12 @@ class ModelBuilder {
   TH1F *lTmp;
   TFile *fIn;
   TDirectory *fOut;
-  bool _usedoubleexp;
+  int _pdfmodel;
 
   private:
   const char * doubleexp(RooWorkspace *ws,RooRealVar &x,std::string ext);
   const char * powerlaw(RooWorkspace *ws,RooRealVar &x,std::string ext);
+  const char * turnon(RooWorkspace *ws,RooRealVar &x,std::string ext);
   void saveHist(TH1F*);
 
   int sel_i;
