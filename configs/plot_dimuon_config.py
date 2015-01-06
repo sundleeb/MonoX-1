@@ -1,5 +1,5 @@
 import ROOT as r
-directory = "category_resolved"
+directory = "category_boosted"
 signals = {	 
            # "signal_ggH": ["ggH",r.kAzure+10	,0] 
            #,"signal_vbf": ["VBF",r.kRed	,0] 

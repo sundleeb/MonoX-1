@@ -85,7 +85,7 @@ class Bin:
    nuisances = self.cr.ret_nuisances()
    if len(nuisances)>0:
      prod = 0
-     if len(nuisances)>1:
+     if len(nuisances)>2:
        nuis_args = r.RooArgList()
        for nuis in nuisances:
         print "Adding Nuisance ", nuis 
@@ -176,9 +176,10 @@ class Channel:
     self.systematics[sys] = [sfup,sfdn]
 
   def add_nuisance(self,name,size):
-    print "Error, Nuisance parameter model not supported fully for shape variations, dont use it!" 
-    sys.exit()
+    #print "Error, Nuisance parameter model not supported fully for shape variations, dont use it!" 
+    #sys.exit()
     self.nuis = r.RooRealVar("nuis_%s"%name,"Nuisance - %s"%name,0,-3,3);
+    #self.nuis = r.RooRealVar("nuis_%s"%name,"Nuisance - %s"%name,0,-3,3);
     self.wspace._import(self.nuis)
     self.cont = r.RooGaussian("const_%s"%name,"Constraint - %s"%name,self.wspace.var(self.nuis.GetName()),r.RooFit.RooConst(0),r.RooFit.RooConst(size));
     self.wspace._import(self.cont)

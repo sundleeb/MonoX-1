@@ -122,7 +122,6 @@ def CombinedControlRegionFit(
     combined_pdf.addPdf(_wspace.pdf("pdf_%s"%ch.ret_binid()),ch.ret_binid())
 
   # Now check systematics, we wont use this right now
-  """
   ext_constraints = r.RooArgSet()
   hasSys = False
   for cr in _control_regions:
@@ -130,7 +129,7 @@ def CombinedControlRegionFit(
     for nuis in nuisances:
       hasSys=True
       ext_constraints.add(_wspace.pdf("const_%s"%nuis))
-  """
+
   # THE FIIIIIIIIIIIIIT!!!!!!!!!!!!!!!!!!!!!!!!!!!! ################################
   # NEED to add constrain terms on top -> Nah, don't bother!
   combined_fit_result = combined_pdf.fitTo(combined_obsdata,r.RooFit.Save())
@@ -161,7 +160,7 @@ def CombinedControlRegionFit(
   c2 = r.TCanvas("compare_models")
   model_hist = r.TH1F("%s_combined_model"%cname,"combined_model",len(_bins)-1,array.array('d',_bins))
   #fillModelHist(model_hist,channels)
-  diag.generateWeightedTemplate(model_hist,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
+  diag.generateWeightedTemplate(model_hist,_wspace.function(pdf_ratio.GetName()),_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
   channels[0].Print()
   model_hist.SetLineWidth(2)
   model_hist.SetLineColor(1)
@@ -282,10 +281,12 @@ def CombinedControlRegionFit(
     diag.setEigenset(par,1)  # up variation
     #fillModelHist(hist_up,channels)
     diag.generateWeightedTemplate(hist_up,_wspace.function(pdf_ratio.GetName()),_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
+    #diag.generateWeightedTemplate(hist_up,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
 
     diag.setEigenset(par,-1)  # up variation
     #fillModelHist(hist_dn,channels)
     diag.generateWeightedTemplate(hist_dn,_wspace.function(pdf_ratio.GetName()),_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
+    #diag.generateWeightedTemplate(hist_dn,pdf_ratio,_wspace.var(_var.GetName()),_wspace.data(_target_datasetname))
 
     # Reset parameter values 
     diag.resetPars()

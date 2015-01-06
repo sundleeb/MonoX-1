@@ -39,9 +39,11 @@ if len(configs) > 1:
 if options.batch:
   r.gROOT.SetBatch(1)
 
+sys.path.append('configs')
 for ic,config in enumerate(configs) :
  print "Run Config", config
- x = __import__(config)
+ #x = __import__(config)
+ import plot_config  as x
  if options.tdir: x.directory = options.tdir
  if x.directory!="":x.directory+="/"
  if ":" in x.dataname: 
@@ -220,7 +222,7 @@ for ic,config in enumerate(configs) :
  lat.DrawLatex(0.68,0.02,label)
  #lat.DrawLatex(0.5,0.5,"#bold{CMS} #emph{Preliminary}") 
  canvs.append(can)
-#can.SaveAs("metdist.pdf")
+ can.SaveAs("metdist.pdf")
  can.Draw()
  if totalsignal != 0 : print "	Expected Significance ", calculateExpectedSignificance(totalsignal,totalbackground), " sigma"
  if totalsignal != 0 : print "	Expected Limit mu  <  ", calculateExpectedLimit(0.01,0.5,totalsignal,totalbackground)

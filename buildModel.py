@@ -2,8 +2,10 @@ import ROOT as r
 import array, sys
 
 # Configurations Read in from Separate .py files
-sys.path.append("configs")
-x = __import__(sys.argv[1]) 
+sys.path.append('configs')
+#import sys.argv[1]
+#x = __import__(categories_config_vtag)
+import categories_config_vtag as x
 
 # book category should read list of samples and append them to as histograms 
 # expect formats of 
@@ -26,6 +28,7 @@ for cat_id,cat in enumerate(x.categories):
   mb.cutstring  = cat['cutstring']
   mb.setvariable(cat['varstring'][0],cat['varstring'][1],cat['varstring'][2])
   mb.setweight(cat['weightname'])
+  mb._usedoubleexp = cat['usedoubleexp']
 
   # create a template histogram from bins
   bins = cat["bins"]

@@ -1,11 +1,11 @@
 import ROOT as r
-directory = "category_resolved"
+directory = "category_boosted"
 signals = {	 
            # "signal_ggH": ["ggH",r.kAzure+10	,0] 
            #,"signal_vbf": ["VBF",r.kRed	,0] 
 	   }
 
-key_order = ["QCD","Z#rightarrow ll","Dibosons","Top","W#rightarrow#mu#nu"]
+key_order = ["Z#rightarrow ll","Dibosons","Top","W#rightarrow#mu#nu"]
 
 backgrounds = { 
 		"Top":			  [["singlemuon_top"],		r.kRed+1,   0]
