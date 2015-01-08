@@ -35,10 +35,10 @@ def cmodel(nam,_f,_fOut):
   # First we need to re-build the nominal templates from the datasets modifying the weights
 
   target = _fin.Get("signal_zjets")
-  Pho = _fin.Get("photon_gjet")
   Zmm = _fin.Get("dimuon_zll")
+  #Pho = _fin.Get("photon_gjet")
   ZmmScales = target.Clone(); ZmmScales.SetName("zmm_weights_%s"%nam)
-  PhotonScales = target.Clone(); PhotonScales.SetName("photon_weights_%s"%nam)
+  #PhotonScales = target.Clone(); PhotonScales.SetName("photon_weights_%s"%nam)
 
   # run through 3 datasets, photon, etc and generate a template from histograms 
   # We only nned to make NLO versions of Z(vv) and Photon :) 
@@ -47,7 +47,6 @@ def cmodel(nam,_f,_fOut):
   from ROOT import diagonalizer
   diag = diagonalizer(_wspace)
  
-  """
   #Loop Over Systematics also?
   Pho = target.Clone(); Pho.SetName("photon_weights_denom_%s"%nam)
   for b in range(Pho.GetNbinsX()): Pho.SetBinContent(b+1,0)
@@ -61,35 +60,35 @@ def cmodel(nam,_f,_fOut):
   # now do systematic parts
   Pho_mrUp = target.Clone(); Pho.SetName("photon_weights_denom_mrUp_%s"%nam)
   for b in range(Pho_mrUp.GetNbinsX()): Pho_mrUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Pho_mrUp,nlo_pho,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
+  diag.generateWeightedTemplate(Pho_mrUp,nlo_pho_mrUp,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
 
   Zvv_mrUp = target.Clone(); Zvv_mrUp.SetName("photon_weights_nom_mrUp_%s"%nam)
   for b in range(Zvv_mrUp.GetNbinsX()):Zvv_mrUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_mrUp,nlo_zjt,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_mrUp,nlo_zjt_mrUp,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
 
   Pho_mrDown = target.Clone(); Pho.SetName("photon_weights_denom_mrDown_%s"%nam)
   for b in range(Pho_mrDown.GetNbinsX()): Pho_mrDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Pho_mrDown,nlo_pho,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
+  diag.generateWeightedTemplate(Pho_mrDown,nlo_pho_mrDown,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
 
   Zvv_mrDown = target.Clone(); Zvv_mrDown.SetName("photon_weights_nom_mrDown_%s"%nam)
   for b in range(Zvv_mrDown.GetNbinsX()): Zvv_mrDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_mrDown,nlo_zjt,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_mrDown,nlo_zjt_mrDown,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
 
   Pho_mfUp = target.Clone(); Pho.SetName("photon_weights_denom_mfUp_%s"%nam)
   for b in range(Pho_mfUp.GetNbinsX()): Pho_mfUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Pho_mfUp,nlo_pho,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
+  diag.generateWeightedTemplate(Pho_mfUp,nlo_pho_mfUp,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
 
   Zvv_mfUp = target.Clone(); Zvv_mfUp.SetName("photon_weights_nom_mfUp_%s"%nam)
   for b in range(Zvv_mfUp.GetNbinsX()): Zvv_mfUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_mfUp,nlo_zjt,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_mfUp,nlo_zjt_mfUp,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
 
   Pho_mfDown = target.Clone(); Pho.SetName("photon_weights_denom_mfDown_%s"%nam)
   for b in range(Pho_mfDown.GetNbinsX()): Pho_mfDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Pho_mfDown,nlo_pho,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
+  diag.generateWeightedTemplate(Pho_mfDown,nlo_pho_mfDown,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
 
   Zvv_mfDown = target.Clone(); Zvv_mfDown.SetName("photon_weights_nom_mfDown_%s"%nam)
   for b in range(Zvv_mfDown.GetNbinsX()): Zvv_mfDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_mfDown,nlo_zjt,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_mfDown,nlo_zjt_mfDown,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
   ##################################################################################################################
 
   # Have to also add one per systematic variation :(, 
@@ -98,11 +97,11 @@ def cmodel(nam,_f,_fOut):
   Zvv_mrDown.Divide(Pho_mrDown); Zvv_mrDown.SetName("photon_weights_%s_mr_Down"%nam);_fOut.WriteTObject(Zvv_mrDown)
   Zvv_mfUp.Divide(Pho_mfUp); 	 Zvv_mfUp.SetName("photon_weights_%s_mf_Up"%nam);_fOut.WriteTObject(Zvv_mfUp)
   Zvv_mfDown.Divide(Pho_mfDown); Zvv_mfDown.SetName("photon_weights_%s_mf_Down"%nam);_fOut.WriteTObject(Zvv_mfDown)
-  """
-  ZmmScales.Divide(Zmm)
-  PhotonScales.Divide(Pho)
 
-  #_fOut.WriteTObject(Zvv)
+  ZmmScales.Divide(Zmm)
+  PhotonScales = Zvv.Clone()
+
+  #_fOut.WriteTObject(Zvv) # these are photon scales
   _fOut.WriteTObject(PhotonScales)
   _fOut.WriteTObject(ZmmScales)
 
@@ -120,20 +119,17 @@ def cmodel(nam,_f,_fOut):
 
   #_control_regions[0].add_systematic_shape("MuonEfficiency",_fin)  # looks for weights of the form XXX _MuonEfficiency +1 and -1 sigma 
   CRs[1].add_systematic_yield("MuonEfficiency",0.01)  # looks for weights of the form XXX _MuonEfficiency +1 and -1 sigma, a number means make a new global scaling (lnN)
-  #CRs[0].add_systematic_shape("mr",_fOut) 
-  #CRs[0].add_systematic_shape("mf",_fOut) 
-  CRs[0].add_systematic_yield("mr",0.03) 
-  CRs[0].add_systematic_yield("mf",0.03) 
+  CRs[0].add_systematic_shape("mr",_fOut) 
+  CRs[0].add_systematic_shape("mf",_fOut) 
+  CRs[0].add_systematic_yield("ewk",0.05) 
   CRs[0].add_systematic_yield("PhotonEfficiency",0.01)  
-
-  # Still some naming issues so check if mvamet or mvamet_
+  # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
   CombinedControlRegionFit(nam,_fin,_fOut,_wspace,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs)
-
-_fOut = r.TFile("photon_dimuon_combined_model_monojet.root","RECREATE")
+  
+_fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
-#categories = ["inclusive","resolved","boosted"]
-categories = ["inclusive"]
-_f = r.TFile.Open("mono-jet.root")
+categories = ["inclusive","resolved","boosted"]
+_f = r.TFile.Open("mono-x-vtagged.root")
 for cn in categories: 
         _fDir = _fOut.mkdir("category_%s"%cn)
 	cmodel(cn,_f,_fDir)
