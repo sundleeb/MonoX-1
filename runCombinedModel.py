@@ -1,4 +1,5 @@
-from combineControlRegions import *
+#from combineControlRegions import *
+from counting_experiment import *
 import ROOT as r 
 r.gROOT.SetBatch(1)
 
@@ -14,7 +15,7 @@ nlo_zjt_mfUp = fkFactor.Get("Z_NLO_LO_mfUp")
 nlo_pho_mfDown = fkFactor.Get("pho_NLO_LO_mfDown")
 nlo_zjt_mfDown = fkFactor.Get("Z_NLO_LO_mfDown")
 
-def cmodel(nam,_f,_fOut):
+def cmodel(cid,nam,_f,_fOut, out_ws):
 
   _fin = _f.Get("category_%s"%nam)
 
@@ -115,7 +116,7 @@ def cmodel(nam,_f,_fOut):
    Channel("Photon+jet",_wspace,0,_wspace.data(_photon_datasetname),PhotonScales,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
  , Channel("Dimuon",_wspace,1,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
   ]
-  #Add Systematic -> Fit will be re-run once per systematic
+  #Add Systematic ? This time we add them as nuisance parameters.
 
   #_control_regions[0].add_systematic_shape("MuonEfficiency",_fin)  # looks for weights of the form XXX _MuonEfficiency +1 and -1 sigma 
   CRs[1].add_systematic_yield("MuonEfficiency",0.01)  # looks for weights of the form XXX _MuonEfficiency +1 and -1 sigma, a number means make a new global scaling (lnN)
@@ -124,15 +125,39 @@ def cmodel(nam,_f,_fOut):
   CRs[0].add_systematic_yield("ewk",0.05) 
   CRs[0].add_systematic_yield("PhotonEfficiency",0.01)  
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
-  CombinedControlRegionFit(nam,_fin,_fOut,_wspace,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs)
+  #CombinedControlRegionFit(nam,_fin,_fOut,_wspace,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs)
+  return Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs,diag)
   
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
 categories = ["inclusive","resolved","boosted"]
 _f = r.TFile.Open("mono-x-vtagged.root")
-for cn in categories: 
+out_ws = r.RooWorkspace("combinedws","Combined Workspace")
+out_ws._import = getattr(out_ws,"import")
+# Need to setup the things here for combined dataset, need to add all possible sample types first because otherwise RooFit throws a fit! 
+sample = r.RooCategory("bin_number","Bin Number")
+obs    = r.RooRealVar("observed","Observed Events bin",1)
+out_ws._import(sample)  # Global variables for dataset
+out_ws._import(obs)
+obsargset = r.RooArgSet(out_ws.var("observed"),out_ws.cat(sample.GetName()))
+combined_obsdata = r.RooDataSet("combinedData","Data in all Bins",obsargset)
+out_ws._import(combined_obsdata)
+
+cmb_categories=[]
+for cid,cn in enumerate(categories): 
         _fDir = _fOut.mkdir("category_%s"%cn)
-	cmodel(cn,_f,_fDir)
+	cmb_categories.append(cmodel(cid,cn,_f,_fDir,out_ws))
+
+# Now loop through and init all the bins ?!
+
+combined_obsdata.Print("v")
+for cid,cn in enumerate(cmb_categories):
+	cn.init_channels()
+# Now we consruct the fit ourselves, first thing is to make a combined dataset and combined pdf
+# Loop through ALL of the bins 
+#for cat in cmb_categories:
+    
+   #cmb_categories[-1].save()
 
 print "Produced combined Z(mm) + photon fits -> ", _fOut.GetName()
 _fOut.Close()

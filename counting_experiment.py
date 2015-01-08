@@ -3,12 +3,13 @@ import sys
 
 MAXBINS=100
 class Bin:
- def __init__(self,chid,id,var,datasetname,pdf,norm,wspace,xmin,xmax):
+ def __init__(self,catid,chid,id,var,datasetname,pdf,norm,wspace,wspace_out,xmin,xmax):
 
    self.chid	  = chid# This is the thing that links two bins from different controls togeher
    self.id        = id
-   self.type_id   = MAXBINS*chid+id
-   self.binid     = "ch_%d_bin_%d"%(chid,id)
+   self.type_id   = MAXBINS*MAXBINS*catid+MAXBINS*chid+id
+   self.binid     = "cat_%d_ch_%d_bin_%d"%(catid,chid,id)
+   self.wspace_out = wspace_out
    self.set_wspace(wspace)
    self.set_norm_var(norm)
 
@@ -24,7 +25,7 @@ class Bin:
    self.dataset.Print("V")
    self.o	= self.dataset.sumEntries("%s>=%g && %s<%g "%(var.GetName(),xmin,var.GetName(),xmax))
    #self.o	= (self.wspace.data(datasetname)).sumEntries("1>0",self.rngename)
-   self.obs	= r.RooRealVar("observed","Observed Events bin",1)
+   self.obs	= self.wspace_out.var("observed")#r.RooRealVar("observed","Observed Events bin",1)
    #self.setup_expect_var(self)
    self.argset = r.RooArgSet(self.var)
    self.var.setRange("fullRange",self.var.getMin(),self.var.getMax())
@@ -32,7 +33,6 @@ class Bin:
    self.pdfFullInt = pdf.createIntegral(self.argset,r.RooFit.Range("fullRange"),r.RooFit.NormSet(self.argset))
    #if not self.wspace.var(self.pdfFullInt.GetName()) : self.wspace._import(self.pdfFullInt)
    self.wspace._import(self.pdfFullInt,r.RooFit.RecycleConflictNodes())
-   print self.wspace.function(self.pdfFullInt.GetName())
    self.b  = 0
    self.constBkg = True
 
@@ -47,7 +47,7 @@ class Bin:
 
  def set_label(self,cat):
    self.categoryname = cat.GetName()
-   self.wspace._import(cat,r.RooFit.RecycleConflictNodes())
+   #self.wspace._import(cat,r.RooFit.RecycleConflictNodes())
 
  def set_wspace(self,w):
    self.wspace = w
@@ -115,11 +115,16 @@ class Bin:
 
  def add_to_dataset(self,obsdata):
    # create a dataset 
-   self.wspace.var("observed").setVal(self.o)
+   self.wspace_out.var("observed").setVal(self.o)
    #self.wspace.cat(self.categoryname).defineType(self.binid,self.id)
-   self.wspace.cat(self.categoryname).setIndex(self.type_id)
-   local_obsargset = r.RooArgSet(self.wspace.var("observed"),self.wspace.cat(self.categoryname))
+   self.wspace_out.cat(self.categoryname).setIndex(self.type_id)
+   print self.wspace_out.cat("bin_number")
+   (self.wspace_out.cat("bin_number")).Print("v")
+   #self.wspace_out.Print()
+   print "I am setting ", self.type_id
+   local_obsargset = r.RooArgSet(self.wspace_out.var("observed"),self.wspace_out.cat("bin_number"))
    obsdata.add(local_obsargset)
+   obsdata.Print("v")
    #self.wspace._import(self.obsdata)
   
  def set_control_region(self,control):
@@ -177,7 +182,6 @@ class Channel:
 
   def add_nuisance(self,name,size):
     print "Error, Nuisance parameter model not supported fully for shape variations, dont use it!" 
-    sys.exit()
     self.nuis = r.RooRealVar("nuis_%s"%name,"Nuisance - %s"%name,0,-3,3);
     self.wspace._import(self.nuis)
     self.cont = r.RooGaussian("const_%s"%name,"Constraint - %s"%name,self.wspace.var(self.nuis.GetName()),r.RooFit.RooConst(0),r.RooFit.RooConst(size));
@@ -212,3 +216,103 @@ class Channel:
 
   def has_background(self):
     return len(self.backgroundname)
+
+class Category:
+  # This class holds a "category" which contains a bunch of channels
+  # It needs to hold a combined_pdf object, a combined_dataset object and 
+  # the target dataset for this channel 
+  def __init__(self,
+   catid
+   ,cname 		# name for the parametric variation templates
+   ,_fin 		# TDirectory   
+   ,_fout 		# and output file 
+   ,_wspace 		# RooWorkspace (in)
+   ,_wspace_out 	# RooWorkspace (out)
+   ,_bins  		# just get the bins
+   ,_varname	    	# name of the variale
+   ,_pdfname	    	# name of a double exp pdf
+   ,_pdfname_zvv	# name of a double exp pdf to use as zvv mc fit
+   ,_target_datasetname # only for initial fit values
+   ,_control_regions 	# CRs constructed 
+   ,diag		# a diagonalizer object
+  ):
+   self.cname = cname;
+   self.catid = catid;
+   # A crappy way to store canvases to be saved in the end
+   self.canvases = {}
+
+   self._fin  = _fin 
+   self._fout = _fout
+
+   self._wspace = _wspace
+   self._wspace_out = _wspace_out
+
+   # Setup a bunch of the attributes for this category 
+   self._var      = _wspace.var(_varname)
+   self._varname  = _varname
+   self._bins     = _bins[:]
+   self._control_regions = _control_regions
+   self._pdf      = _wspace.pdf(_pdfname)
+   self._pdf_orig = _wspace.pdf(_pdfname_zvv)
+   self._data_mc  = _wspace.data(_target_datasetname)
+   self._pdfname = _pdfname
+   self._pdfname_zvv  =_pdfname_zvv
+   self._target_datasetname = _target_datasetname
+   self.sample = self._wspace_out.cat("bin_number")
+   self._obsvar = self._wspace_out.var("observed")
+   self._obsdata = self._wspace_out.data("combinedData")
+
+   self._norm = r.RooRealVar("%s_%s_norm"%(cname,_target_datasetname),"Norm",_wspace.data(_target_datasetname).sumEntries())
+   self._norm.removeRange()
+   self._norm_orig= r.RooRealVar("%s_%s_norm_orig"%(cname,_target_datasetname),"Norm_orig",_wspace.data(_target_datasetname).sumEntries())
+   self._norm.setConstant(False)
+   self._norm_orig.setConstant(True)
+   self._wspace._import(self._norm)
+   self._wspace._import(self._norm_orig)
+
+   diag.freezeParameters(self._pdf_orig.getParameters(self._data_mc),False)
+   #self._pdf_orig.fitTo(self._data_mc)  # Just initialises parameters 
+   #self._pdf.fitTo(self._data_mc)       # Just initialises parameters 
+   # Now we loop over the CR's and bins to produce the counting experiments for this category 
+   # A fit of the original pdf to the Zvv data will help kick things off
+   diag.freezeParameters(self._pdf_orig.getParameters(self._data_mc),True)
+   for j,cr in enumerate(self._control_regions):
+    for i,bl in enumerate(self._bins):
+     if i >= len(self._bins)-1 : continue
+     self.sample.defineType("cat_%d_ch_%d_bin_%d"%(self.catid,j,i),MAXBINS*MAXBINS*catid+MAXBINS*j+i)
+   # END
+  def init_channels(self):
+   self.channels = []
+   sample = self._wspace_out.cat("bin_number") #r.RooCategory("bin_number","bin_number")
+   sample.Print()
+   #for j,cr in enumerate(self._control_regions):
+   for j,cr in enumerate(self._control_regions):
+    for i,bl in enumerate(self._bins):
+     if i >= len(self._bins)-1 : continue
+     xmin,xmax = bl,self._bins[i+1]
+     ch = Bin(self.catid,j,i,self._var,cr.ret_dataset(),self._pdf,self._norm,self._wspace,self._wspace_out,xmin,xmax)
+     ch.set_control_region(cr)
+     if cr.has_background(): ch.add_background(cr.ret_background())
+     ch.set_label(sample) # should import the sample category label
+     ch.set_sfactor(cr.ret_sfactor(i))
+     # This has to the the last thing
+     ch.setup_expect_var()
+     ch.add_to_dataset(self._obsdata)
+     self.channels.append(ch)
+   
+   # Now start making the first plot
+   self.fr = self._var.frame()
+   self._wspace.data(self._target_datasetname).plotOn(self.fr,r.RooFit.Binning(200))
+   self._pdf_orig.plotOn(self.fr)
+   c = r.TCanvas("zjets_signalregion_mc_fit_before_after")
+   self.fr.GetXaxis().SetTitle("fake MET (GeV)")
+   self.fr.GetYaxis().SetTitle("Events/GeV")
+   self.fr.SetTitle("")
+   self.fr.Draw()
+   self.canvases["zjets_signalregion_mc_fit_before_after"] = c.Clone()
+
+  def ret_channels(self): 
+   return self.channels
+  def save(self):
+   for canv in self.canvases.keys():
+     self._fout.WriteTObject(self.canvases[canv])
