@@ -149,6 +149,8 @@ def CombinedControlRegionFit(
   combined_fit_result = combined_pdf.fitTo(combined_obsdata,r.RooFit.Save())
   # #################################################################################
   # Make the ratio of new/original fits
+
+def ANOTHER_FUNCTION
   ratioargs = r.RooArgList(_norm,_pdf,_norm_orig,_pdf_orig)
   pdf_ratio = r.RooFormulaVar("ratio_correction_%s"%cname,"Correction for Zvv from dimuon+photon control regions","@0*@1/(@2*@3)",ratioargs)
   _wspace._import(pdf_ratio)
