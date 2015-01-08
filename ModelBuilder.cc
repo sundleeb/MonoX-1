@@ -5,11 +5,11 @@
 void ModelBuilder::saveHist(TH1F *histogram){
    fOut->WriteTObject(histogram);
    // also make a RooDataHist and RooHistPdf
-   RooDataHist tmp_hist(Form("dhist_%s",histogram->GetName()),histogram->GetTitle(),RooArgList(*(wspace->var(varstring.c_str()))),histogram);
-   wspace->import(tmp_hist);
+//   RooDataHist tmp_hist(Form("dhist_%s",histogram->GetName()),histogram->GetTitle(),RooArgList(*(wspace->var(varstring.c_str()))),histogram);
+//   wspace->import(tmp_hist);
 
-   RooHistPdf tmp_pdf(Form("hpdf_%s",histogram->GetName()),histogram->GetTitle(),RooArgSet(*(wspace->var(varstring.c_str()))),*((RooDataHist*)(wspace->data(tmp_hist.GetName()))));
-   wspace->import(tmp_pdf);
+//   RooHistPdf tmp_pdf(Form("hpdf_%s",histogram->GetName()),histogram->GetTitle(),RooArgSet(*(wspace->var(varstring.c_str()))),*((RooDataHist*)(wspace->data(tmp_hist.GetName()))));
+//   wspace->import(tmp_pdf);
 }
 const char * ModelBuilder::turnon(RooWorkspace *ws,RooRealVar &x,std::string ext){
    /*

@@ -294,11 +294,16 @@ def CombinedControlRegionFit(
   npars = diag.generateVariations(combined_fit_result)
   h2covar = diag.retCovariance()
   _fout.WriteTObject(h2covar)
+  leg_var = r.TLegend(0.56,0.42,0.89,0.89)
+  leg_var.SetFillColor(0)
+  leg_var.SetTextFont(42)
+
   canv = r.TCanvas("canv_variations")
+  canvr = r.TCanvas("canv_variations_ratio")
   model_hist_spectrum = getNormalizedHist(model_hist)
   model_hist_spectrum.Draw()
   systs = []
-
+  sys_c=0
   for par in range(npars):
     hist_up = r.TH1F("%s_combined_model_par_%d_Up"%(cname,par),"combined_model par %d Up 1 sigma"%par  ,len(_bins)-1,array.array('d',_bins))
     hist_dn = r.TH1F("%s_combined_model_par_%d_Down"%(cname,par),"combined_model par %d Up 1 sigma"%par,len(_bins)-1,array.array('d',_bins))
@@ -316,8 +321,9 @@ def CombinedControlRegionFit(
     canv.cd()
     hist_up.SetLineWidth(2)
     hist_dn.SetLineWidth(2)
-    hist_up.SetLineColor(par+2)
-    hist_dn.SetLineColor(par+2)
+    if sys_c+2 == 10: sys_c+=1
+    hist_up.SetLineColor(sys_c+2)
+    hist_dn.SetLineColor(sys_c+2)
     hist_dn.SetLineStyle(2)
 
     _fout.WriteTObject(hist_up)
@@ -334,8 +340,8 @@ def CombinedControlRegionFit(
 
     ct = r.TCanvas("sys_par_%d"%par)
     flat = model_hist.Clone()
-    hist_up_cl = hist_up.Clone()
-    hist_dn_cl = hist_dn.Clone()
+    hist_up_cl = hist_up.Clone();hist_up_cl.SetName(hist_up_cl.GetName()+"_ratio")
+    hist_dn_cl = hist_dn.Clone();hist_dn_cl.SetName(hist_dn_cl.GetName()+"_ratio")
     hist_up_cl.Divide(model_hist_spectrum)
     hist_dn_cl.Divide(model_hist_spectrum)
     hist_up_cl.Draw('hist')
@@ -343,7 +349,16 @@ def CombinedControlRegionFit(
     flat.Divide(model_hist)
     flat.Draw("histsame")
     _fout.WriteTObject(ct)
-
+    canvr.cd()
+    if par==0: flat.Draw("hist")
+    systs.append(flat)
+    systs.append(hist_up_cl)
+    systs.append(hist_dn_cl)
+    hist_up_cl.Draw('histsame')
+    hist_dn_cl.Draw('histsame')
+    leg_var.AddEntry(hist_up_cl,"Parameter %d"%par,"L")
+    sys_c+=1
+  
   for ch in channels: ch.Print()
   # Final step is to produce alternate templates due to systematic shifts. Loope through and re-fit for each change.
   all_systs = []
@@ -376,7 +391,38 @@ def CombinedControlRegionFit(
     # remake combined fit!
     _fout.WriteTObject(model_hist_sys_up)
     _fout.WriteTObject(model_hist_sys_dn)
+    model_hist_sys_up= getNormalizedHist(model_hist_sys_up)
+    model_hist_sys_dn= getNormalizedHist(model_hist_sys_dn)
+    if sys_c+2 == 10 : sys_c+=1
+    model_hist_sys_up.SetLineColor(sys_c+2)
+    model_hist_sys_dn.SetLineColor(sys_c+2)
+    model_hist_sys_up.SetLineWidth(2)
+    model_hist_sys_dn.SetLineWidth(2)
+    model_hist_sys_dn.SetLineStyle(2)
+
+    canv.cd()
+    model_hist_sys_up.Draw("histsame")
+    model_hist_sys_dn.Draw("histsame")
+    systs.append(model_hist_sys_up)
+    systs.append(model_hist_sys_dn)
+    model_hist_sys_up_cl = model_hist_sys_up.Clone(); model_hist_sys_up_cl.SetName(model_hist_sys_up_cl.GetName()+"_ratio")
+    model_hist_sys_dn_cl = model_hist_sys_dn.Clone(); model_hist_sys_dn_cl.SetName(model_hist_sys_dn_cl.GetName()+"_ratio")
+    model_hist_sys_up_cl.Divide(model_hist_spectrum)
+    model_hist_sys_dn_cl.Divide(model_hist_spectrum)
+    systs.append(model_hist_sys_up_cl)
+    systs.append(model_hist_sys_dn_cl)
+    canvr.cd()
+    model_hist_sys_up_cl.Draw("histsame")
+    model_hist_sys_dn_cl.Draw("histsame")
+
+    leg_var.AddEntry(model_hist_sys_up,"%s"%syst,"L")
+    sys_c+=1
 
   _fout.WriteTObject(c)
+  canv.cd(); 
+  leg_var.Draw()
+  canvr.cd();
+  leg_var.Draw()
   _fout.WriteTObject(canv)
+  _fout.WriteTObject(canvr)
   #_fout.Close()

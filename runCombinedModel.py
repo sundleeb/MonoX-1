@@ -2,8 +2,7 @@ from combineControlRegions import *
 import ROOT as r 
 r.gROOT.SetBatch(1)
 
-#fkFactor = r.TFile.Open("/afs/cern.ch/work/n/nckw/public/monojet/Photon_Z_NLO_kfactors.root")
-fkFactor = r.TFile.Open("Photon_Z_NLO_kfactors.root")
+fkFactor = r.TFile.Open("/afs/cern.ch/work/n/nckw/public/monojet/Photon_Z_NLO_kfactors.root")
 nlo_pho = fkFactor.Get("pho_NLO_LO")
 nlo_zjt = fkFactor.Get("Z_NLO_LO")
 nlo_pho_mrUp = fkFactor.Get("pho_NLO_LO_mrUp")
@@ -14,22 +13,6 @@ nlo_pho_mfUp = fkFactor.Get("pho_NLO_LO_mfUp")
 nlo_zjt_mfUp = fkFactor.Get("Z_NLO_LO_mfUp")
 nlo_pho_mfDown = fkFactor.Get("pho_NLO_LO_mfDown")
 nlo_zjt_mfDown = fkFactor.Get("Z_NLO_LO_mfDown")
-nlo_zj_pho     = fkFactor.Get("Z_pho_NLO")
-lo_zj_pho      = fkFactor.Get("Z_pho_LO")
-
-#nlo_zj_pho.Divide(lo_zj_pho)
-#nlo_pho_mrUp.Divide(nlo_pho)
-#nlo_pho_mrDown.Divide(nlo_pho)
-#nlo_pho_mfUp.Divide(nlo_pho)
-#nlo_pho_mfDown.Divide(nlo_pho)
-nlo_pho.Divide(nlo_pho)
-
-#nlo_zjt_mrUp.Divide(nlo_zjt)
-#nlo_zjt_mrDown.Divide(nlo_zjt)
-#nlo_zjt_mfUp.Divide(nlo_zjt)
-#nlo_zjt_mfDown.Divide(nlo_zjt)
-nlo_zjt.Divide(nlo_zjt)
-
 
 def cmodel(nam,_f,_fOut):
 
@@ -64,7 +47,7 @@ def cmodel(nam,_f,_fOut):
   from ROOT import diagonalizer
   diag = diagonalizer(_wspace)
  
-
+  """
   #Loop Over Systematics also?
   Pho = target.Clone(); Pho.SetName("photon_weights_denom_%s"%nam)
   for b in range(Pho.GetNbinsX()): Pho.SetBinContent(b+1,0)
@@ -115,7 +98,7 @@ def cmodel(nam,_f,_fOut):
   Zvv_mrDown.Divide(Pho_mrDown); Zvv_mrDown.SetName("photon_weights_%s_mr_Down"%nam);_fOut.WriteTObject(Zvv_mrDown)
   Zvv_mfUp.Divide(Pho_mfUp); 	 Zvv_mfUp.SetName("photon_weights_%s_mf_Up"%nam);_fOut.WriteTObject(Zvv_mfUp)
   Zvv_mfDown.Divide(Pho_mfDown); Zvv_mfDown.SetName("photon_weights_%s_mf_Down"%nam);_fOut.WriteTObject(Zvv_mfDown)
-
+  """
   ZmmScales.Divide(Zmm)
   PhotonScales.Divide(Pho)
 
@@ -128,37 +111,29 @@ def cmodel(nam,_f,_fOut):
     _bins.append(target.GetBinLowEdge(b+1))
 
   CRs = [
-    # Channel(_wspace,0,_wspace.data(_photon_datasetname),Zvv,"Purity:0.9399+(8.46e-5)*x")  # stupid linear fit of Purities, should move to flat 
-    # Channel(_wspace,0,_wspace.data(_photon_datasetname),Zvv,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
-    Channel("Photon+jet",_wspace,0,_wspace.data(_photon_datasetname),PhotonScales,"Purity:0.97"),  # stupid linear fit of Purities, should move to flat 
-    Channel("Dimuon",_wspace,1,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
+  # Channel(_wspace,0,_wspace.data(_photon_datasetname),Zvv,"Purity:0.9399+(8.46e-5)*x")  # stupid linear fit of Purities, should move to flat 
+  # Channel(_wspace,0,_wspace.data(_photon_datasetname),Zvv,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
+   Channel("Photon+jet",_wspace,0,_wspace.data(_photon_datasetname),PhotonScales,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
+ , Channel("Dimuon",_wspace,1,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
   ]
   #Add Systematic -> Fit will be re-run once per systematic
 
   #_control_regions[0].add_systematic_shape("MuonEfficiency",_fin)  # looks for weights of the form XXX _MuonEfficiency +1 and -1 sigma 
+  CRs[1].add_systematic_yield("MuonEfficiency",0.01)  # looks for weights of the form XXX _MuonEfficiency +1 and -1 sigma, a number means make a new global scaling (lnN)
   #CRs[0].add_systematic_shape("mr",_fOut) 
   #CRs[0].add_systematic_shape("mf",_fOut) 
-
-  CRs[1].add_systematic_yield("MuonEfficiency",0.01)  # looks for weights of the form XXX _MuonEfficiency +1 and -1 sigma, a number means make a new global scaling (lnN)
-  CRs[0].add_systematic_yield("mr" ,0.03) 
-  CRs[0].add_systematic_yield("mf" ,0.03) 
-  CRs[0].add_systematic_yield("ewk",0.05) 
-  CRs[0].add_systematic_yield("PhotonEfficiency",0.01) 
-  #CRs[0].add_nuisance("mr" ,0.03) 
-  #CRs[0].add_nuisance("mf" ,0.03) 
-  #CRs[0].add_nuisance("ewk",0.065) #combination of a few people 
-  #CRs[0].add_nuisance("PhotonEfficiency",0.01)  
-  #CRs[1].add_nuisance("MuonEfficiency",0.01)  # looks for weights of the form XXX _MuonEfficiency +1 and -1 sigma, a number means make a new global scaling (lnN)
+  CRs[0].add_systematic_yield("mr",0.03) 
+  CRs[0].add_systematic_yield("mf",0.03) 
+  CRs[0].add_systematic_yield("PhotonEfficiency",0.01)  
 
   # Still some naming issues so check if mvamet or mvamet_
   CombinedControlRegionFit(nam,_fin,_fOut,_wspace,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs)
 
-_fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
+_fOut = r.TFile("photon_dimuon_combined_model_monojet.root","RECREATE")
 # run once per category
 #categories = ["inclusive","resolved","boosted"]
-#categories = ["inclusive"]
-categories = ["inclusive","resolved","boosted"]
-_f = r.TFile.Open("mono-x-vtagged.root")
+categories = ["inclusive"]
+_f = r.TFile.Open("mono-jet.root")
 for cn in categories: 
         _fDir = _fOut.mkdir("category_%s"%cn)
 	cmodel(cn,_f,_fDir)

@@ -40,6 +40,7 @@ class ModelBuilder {
   }
   void setvariable(std::string v, double l, double u){
    RooRealVar var(v.c_str(),v.c_str(),l,u);
+   var.setMin(l); var.setMax(u);
    wspace->import(var);
    min = l;
    max = u;
