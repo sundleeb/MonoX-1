@@ -1,13 +1,27 @@
 import ROOT as r
 import sys
+import array 
 
 MAXBINS=100
+
+def getNormalizedHist(hist):
+  thret = hist.Clone()
+  nb = hist.GetNbinsX()
+  for b in range(1,nb+1): 
+    sfactor = 1./hist.GetBinWidth(b)
+    thret.SetBinContent(b,hist.GetBinContent(b)*sfactor)
+    thret.SetBinError(b,hist.GetBinError(b)*sfactor)
+    #thret.GetYaxis().SetTitle("Events")
+    thret.GetYaxis().SetTitle("Events/GeV")
+  return thret
+
+
 class Bin:
  def __init__(self,catid,chid,id,var,datasetname,pdf,norm,wspace,wspace_out,xmin,xmax):
 
    self.chid	  = chid# This is the thing that links two bins from different controls togeher
    self.id        = id
-   self.type_id   = MAXBINS*MAXBINS*catid+MAXBINS*chid+id
+   self.type_id   = 10*MAXBINS*catid+MAXBINS*chid+id
    self.binid     = "cat_%d_ch_%d_bin_%d"%(catid,chid,id)
    self.wspace_out = wspace_out
    self.set_wspace(wspace)
@@ -22,12 +36,14 @@ class Bin:
    self.xmax = xmax
    self.cen = (xmax+xmin)/2
 
-   self.dataset.Print("V")
+   self.binerror = 10
+
    self.o	= self.dataset.sumEntries("%s>=%g && %s<%g "%(var.GetName(),xmin,var.GetName(),xmax))
    #self.o	= (self.wspace.data(datasetname)).sumEntries("1>0",self.rngename)
    self.obs	= self.wspace_out.var("observed")#r.RooRealVar("observed","Observed Events bin",1)
    #self.setup_expect_var(self)
    self.argset = r.RooArgSet(self.var)
+   self.obsargset=r.RooArgSet(self.wspace_out.var("observed"),self.wspace_out.cat("bin_number"))
    self.var.setRange("fullRange",self.var.getMin(),self.var.getMax())
    
    self.pdfFullInt = pdf.createIntegral(self.argset,r.RooFit.Range("fullRange"),r.RooFit.NormSet(self.argset))
@@ -113,19 +129,18 @@ class Bin:
    self.wspace._import(self.obs,r.RooFit.RecycleConflictNodes())
    self.wspace.factory("Poisson::pdf_%s(observed,mu_%s)"%(self.binid,self.binid))
 
- def add_to_dataset(self,obsdata):
-   # create a dataset 
+ def add_to_dataset(self):
+   # create a dataset called observed
    self.wspace_out.var("observed").setVal(self.o)
-   #self.wspace.cat(self.categoryname).defineType(self.binid,self.id)
    self.wspace_out.cat(self.categoryname).setIndex(self.type_id)
-   print self.wspace_out.cat("bin_number")
-   (self.wspace_out.cat("bin_number")).Print("v")
-   #self.wspace_out.Print()
-   print "I am setting ", self.type_id
-   local_obsargset = r.RooArgSet(self.wspace_out.var("observed"),self.wspace_out.cat("bin_number"))
-   obsdata.add(local_obsargset)
-   obsdata.Print("v")
-   #self.wspace._import(self.obsdata)
+   lv = self.wspace_out.var("observed")
+   lc = self.wspace_out.cat("bin_number")
+   local_obsargset = r.RooArgSet(lv,lc)
+   if not self.wspace_out.data("combinedData"): 
+     obsdata = r.RooDataSet("combinedData","Data in all Bins",local_obsargset)
+     self.wspace_out._import(obsdata)
+   else:obsdata = self.wspace_out.data("combinedData")
+   obsdata.addFast(local_obsargset)
   
  def set_control_region(self,control):
    self.cr = control
@@ -135,6 +150,10 @@ class Bin:
    return self.wspace.data(dsname)
  def ret_observed(self):
    return self.o
+ def ret_err(self):
+   return self.binerror
+ def add_err(self,e):
+   self.binerror = (self.binerror**2+e**2)**0.5
  def ret_expected(self):
    return self.wspace.function(self.mu.GetName()).getVal()
  def ret_background(self):
@@ -240,6 +259,7 @@ class Category:
    self.catid = catid;
    # A crappy way to store canvases to be saved in the end
    self.canvases = {}
+   self.histograms = []
 
    self._fin  = _fin 
    self._fout = _fout
@@ -247,6 +267,9 @@ class Category:
    self._wspace = _wspace
    self._wspace_out = _wspace_out
 
+   self.channels = []
+   self.all_hists = []
+   self.cr_prefit_hists = []
    # Setup a bunch of the attributes for this category 
    self._var      = _wspace.var(_varname)
    self._varname  = _varname
@@ -260,7 +283,7 @@ class Category:
    self._target_datasetname = _target_datasetname
    self.sample = self._wspace_out.cat("bin_number")
    self._obsvar = self._wspace_out.var("observed")
-   self._obsdata = self._wspace_out.data("combinedData")
+   #self._obsdata = self._wspace_out.data("combinedData")
 
    self._norm = r.RooRealVar("%s_%s_norm"%(cname,_target_datasetname),"Norm",_wspace.data(_target_datasetname).sumEntries())
    self._norm.removeRange()
@@ -279,10 +302,38 @@ class Category:
    for j,cr in enumerate(self._control_regions):
     for i,bl in enumerate(self._bins):
      if i >= len(self._bins)-1 : continue
-     self.sample.defineType("cat_%d_ch_%d_bin_%d"%(self.catid,j,i),MAXBINS*MAXBINS*catid+MAXBINS*j+i)
-   # END
+     self.sample.defineType("cat_%d_ch_%d_bin_%d"%(self.catid,j,i),10*MAXBINS*catid+MAXBINS*j+i)
+     self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
+
+  def fillExpectedHist(self,cr,expected_hist):
+   bc=0
+   for i,ch in enumerate(self.channels):
+     if ch.chid == cr.chid:
+       bc+=1
+       expected_hist.SetBinContent(bc,ch.ret_expected())
+       expected_hist.SetBinError(bc,ch.ret_err())
+
+  def fillObservedHist(self,cr,observed_hist):
+   bc=0
+   for i,ch in enumerate(self.channels):
+     if ch.chid == cr.chid:
+       bc+=1
+       observed_hist.SetBinContent(bc,ch.ret_observed())
+       observed_hist.SetBinError(bc,(ch.ret_observed())**0.5)
+
+  def fillBackgroundHist(self,cr,background_hist):
+   bc=0
+   for i,ch in enumerate(self.channels):
+     if ch.chid == cr.chid:
+       bc+=1
+       background_hist.SetBinContent(bc,ch.ret_background())
+
+  def fillModelHist(self,model_hist):
+   for i,ch in enumerate(self.channels):
+     if i>=len(self._bins)-1: break
+     model_hist.SetBinContent(i+1,ch.ret_model())
+
   def init_channels(self):
-   self.channels = []
    sample = self._wspace_out.cat("bin_number") #r.RooCategory("bin_number","bin_number")
    sample.Print()
    #for j,cr in enumerate(self._control_regions):
@@ -297,9 +348,32 @@ class Category:
      ch.set_sfactor(cr.ret_sfactor(i))
      # This has to the the last thing
      ch.setup_expect_var()
-     ch.add_to_dataset(self._obsdata)
+     ch.add_to_dataset()
      self.channels.append(ch)
    
+   
+   for j,cr in enumerate(self._control_regions):
+   #save the prefit histos
+    cr_pre_hist = r.TH1F("control_region_%s"%cr.ret_name(),"Expected %s control region"%cr.ret_name(),len(self._bins)-1,array.array('d',self._bins))
+    self.fillExpectedHist(cr,cr_pre_hist)
+    cr_pre_hist.SetLineWidth(2)
+    cr_pre_hist.SetLineColor(r.kRed)
+    self.all_hists.append(cr_pre_hist.Clone())
+    self.cr_prefit_hists.append(cr_pre_hist.Clone())
+   
+
+  def ret_channels(self): 
+   return self.channels
+
+  def generate_systematic_templates(self):
+   # The parameters have changed so re-generate the templates
+   # We also re-calculate the expectations in each CR to update the errors for the plotting 
+   return 0
+
+  
+
+  def make_post_fit_plots(self):
+   # first put central value post fit curve onto canvas
    # Now start making the first plot
    self.fr = self._var.frame()
    self._wspace.data(self._target_datasetname).plotOn(self.fr,r.RooFit.Binning(200))
@@ -308,11 +382,112 @@ class Category:
    self.fr.GetXaxis().SetTitle("fake MET (GeV)")
    self.fr.GetYaxis().SetTitle("Events/GeV")
    self.fr.SetTitle("")
+   self._pdf.plotOn(self.fr,r.RooFit.LineColor(r.kBlue))
    self.fr.Draw()
-   self.canvases["zjets_signalregion_mc_fit_before_after"] = c.Clone()
+   self._fout.WriteTObject(c)    
+ 
+   lat = r.TLatex();
+   lat.SetNDC();
+   lat.SetTextSize(0.04);
+   lat.SetTextFont(42);
 
-  def ret_channels(self): 
-   return self.channels
+   # now build post fit plots in each control region with some indication of systematic variations from fit?
+   for j,cr in enumerate(self._control_regions):
+    c = r.TCanvas("c_%s"%cr.ret_name(),"",800,800)
+    cr_hist = r.TH1F("%s_control_region_%s"%(self.cname,cr.ret_name()),"Expected %s control region"%cr.ret_name(),len(self._bins)-1,array.array('d',self._bins))
+    da_hist = r.TH1F("%s_data_control_region_%s"%(self.cname,cr.ret_name()),"data %s control region"%cr.ret_name(),len(self._bins)-1,array.array('d',self._bins))
+    mc_hist = r.TH1F("%s_mc_control_region_%s"%(self.cname,cr.ret_name()),"Background %s control region"%cr.ret_name(),len(self._bins)-1,array.array('d',self._bins))
+    self.fillObservedHist(cr,da_hist)
+    self.fillBackgroundHist(cr,mc_hist)
+    self.fillExpectedHist(cr,cr_hist)
+    da_hist.SetTitle("") 
+    cr_hist.SetFillColor(r.kBlue-10)
+    mc_hist.SetFillColor(r.kRed+1)
+
+    cr_hist = getNormalizedHist(cr_hist)
+    da_hist = getNormalizedHist(da_hist)
+    mc_hist = getNormalizedHist(mc_hist)
+    pre_hist = getNormalizedHist(self.cr_prefit_hists[j])
+
+    cr_hist.SetLineColor(r.kBlue)
+    cr_hist.SetLineWidth(2)
+    mc_hist.SetLineColor(1)
+    mc_hist.SetLineWidth(2)
+    da_hist.SetMarkerColor(1)
+    da_hist.SetLineColor(1)
+    da_hist.SetLineWidth(2)
+    da_hist.SetMarkerStyle(20)
+    self.histograms.append(da_hist)
+    self.histograms.append(cr_hist)
+    self.histograms.append(mc_hist)
+    self.histograms.append(pre_hist)
+    
+    c.cd()
+    pad1 = r.TPad("p1","p1",0,0.28,1,1)
+    pad1.SetBottomMargin(0.01)
+    pad1.SetCanvas(c)
+    pad1.Draw()
+    pad1.cd()
+    tlg = r.TLegend(0.6,0.67,0.89,0.89)
+    tlg.SetFillColor(0)
+    tlg.SetTextFont(42)
+    tlg.AddEntry(da_hist,"Data - %s"%cr.ret_title(),"PEL") 
+    tlg.AddEntry(cr_hist,"Expected (post-fit)","FL") 
+    tlg.AddEntry(mc_hist,"Backgrounds Component","F")
+    tlg.AddEntry(pre_hist,"Expected (pre-fit)","L")
+    da_hist.GetYaxis().SetTitle("Events/GeV");
+    da_hist.GetXaxis().SetTitle("fake MET (GeV)");
+    da_hist.Draw("Pe")
+    cr_hist.Draw("sameE2")
+    cr_line = cr_hist.Clone(); cr_line.SetFillColor(0)
+    self.all_hists.append(cr_line)
+    pre_hist.Draw("samehist")
+    cr_line.Draw("histsame")
+    mc_hist.Draw("samehist")
+    da_hist.Draw("Pesame")
+    tlg.Draw()
+    lat.DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
+    pad1.SetLogy()
+    pad1.RedrawAxis()
+
+    # Ratio plot
+    c.cd()
+    pad2 = r.TPad("p2","p2",0,0.068,1,0.28)
+    pad2.SetTopMargin(0.02)
+    pad2.SetCanvas(c)
+    pad2.Draw()
+    pad2.cd()
+    ratio = da_hist.Clone()
+    ratio_pre = da_hist.Clone()
+    ratio.GetYaxis().SetRangeUser(0.01,1.99)
+    ratio.Divide(cr_hist)
+    ratio_pre.Divide(pre_hist)
+    ratio.GetYaxis().SetTitle("Data/Bkg")
+    ratio.GetYaxis().SetNdivisions(5)
+    ratio.GetYaxis().SetLabelSize(0.1)
+    ratio.GetYaxis().SetTitleSize(0.12)
+    ratio.GetXaxis().SetTitleSize(0.085)
+    ratio.GetXaxis().SetLabelSize(0.12)
+    self.all_hists.append(ratio)
+    self.all_hists.append(ratio_pre)
+    ratio.GetXaxis().SetTitle("")
+    ratio.Draw()
+    ratio_pre.SetLineColor(pre_hist.GetLineColor())
+    ratio_pre.SetMarkerColor(pre_hist.GetLineColor())
+    ratio_pre.SetLineWidth(2)
+    line = r.TLine(da_hist.GetXaxis().GetXmin(),1,da_hist.GetXaxis().GetXmax(),1)
+    line.SetLineColor(1)
+    line.SetLineStyle(2)
+    line.SetLineWidth(2)
+    line.Draw()
+    ratio.Draw("same")
+    ratio_pre.Draw("pelsame")
+    ratio.Draw("samepel")
+    self.all_hists.append(line)
+    self._fout.WriteTObject(c) 
+
   def save(self):
-   for canv in self.canvases.keys():
-     self._fout.WriteTObject(self.canvases[canv])
+   #for canv in self.canvases.keys():
+   #  self._fout.WriteTObject(self.canvases[canv])
+   for hist in self.histograms:
+     self._fout.WriteTObject(hist)
