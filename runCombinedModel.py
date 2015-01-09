@@ -3,7 +3,8 @@ from counting_experiment import *
 import ROOT as r 
 r.gROOT.SetBatch(1)
 
-fkFactor = r.TFile.Open("/afs/cern.ch/work/n/nckw/public/monojet/Photon_Z_NLO_kfactors.root")
+#fkFactor = r.TFile.Open("/afs/cern.ch/work/n/nckw/public/monojet/Photon_Z_NLO_kfactors.root")
+fkFactor = r.TFile.Open("Photon_Z_NLO_kfactors.root")
 nlo_pho = fkFactor.Get("pho_NLO_LO")
 nlo_zjt = fkFactor.Get("Z_NLO_LO")
 nlo_pho_mrUp = fkFactor.Get("pho_NLO_LO_mrUp")
@@ -128,36 +129,38 @@ def cmodel(cid,nam,_f,_fOut, out_ws):
   #CombinedControlRegionFit(nam,_fin,_fOut,_wspace,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs)
   return Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs,diag)
   
+#----------------------------------------------------------------------------------------------------------------------------------------------------------//
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
 categories = ["inclusive","resolved","boosted"]
 _f = r.TFile.Open("mono-x-vtagged.root")
 out_ws = r.RooWorkspace("combinedws","Combined Workspace")
 out_ws._import = getattr(out_ws,"import")
+
 # Need to setup the things here for combined dataset, need to add all possible sample types first because otherwise RooFit throws a fit! 
-sample = r.RooCategory("bin_number","Bin Number")
-obs    = r.RooRealVar("observed","Observed Events bin",1)
-out_ws._import(sample)  # Global variables for dataset
+sampleType  = r.RooCategory("bin_number","Bin Number");
+obs         = r.RooRealVar("observed","Observed Events bin",1)
+
+out_ws._import(sampleType)  # Global variables for dataset
 out_ws._import(obs)
-obsargset = r.RooArgSet(out_ws.var("observed"),out_ws.cat(sample.GetName()))
-combined_obsdata = r.RooDataSet("combinedData","Data in all Bins",obsargset)
-out_ws._import(combined_obsdata)
+obsargset   = r.RooArgSet(out_ws.var("observed"),out_ws.cat("bin_number"))
 
 cmb_categories=[]
 for cid,cn in enumerate(categories): 
         _fDir = _fOut.mkdir("category_%s"%cn)
 	cmb_categories.append(cmodel(cid,cn,_f,_fDir,out_ws))
-
-# Now loop through and init all the bins ?!
-
-combined_obsdata.Print("v")
+# Had to define the types before adding to the combined dataset
 for cid,cn in enumerate(cmb_categories):
 	cn.init_channels()
-# Now we consruct the fit ourselves, first thing is to make a combined dataset and combined pdf
-# Loop through ALL of the bins 
-#for cat in cmb_categories:
-    
-   #cmb_categories[-1].save()
+# Now we have the observation and expectation of all of the bins, make a combined pdf and fit!
+# ------------------------------------------------------------
+# WRITE THE FIT PART HERE
+# ------------------------------------------------------------
+for cat in cmb_categories:
+   cat.make_post_fit_plots() 
+   cat.save() # make plots, save histograms and canvases
 
+# END
 print "Produced combined Z(mm) + photon fits -> ", _fOut.GetName()
 _fOut.Close()
+# END
