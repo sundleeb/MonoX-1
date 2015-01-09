@@ -111,4 +111,16 @@ lat->SetTextFont(42);
   c_ControlRegion_1->SaveAs(Form("post_fit_zmm_%s.pdf",cats[c].c_str()));
   c_ControlRegion_1->SaveAs(Form("post_fit_zmm_%s.png",cats[c].c_str()));
 
+  // Canvas for the variations of the systematics 
+  canv_variations->Draw();
+  lat->DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
+  lat->DrawLatex(0.7,0.94,Form("%s category",cats[c].c_str()));
+  canv_variations->SaveAs(Form("systematic_variations_%s.pdf",cats[c].c_str()));
+  canv_variations->SaveAs(Form("systematic_variations_%s.png",cats[c].c_str()));
+
+  canv_variations_ratio->Draw();
+  lat->DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
+  lat->DrawLatex(0.7,0.94,Form("%s category",cats[c].c_str()));
+  canv_variations_ratio->SaveAs(Form("systematic_variations_ratio_%s.pdf",cats[c].c_str()));
+  canv_variations_ratio->SaveAs(Form("systematic_variations_ratio_%s.png",cats[c].c_str()));
 }
