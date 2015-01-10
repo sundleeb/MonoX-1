@@ -39,12 +39,12 @@ class ModelBuilder {
    additional_vars.insert(std::pair<std::string,TH1F*>(v,var_hist));
   }
   void setvariable(std::string v, double l, double u){
-   RooRealVar var(v.c_str(),v.c_str(),l,u);
+   varstring = v;
+   RooRealVar var(varstring.c_str(),varstring.c_str(),l,u);
    var.setMin(l); var.setMax(u);
    wspace->import(var);
    min = l;
    max = u;
-   varstring = v;
 
   };
   void setweight(std::string w){

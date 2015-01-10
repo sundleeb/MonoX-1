@@ -23,8 +23,9 @@ const char * ModelBuilder::turnon(RooWorkspace *ws,RooRealVar &x,std::string ext
    //RooEffProd *pdf = new RooEffProd(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),*pdf_pow,eff);
    RooProdPdf *pdf = new RooProdPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),RooArgList(*pdf_pow,*eff));
    */
-   RooRealVar eff_mu(Form("eff_mu_%s",ext.c_str()),"eff decay param mu",250,200.,400.);
-   RooRealVar eff_sig(Form("eff_sig_%s",ext.c_str()),"eff decay param sigma ",5,0.,20.);
+   ext += catname;
+   RooRealVar eff_mu(Form("eff_mu_%s",ext.c_str()),"eff decay param mu",240,200.,300.);
+   RooRealVar eff_sig(Form("eff_sig_%s",ext.c_str()),"eff decay param sigma ",10,0.,20.);
    RooRealVar frac(Form("frac_%s",ext.c_str()),"Fraction",0.8,0,1);
 
    RooRealVar m1(Form("plaw_p_%s",ext.c_str()),"p",-4.,-15.,0.);
@@ -37,6 +38,7 @@ const char * ModelBuilder::turnon(RooWorkspace *ws,RooRealVar &x,std::string ext
 }
 
 const char * ModelBuilder::powerlaw(RooWorkspace *ws,RooRealVar &x,std::string ext){
+   ext += catname;
    RooRealVar m1(Form("p_%s",ext.c_str()),"p",-4.,-10.,0.);
    //RooGenericPdf *pdf = new RooGenericPdf(Form("powerLaw_%s",ext.c_str()), Form("powerLaw_%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,m1));
    // Same name as exponential for now
@@ -45,6 +47,7 @@ const char * ModelBuilder::powerlaw(RooWorkspace *ws,RooRealVar &x,std::string e
    return pdf->GetName(); 
 }
 const char * ModelBuilder::doubleexp(RooWorkspace *ws,RooRealVar &x,std::string ext){ 
+   ext += catname;
    // Double exponential model
    RooRealVar frac(Form("f_%s",ext.c_str()),"f",0.8,0.,1.);
    RooRealVar m1(Form("m1_%s",ext.c_str()),"m1",-0.02,-0.3,0.05);
