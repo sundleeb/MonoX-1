@@ -231,6 +231,7 @@ for ic,config in enumerate(configs) :
  line.SetLineWidth(3)
  line.Draw()
  ratio.Draw("same")
+ pad2.RedrawAxis()
  # add Label
  can.cd()
  lat.DrawLatex(0.68,0.02,label)
