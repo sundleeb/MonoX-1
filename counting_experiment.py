@@ -28,11 +28,17 @@ class Bin:
    self.set_wspace(wspace)
    self.set_norm_var(norm)
 
-   if not self.wspace_out.var(var.GetName()): self.wspace_out._import(var,r.RooFit.RecycleConflictNodes())
    self.var	  = self.wspace_out.var(var.GetName())
+   #self.var	  = self.wspace.var(var.GetName())
    self.dataset   = self.wspace.data(datasetname)
    if not self.wspace_out.pdf(pdf.GetName()): self.wspace_out._import(pdf,r.RooFit.RecycleConflictNodes())
    self.pdf	  = self.wspace_out.pdf(pdf.GetName())
+   print "TESTY"
+   self.var.setVal(600)
+   print "met 600, ", self.pdf.getVal()
+   self.var.setVal(300)
+   print "met 300, ", self.pdf.getVal()
+
    self.rngename = "rnge_%s"%self.binid
    self.var.setRange(self.rngename,xmin,xmax)
    self.xmin = xmin
@@ -45,13 +51,13 @@ class Bin:
    #self.o	= (self.wspace.data(datasetname)).sumEntries("1>0",self.rngename)
    self.obs	= self.wspace_out.var("observed")#r.RooRealVar("observed","Observed Events bin",1)
    #self.setup_expect_var(self)
-   self.argset = r.RooArgSet(wspace_out.var(self.var.GetName()))
+   self.argset = r.RooArgSet(wspace.var(self.var.GetName())) # <-------------------------- Check this is cool
    self.obsargset=r.RooArgSet(self.wspace_out.var("observed"),self.wspace_out.cat("bin_number"))
-   self.var.setRange("fullRange",self.var.getMin(),self.var.getMax())
+   self.var.setRange("fullRange_%d"%self.catid,self.wspace.var(self.var.GetName()).getMin(),self.wspace.var(self.var.GetName()).getMax())
    
-   self.pdfFullInt = pdf.createIntegral(self.argset,r.RooFit.Range("fullRange"),r.RooFit.NormSet(self.argset))
+   self.pdfFullInt = pdf.createIntegral(self.argset,r.RooFit.Range("fullRange_%d"%self.catid),r.RooFit.NormSet(self.argset))
    #if not self.wspace.var(self.pdfFullInt.GetName()) : self.wspace._import(self.pdfFullInt)
-   self.wspace_out._import(self.pdfFullInt,r.RooFit.RecycleConflictNodes())
+   self.wspace_out._import(self.pdfFullInt)
    self.b  = 0
    self.constBkg = True
 
@@ -259,8 +265,8 @@ class Channel:
 		,"(%f*@0*@0+%f*@0)/%f"%(coeff_a,coeff_b,nsf) \
 		#,"(%f*@0*@0+%f*@0)"%(coeff_a,coeff_b) \
 		,r.RooArgList(self.wspace_out.var("nuis_%s"%name))) # this is now relative deviation, SF-SF_0 = func => SF = SF_0*(1+func/SF_0)
-	"""
-	print "Nom, up, down", nsf, 	sysup.GetBinContent(b+1) ,sysdn.GetBinContent(b+1) 
+
+	print "Nom, up, down", nsf, 	1./sysup.GetBinContent(b+1) ,1./sysdn.GetBinContent(b+1) 
 	print "att nuis = 0",
 	self.wspace_out.var("nuis_%s"%name).setVal(0)
 	print func.getVal()
@@ -272,7 +278,6 @@ class Channel:
 	print func.getVal()
 	self.wspace_out.var("nuis_%s"%name).setVal(0)
         if not self.wspace_out.function(func.GetName()) :self.wspace_out._import(func)
-	"""
 
   def set_wspace(self,w):
    self.wspace = w
@@ -352,10 +357,17 @@ class Category:
    self.sample = self._wspace_out.cat("bin_number")
    self._obsvar = self._wspace_out.var("observed")
    #self._obsdata = self._wspace_out.data("combinedData")
+   if self._wspace_out.var(self._var.GetName()): a = 1
+#     if self._var.getMin()< self._wspace_out.var(self._var.GetName()).getMin() : self._wspace_out.var(self._var.GetName()).setMin(self._var.getMin())
+#     if self._var.getMax()> self._wspace_out.var(self._var.GetName()).getMax() : self._wspace_out.var(self._var.GetName()).setMin(self._var.getMax())
+#     if self._var.getMin()> self._wspace_out.var(self._var.GetName()).getMin() : self._var.setMin(self._wspace_out.var(self._var.GetName()).getMin())
+#     if self._var.getMax()< self._wspace_out.var(self._var.GetName()).getMax() : self._var.setMax(self._wspace_out.var(self._var.GetName()).getMax())
 
-   self._norm = r.RooRealVar("%s_%s_norm"%(cname,_target_datasetname),"Norm",_wspace.data(_target_datasetname).sumEntries())
-   self._norm.removeRange()
-   self._norm_orig= r.RooRealVar("%s_%s_norm_orig"%(cname,_target_datasetname),"Norm_orig",_wspace.data(_target_datasetname).sumEntries())
+   else: self._wspace_out._import(self._var,r.RooFit.RecycleConflictNodes())
+   self._var = self._wspace_out.var(self._var.GetName())
+   self._norm = r.RooRealVar("%s_%s_norm"%(cname,_target_datasetname),"Norm",_wspace.data(_target_datasetname).sumEntries(),0,100000)
+   self._norm.removeMax()
+   self._norm_orig= r.RooRealVar("%s_%s_norm_orig"%(cname,_target_datasetname),"Norm_orig",_wspace.data(_target_datasetname).sumEntries(),0,10000)
    self._norm.setConstant(False)
    self._norm_orig.setConstant(True)
    self._wspace_out._import(self._norm)
@@ -567,7 +579,7 @@ class Category:
   def make_post_fit_plots(self):
    # first put central value post fit curve onto canvas
    # Now start making the first plot
-   self.fr = self._var.frame()
+   self.fr = self._wspace.var(self._var.GetName()).frame()
    self._wspace.data(self._target_datasetname).plotOn(self.fr,r.RooFit.Binning(200))
    self._pdf_orig.plotOn(self.fr,r.RooFit.LineColor(r.kRed))
    c = r.TCanvas("zjets_signalregion_mc_fit_before_after")
@@ -620,7 +632,7 @@ class Category:
     pad1.SetCanvas(c)
     pad1.Draw()
     pad1.cd()
-    tlg = r.TLegend(0.6,0.67,0.89,0.89)
+    tlg = r.TLegend(0.54,0.53,0.89,0.89)
     tlg.SetFillColor(0)
     tlg.SetTextFont(42)
     tlg.AddEntry(da_hist,"Data - %s"%cr.ret_title(),"PEL") 
@@ -644,8 +656,8 @@ class Category:
 
     # Ratio plot
     c.cd()
-    pad2 = r.TPad("p2","p2",0,0.068,1,0.28)
-    pad2.SetTopMargin(0.02)
+    pad2 = r.TPad("p2","p2",0,0.068,1,0.285)
+    pad2.SetTopMargin(0.04)
     pad2.SetCanvas(c)
     pad2.Draw()
     pad2.cd()
@@ -673,6 +685,15 @@ class Category:
     ratio_pre.SetLineColor(pre_hist.GetLineColor())
     ratio_pre.SetMarkerColor(pre_hist.GetLineColor())
     ratio_pre.SetLineWidth(2)
+    eline = ratio.Clone(); eline.SetName("OneWithError_%s"%ratio.GetName())
+    self.all_hists.append(eline)
+    for b in range(ratio.GetNbinsX()):
+      eline.SetBinContent(b+1,1)
+      eline.SetBinError(b+1,cr_hist.GetBinError(b+1)/cr_hist.GetBinContent(b+1))
+    eline.SetFillColor(r.kBlue-10)
+    eline.SetLineColor(r.kBlue-10)
+    eline.SetMarkerSize(0)
+    eline.Draw("sameE2")
     line = r.TLine(da_hist.GetXaxis().GetXmin(),1,da_hist.GetXaxis().GetXmax(),1)
     line.SetLineColor(1)
     line.SetLineStyle(2)
@@ -682,6 +703,7 @@ class Category:
     ratio_pre.Draw("pelsame")
     ratio.Draw("samepel")
     self.all_hists.append(line)
+    pad2.RedrawAxis()
     self._fout.WriteTObject(c) 
 
   def save(self):

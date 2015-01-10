@@ -38,7 +38,6 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
     metname = "mvamet_"
     gvptname = "genVpt_"
   # First we need to re-build the nominal templates from the datasets modifying the weights
-
   target = _fin.Get("signal_zjets")
   Zmm = _fin.Get("dimuon_zll")
   #Pho = _fin.Get("photon_gjet")
@@ -123,11 +122,11 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   ]
   #Add Systematic ? This time we add them as nuisance parameters.
 
-  #CRs[0].add_nuisance_shape("mr",_fOut) 
+  CRs[0].add_nuisance_shape("mr",_fOut) 
   CRs[0].add_nuisance_shape("mf",_fOut) 
-  #CRs[0].add_nuisance("ewk",0.05) 
-  #CRs[0].add_nuisance("PhotonEfficiency",0.05) 
-  #CRs[1].add_nuisance("MuonEfficiency",0.05)
+  CRs[0].add_nuisance("ewk",0.05) 
+  CRs[0].add_nuisance("PhotonEfficiency",0.01) 
+  CRs[1].add_nuisance("MuonEfficiency",0.01)
 
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
   #CombinedControlRegionFit(nam,_fin,_fOut,_wspace,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs)
@@ -136,9 +135,9 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
-#categories = ["inclusive","resolved","boosted"]
-#categories = ["inclusive","resolved"]
-categories = ["inclusive"]
+categories = ["inclusive","resolved","boosted"]
+#categories = ["boosted","resolved","inclusive"]
+#categories = ["inclusive"]
 _f = r.TFile.Open("mono-x-vtagged.root")
 out_ws = r.RooWorkspace("combinedws","Combined Workspace")
 out_ws._import = getattr(out_ws,"import")
@@ -159,6 +158,8 @@ for cid,cn in enumerate(categories):
 # Had to define the types before adding to the combined dataset
 for cid,cn in enumerate(cmb_categories):
 	cn.init_channels()
+        channels = cn.ret_channels()
+        for ch in channels: ch.Print()
 out_ws.Print('v')
 # Next we want to build a list of all of the nuisance parameters which will be in the fit :), this is performed with add_nuisance
 ext_constraints = r.RooArgSet() 
@@ -184,6 +185,9 @@ for cid,cn in enumerate(cmb_categories):
 if hasSys: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save(),r.RooFit.ExternalConstraints(ext_constraints))
 else: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save())
 combined_pdf.Print("v")
+for cid,cn in enumerate(cmb_categories):
+  channels = cn.ret_channels()
+  for ch in channels: ch.Print()
 # ------------------------------------------------------------
 # Now Generate the systematics coming from the fitting 
 npars = diag_combined.generateVariations(combined_fit_result)
