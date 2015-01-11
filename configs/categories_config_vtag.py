@@ -5,7 +5,7 @@ BINS = range(250,550,50)
 BINS.append(1000)
 categories = [
 	{
-	    'name':"resolved"
+            'name':"resolved"
 	   ,'in_file_name':"resolved-combo.root"
 	   ,"cutstring":"mvamet>250 && mvamet<1000"
 	   ,"varstring":["mvamet",250,1000]
@@ -13,22 +13,24 @@ categories = [
 	   ,"additionalvars":[['jet1pt',25,150,1000]]
 	   ,"pdfmodel":1
 	   ,"bins":BINS[:]
+           ,"recoilMC":"recoilfits/recoilfit_zmm53XRR_2012_0jet.root"    
+           ,"recoilData":"recoilfits/recoilfit_datamm53XRR_2012_0jet.root"                                                                                                       
 	   ,"samples":
 	   	{  # Format is TreeName : ['region','process',isMC,isSignal]  !! Note isSignal means DM/Higgs etc for signal region but Z-jets/W-jets for the di/single-muon regions !!
 		  # Signal Region
 		   "Znunu_signal"  	:['signal','zjets',1,0]
-		  ,"Zll_signal"	   	:['signal','zll',1,0]
+		  ,"Zll_signalMet"	:['signal','zll',1,0]
 		  ,"Wjets_signal"  	:['signal','wjets',1,0]
-		  ,"WW_signal"  	:['signal','dibosons',1,0]
-		  ,"WZ_signal"  	:['signal','dibosons',1,0]
-		  ,"ZZ_signal"  	:['signal','dibosons',1,0]
-		  ,"ttbar_signal"   	:['signal','top',1,0]
-		  ,"SingleTop_signal"   :['signal','top',1,0]
+		  ,"WW_signalMet"  	:['signal','dibosons',1,0]
+		  ,"WZ_signalMet"  	:['signal','dibosons',1,0]
+		  ,"ZZ_signalMet"  	:['signal','dibosons',1,0]
+		  ,"ttbar_signalMet"   	:['signal','top',1,0]
+		  ,"SingleTop_signalMet":['signal','top',1,0]
 		  ,"QCD_signal"		:['signal','qcd',1,0]
-		  ,"ggH125_signal"    	:['signal','ggH',1,1]
-		  ,"VBFH125_signal"   	:['signal','vbf',1,1]
-		  ,"WH125_signal"   	:['signal','wh',1,1]
-		  ,"ZH125_signal"   	:['signal','zh',1,1]
+		  ,"ggH125_signalMet"   :['signal','ggH',1,1]
+		  ,"VBFH125_signalMet"  :['signal','vbf',1,1]
+		  ,"WH125_signalMet"   	:['signal','wh',1,1]
+		  ,"ZH125_signalMet"   	:['signal','zh',1,1]
 		  ,"data_signal"	:['signal','data',0,0]
 
 		  # Di muon-Control
@@ -67,7 +69,11 @@ categories = [
 		  ,"QCD_photon_control"		:['photon','qcd',1,0]
 
 	   	}
-	}, 
+                ,"metsamples":
+	   	{ 
+                    "Zll_signal","WW_signal","WZ_signal","ZZ_signal","ttbar_signal","SingleTop_signal","QCD_signal",
+                    "ggH125_signal"    	,"VBFH125_signal"   	,"WH125_signal"   	,"ZH125_signal"},
+                    }, 
 	{
 	    'name':"boosted"
 	   ,'in_file_name':"boosted-combo.root"
@@ -76,23 +82,25 @@ categories = [
 	   ,"weightname":"weight"
 	   ,"bins":BINS[:]
 	   ,"additionalvars":[['jet1pt',25,150,1000]]
-	   ,"pdfmodel":2
+	   ,"pdfmodel":0
+           ,"recoilMC":"recoilfits/recoilfit_zmm53XRR_2012_0jet.root"    
+           ,"recoilData":"recoilfits/recoilfit_datamm53XRR_2012_0jet.root"                                                                                                       
 	   ,"samples":
 	   	{  # Format is TreeName : ['region','process',isMC,isSignal]  !! Note isSignal means DM/Higgs etc for signal region but Z-jets/W-jets for the di/single-muon regions !!
 		  # Signal Region
 		   "Znunu_signal"  	:['signal','zjets',1,0]
-		  ,"Zll_signal"	   	:['signal','zll',1,0]
+		  ,"Zll_signalMet"	:['signal','zll',1,0]
 		  ,"Wjets_signal"  	:['signal','wjets',1,0]
-		  ,"WW_signal"  	:['signal','dibosons',1,0]
-		  ,"WZ_signal"  	:['signal','dibosons',1,0]
-		  ,"ZZ_signal"  	:['signal','dibosons',1,0]
-		  ,"ttbar_signal"   	:['signal','top',1,0]
-		  ,"SingleTop_signal"   :['signal','top',1,0]
+		  ,"WW_signalMet"  	:['signal','dibosons',1,0]
+		  ,"WZ_signalMet"  	:['signal','dibosons',1,0]
+		  ,"ZZ_signalMet"  	:['signal','dibosons',1,0]
+		  ,"ttbar_signalMet"   	:['signal','top',1,0]
+		  ,"SingleTop_signalMet":['signal','top',1,0]
 		  ,"QCD_signal"		:['signal','qcd',1,0]
-		  ,"ggH125_signal"    	:['signal','ggH',1,1]
-		  ,"VBFH125_signal"   	:['signal','vbf',1,1]
-		  ,"WH125_signal"   	:['signal','wh',1,1]
-		  ,"ZH125_signal"   	:['signal','zh',1,1]
+                  ,"ggH125_signalMet"   :['signal','ggH',1,1]
+		  ,"VBFH125_signalMet"  :['signal','vbf',1,1]
+		  ,"WH125_signalMet"   	:['signal','wh',1,1]
+		  ,"ZH125_signalMet"   	:['signal','zh',1,1]
 		  #,"GV_signal"   	:['signal','gv',1,0]
 		  ,"data_signal"	:['signal','data',0,0]
 
@@ -131,9 +139,14 @@ categories = [
 		  ,"ttbar_photon_control"   	:['photon','top',1,0]
 		  ,"SingleTop_photon_control"   :['photon','top',1,0]
 		  ,"QCD_photon_control"		:['photon','qcd',1,0]
-	   	}
-	},
-	{
+	   	},
+                "metsamples":
+	   	{ 
+                    "Zll_signal","WW_signal","WZ_signal","ZZ_signal","ttbar_signal","SingleTop_signal","QCD_signal",
+                    "ggH125_signal"    	,"VBFH125_signal"   	,"WH125_signal"   	,"ZH125_signal"
+                },
+        },                     
+    	{
 	    'name':"inclusive"
 	   ,'in_file_name':"monojet-combo.root"
 	   #,'in_file_name':"inclusive-combo.root"
@@ -143,22 +156,25 @@ categories = [
 	   ,"bins":[200.0 , 210.0 , 220.0 , 230.0 , 240.0 , 250.0 , 260.0 , 270.0 , 280.0 , 290.0 , 300.0 , 310.0 , 320.0 , 330.0,340,360,380,420,510,1000]
 	   ,"additionalvars":[['jet1pt',25,150,1000]]
 	   ,"pdfmodel":0
+           ,"recoilMC":"recoilfits/recoilfit_zmm53XRR_2012_0jet.root"    
+           ,"recoilData":"recoilfits/recoilfit_datamm53XRR_2012_0jet.root"                                                                                                       
 	   ,"samples":
 	   	{  # Format is TreeName : ['region','process',isMC,isSignal]  !! Note isSignal means DM/Higgs etc for signal region but Z-jets/W-jets for the di/single-muon regions !!
 		  # Signal Region
 		   "Znunu_signal"  	:['signal','zjets',1,0]
-		  ,"Zll_signal"	   	:['signal','zll',1,0]
-		  ,"Wjets_signal"  	:['signal','wjets',1,0]
-		  ,"WW_signal"  	:['signal','dibosons',1,0]
-		  ,"WZ_signal"  	:['signal','dibosons',1,0]
-		  ,"ZZ_signal"  	:['signal','dibosons',1,0]
-		  ,"ttbar_signal"   	:['signal','top',1,0]
-		  ,"SingleTop_signal"   :['signal','top',1,0]
+                   #,"Zll_signal"	        :['signal','zll',1,0]
+		  ,"Zll_signalMet"	:['signal','zll',1,0]
+ 		  ,"Wjets_signal"  	:['signal','wjets',1,0]
+		  ,"WW_signalMet"  	:['signal','dibosons',1,0]
+		  ,"WZ_signalMet"  	:['signal','dibosons',1,0]
+		  ,"ZZ_signalMet"  	:['signal','dibosons',1,0]
+		  ,"ttbar_signalMet"   	:['signal','top',1,0]
+		  ,"SingleTop_signalMet":['signal','top',1,0]
 		  ,"QCD_signal"		:['signal','qcd',1,0]
-		  ,"ggH125_signal"    	:['signal','ggH',1,1]
-		  ,"VBFH125_signal"   	:['signal','vbf',1,1]
-		  ,"WH125_signal"   	:['signal','wh',1,1]
-		  ,"ZH125_signal"   	:['signal','zh',1,1]
+		  ,"ggH125_signalMet"   :['signal','ggH',1,1]
+		  ,"VBFH125_signalMet"  :['signal','vbf',1,1]
+		  ,"WH125_signalMet"   	:['signal','wh',1,1]
+		  ,"ZH125_signalMet"   	:['signal','zh',1,1]
 		  #,"GV_signal"   	:['signal','gv',1,0]
 		  ,"data_signal"	:['signal','data',0,0]
 
@@ -197,7 +213,11 @@ categories = [
 		  ,"ttbar_photon_control"   	:['photon','top',1,0]
 		  ,"SingleTop_photon_control"   :['photon','top',1,0]
 		  ,"QCD_photon_control"		:['photon','qcd',1,0]
-	   	}
+	   	},
+                "metsamples":
+	   	{ 
+                    "Zll_signal","WW_signal","WZ_signal","ZZ_signal","ttbar_signal","SingleTop_signal","QCD_signal",
+                    "ggH125_signal"    	,"VBFH125_signal"   	,"WH125_signal"   	,"ZH125_signal"
+                },
 	}
-
 ]
