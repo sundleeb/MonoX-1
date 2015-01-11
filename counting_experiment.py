@@ -611,7 +611,7 @@ class Category:
     self.fillExpectedHist(cr,cr_hist)
     da_hist.SetTitle("") 
     cr_hist.SetFillColor(r.kBlue-10)
-    mc_hist.SetFillColor(r.kRed+1)
+    mc_hist.SetFillColor(r.kGray)
 
     cr_hist = getNormalizedHist(cr_hist)
     da_hist = getNormalizedHist(da_hist)
