@@ -107,10 +107,6 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   _fOut.WriteTObject(PhotonScales)
   _fOut.WriteTObject(ZmmScales)
 
-  #pho_FAKE_Up = PhotonScales.Clone(); pho_FAKE_Up.SetName("photon_weights_%s_FAKE_Up"%nam); pho_FAKE_Up.Scale(1.1)
-  #pho_FAKE_Down = PhotonScales.Clone(); pho_FAKE_Down.SetName("photon_weights_%s_FAKE_Down"%nam); pho_FAKE_Down.Scale(0.9)
-  #_fOut.WriteTObject(pho_FAKE_Down)
-  #_fOut.WriteTObject(pho_FAKE_Up)
 
   _bins = []  # take bins from some histogram
   for b in range(target.GetNbinsX()+1):
@@ -127,16 +123,17 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[0].add_nuisance("ewk",0.05) 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
   CRs[1].add_nuisance("MuonEfficiency",0.01)
+  CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
+  CRs[1].add_nuisance("xs_dibosons",0.1,True)   # is a background systematic
 
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
-  #CombinedControlRegionFit(nam,_fin,_fOut,_wspace,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs)
   return Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data%s"%nam,"doubleExponential_dimuon_mc%s"%nam,"signal_zjets",CRs,diag)
   
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
 categories = ["inclusive","resolved","boosted"]
-#categories = ["boosted","resolved","inclusive"]
+#categories = ["boosted","resolved"]
 #categories = ["inclusive"]
 _f = r.TFile.Open("mono-x-vtagged.root")
 out_ws = r.RooWorkspace("combinedws","Combined Workspace")
@@ -167,7 +164,7 @@ hasSys = False
 
 for cn in cmb_categories:
  for cr in cn.ret_control_regions():
-  nuisances = cr.ret_nuisances()
+  nuisances = cr.ret_nuisances()+cr.ret_bkg_nuisances()
   for nuis in nuisances:
    hasSys=True
    ext_constraints.add(out_ws.pdf("const_%s"%nuis))
@@ -184,10 +181,6 @@ for cid,cn in enumerate(cmb_categories):
     combined_pdf.addPdf(out_ws.pdf("pdf_%s"%ch.ret_binid()),ch.ret_binid())
 if hasSys: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save(),r.RooFit.ExternalConstraints(ext_constraints))
 else: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save())
-combined_pdf.Print("v")
-for cid,cn in enumerate(cmb_categories):
-  channels = cn.ret_channels()
-  for ch in channels: ch.Print()
 # ------------------------------------------------------------
 # Now Generate the systematics coming from the fitting 
 npars = diag_combined.generateVariations(combined_fit_result)
@@ -199,6 +192,10 @@ for cat in cmb_categories:
    cat.generate_systematic_templates(diag_combined,npars)
    cat.make_post_fit_plots() # Makes Post-fit to CR plots including approximated error bands from fit variations 
    cat.save() # make plots, save histograms and canvases
+
+for cid,cn in enumerate(cmb_categories):
+   channels = cn.ret_channels()
+   for ch in channels: ch.Print()
 
 # END
 print "Produced combined Z(mm) + photon fits -> ", _fOut.GetName()

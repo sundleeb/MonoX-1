@@ -33,11 +33,6 @@ class Bin:
    self.dataset   = self.wspace.data(datasetname)
    if not self.wspace_out.pdf(pdf.GetName()): self.wspace_out._import(pdf,r.RooFit.RecycleConflictNodes())
    self.pdf	  = self.wspace_out.pdf(pdf.GetName())
-   print "TESTY"
-   self.var.setVal(600)
-   print "met 600, ", self.pdf.getVal()
-   self.var.setVal(300)
-   print "met 300, ", self.pdf.getVal()
 
    self.rngename = "rnge_%s"%self.binid
    self.var.setRange(self.rngename,xmin,xmax)
@@ -59,17 +54,40 @@ class Bin:
    #if not self.wspace.var(self.pdfFullInt.GetName()) : self.wspace._import(self.pdfFullInt)
    self.wspace_out._import(self.pdfFullInt)
    self.b  = 0
-   self.constBkg = True
+   #self.constBkg = True
 
  def add_background(self,bkg):
    if "Purity" in bkg:
      tmp_pfunc = r.TF1("tmp_bkg_%s"%self.id,bkg.split(":")[-1]) #?
-     self.b       = tmp_pfunc.Eval(self.cen)
-     self.constBkg = False
+     b = self.o*(1-tmp_pfunc.Eval(self.cen))
+     #self.constBkg = False
    else:
      bkg_set      = self.wspace.data(bkg)
      #if not self.wspace_out.data(bkg): self.wspace_out._import(bkg)
-     self.b	= bkg_set.sumEntries("%s>=%g && %s<%g "%(self.var.GetName(),self.xmin,self.var.GetName(),self.xmax)) 
+     b	= bkg_set.sumEntries("%s>=%g && %s<%g "%(self.var.GetName(),self.xmin,self.var.GetName(),self.xmax)) 
+ 
+   # Now model nuisances for background
+   nuisances = self.cr.ret_bkg_nuisances()
+   if len(nuisances)>0:
+     prod = 0
+     if len(nuisances)>1:
+       nuis_args = r.RooArgList()
+       for nuis in nuisances: 
+        print "Adding Background Nuisance ", nuis 
+	# Nuisance*Scale is the model 
+	#form_args = r.RooArgList(self.wspace_out.var("nuis_%s"%nuis),self.wspace_out.function("sys_function_%s_%s"%(nuis,self.binid)))
+	form_args = r.RooArgList(self.wspace_out.function("sys_function_%s_%s"%(nuis,self.binid)))
+     	delta_nuis = r.RooFormulaVar("delta_bkg_%s_%s"%(self.binid,nuis),"Delta Change from %s"%nuis,"1+@0",form_args)
+        self.wspace_out._import(delta_nuis,r.RooFit.RecycleConflictNodes())
+     	nuis_args.add(self.wspace_out.function(delta_nuis.GetName()))
+       prod = r.RooProduct("prod_background_%s"%self.binid,"Nuisance Modifier",nuis_args)
+     else: 
+       print "Adding Background Nuisance ", nuisances[0]
+       prod = r.RooFormulaVar("prod_background_%s"%self.binid,"Delta Change in Background from %s"%nuisances[0],"1+@0",r.RooArgList(self.wspace_out.function("sys_function_%s_%s"%(nuisances[0],self.binid))))
+     self.b = r.RooFormulaVar("background_%s"%self.binid,"Number of expected background events in %s"%self.binid,"@0*%f"%b,r.RooArgList(prod))
+   else: self.b = r.RooFormulaVar("background_%s"%self.binid,"Number of expected background events in %s"%self.binid,"@0",r.RooArgList(r.RooFit.RooConst(b)))
+   self.wspace_out._import(self.b)
+   self.b = self.wspace_out.function(self.b.GetName())
 
  def set_label(self,cat):
    self.categoryname = cat.GetName()
@@ -107,7 +125,6 @@ class Bin:
    else: self.model_mu = self.wspace_out.function("model_mu_cat_%d_bin_%d"%(self.catid,self.id))
 
    arglist = r.RooArgList((self.model_mu),self.wspace_out.var(self.sfactor.GetName()))
-   arglist.Print("v")
 
    # Multiply by each of the uncertainties in the control region, dont alter the Poisson pdf, we will add the constraint at the end. Actually we won't use this right now.
    nuisances = self.cr.ret_nuisances()
@@ -123,24 +140,19 @@ class Bin:
      	delta_nuis = r.RooFormulaVar("delta_%s_%s"%(self.binid,nuis),"Delta Change from %s"%nuis,"1+@0",form_args)
         self.wspace_out._import(delta_nuis,r.RooFit.RecycleConflictNodes())
      	nuis_args.add(self.wspace_out.function(delta_nuis.GetName()))
-       nuis_args.Print("v")
        prod = r.RooProduct("prod_%s"%self.binid,"Nuisance Modifier",nuis_args)
-       prod.Print("v")
      else: 
        print "Adding Nuisance ", nuisances[0]
        prod = r.RooFormulaVar("prod_%s"%self.binid,"Delta Change from %s"%nuisances[0],"1+@0",r.RooArgList(self.wspace_out.function("sys_function_%s_%s"%(nuisances[0],self.binid))))
      arglist.add(prod)
-     prod.Print("")
-     arglist.Print("")
      self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"(@0*@1)*@2",arglist)
    else: self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"(@0*@1)",arglist)
    # Finally we add in the background 
-   bkgArgList = r.RooArgList(self.pure_mu)
-   if self.constBkg: self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"%f+@0"%self.b,bkgArgList)
-   else : self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0/%f"%self.b,bkgArgList)
+   bkgArgList = r.RooArgList(self.pure_mu,self.wspace_out.function(self.b.GetName()))
+   #if self.constBkg: self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"%f+@0"%self.b,bkgArgList)
+   #else : self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0/%f"%self.b,bkgArgList)
+   self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0+@1",bkgArgList)
  
-   self.mu.Print("vT")
-   print self.mu.getVal()
    #self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0/(@1*@2)",r.RooArgList(self.integral,self.sfactor,self.pdfFullInt))
    self.wspace_out._import(self.mu,r.RooFit.RecycleConflictNodes())
    self.wspace_out._import(self.obs,r.RooFit.RecycleConflictNodes())
@@ -176,8 +188,9 @@ class Bin:
  def ret_expected_err(self):
    return self.wspace_out.function(self.mu.GetName()).getError()
  def ret_background(self):
-   if self.constBkg: return self.b
-   else: return (1-self.b)*(self.ret_expected())
+   #if self.constBkg: return self.b
+   #else: return (1-self.b)*(self.ret_expected())
+   return self.wspace_out.function(self.b.GetName()).getVal()
  def ret_model(self):
    return self.wspace_out.function(self.model_mu.GetName()).getVal()
  def ret_model_err(self):
@@ -200,6 +213,7 @@ class Channel:
     self.wspace_out = wspace_out
     self.set_wspace(wspace)
     self.nuisances = []
+    self.bkg_nuisances = []
     self.systematics = {}
     self.crname = cname
     self.nbins  = scalefactors.GetNbinsX()
@@ -222,15 +236,16 @@ class Channel:
     sfup.Scale(1+kappa)
     sfdn.Scale(1./(1+kappa))
     self.systematics[sys] = [sfup,sfdn]
-
-  def add_nuisance(self,name,size):
+  
+  def add_nuisance(self,name,size,bkg=False):
     #print "Error, Nuisance parameter model not supported fully for shape variations, dont use it!" 
     if not(self.wspace_out.var("nuis_%s"%name)): 
       nuis = r.RooRealVar("nuis_%s"%name,"Nuisance - %s"%name,0,-3,3);
       self.wspace_out._import(nuis)
       cont = r.RooGaussian("const_%s"%name,"Constraint - %s"%name,self.wspace_out.var(nuis.GetName()),r.RooFit.RooConst(0),r.RooFit.RooConst(1));
       self.wspace_out._import(cont)
-      self.nuisances.append(name)
+      if bkg: self.bkg_nuisances.append(name)
+      else:   self.nuisances.append(name)
 
     # run through all of the bins in the control regions and create a function to interpolate
     for b in range(self.nbins):
@@ -265,23 +280,15 @@ class Channel:
 		,"(%f*@0*@0+%f*@0)/%f"%(coeff_a,coeff_b,nsf) \
 		#,"(%f*@0*@0+%f*@0)"%(coeff_a,coeff_b) \
 		,r.RooArgList(self.wspace_out.var("nuis_%s"%name))) # this is now relative deviation, SF-SF_0 = func => SF = SF_0*(1+func/SF_0)
-
-	print "Nom, up, down", nsf, 	1./sysup.GetBinContent(b+1) ,1./sysdn.GetBinContent(b+1) 
-	print "att nuis = 0",
-	self.wspace_out.var("nuis_%s"%name).setVal(0)
-	print func.getVal()
-	print "att nuis = -1",  
-	self.wspace_out.var("nuis_%s"%name).setVal(-1)
-	print func.getVal()
-	print "att nuis = 1",  
-	self.wspace_out.var("nuis_%s"%name).setVal(1)
-	print func.getVal()
 	self.wspace_out.var("nuis_%s"%name).setVal(0)
         if not self.wspace_out.function(func.GetName()) :self.wspace_out._import(func)
 
   def set_wspace(self,w):
    self.wspace = w
    self.wspace._import = getattr(self.wspace,"import") # workaround: import is a python keyword
+  
+  def ret_bkg_nuisances(self):
+    return self.bkg_nuisances
 
   def ret_nuisances(self):
     return self.nuisances
@@ -430,7 +437,6 @@ class Category:
 
   def init_channels(self):
    sample = self._wspace_out.cat("bin_number") #r.RooCategory("bin_number","bin_number")
-   sample.Print()
    #for j,cr in enumerate(self._control_regions):
    for j,cr in enumerate(self._control_regions):
     for i,bl in enumerate(self._bins):
@@ -506,7 +512,6 @@ class Category:
      for i,ch in enumerate(self.channels):
        if ch.chid != cr.chid: continue
        derr = abs(ch.ret_expected()-nominals[j][chi])
-       print "Adding to ", ch.ret_binid(),"Nominal = ", nominals[j][chi], " Err = ",ch.ret_expected(), " dE = ", derr
        ch.add_err(derr); chi+=1
 
     diag.setEigenset(par,-1)  # up variation
