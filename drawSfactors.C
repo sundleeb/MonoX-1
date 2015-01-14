@@ -48,8 +48,8 @@ lat->SetTextFont(42);
   fi->cd(Form("category_%s",cats[c].c_str()));
   TLegend *ld = new TLegend(0.5,0.65,0.89,0.89);ld->SetFillColor(0);
   ld->AddEntry(&dat,"Z(#rightarrow#nu#nu)+jets MC","PE1");
-  ld->AddEntry(&datafit,"Pdf fit to Z(#rightarrow#nu#nu) MC","L");
-  ld->AddEntry(&mcfit,"Pdf post-fit to control regions","L");
+  ld->AddEntry(&mcfit,"Pdf fit to Z(#rightarrow#nu#nu) MC","L");
+  ld->AddEntry(&datafit,"Pdf post-fit to control regions","L");
   zjets_signalregion_mc_fit_before_after->SetLogy(); 
   zjets_signalregion_mc_fit_before_after->Draw();
   ld->Draw();
@@ -111,4 +111,16 @@ lat->SetTextFont(42);
   c_ControlRegion_1->SaveAs(Form("post_fit_zmm_%s.pdf",cats[c].c_str()));
   c_ControlRegion_1->SaveAs(Form("post_fit_zmm_%s.png",cats[c].c_str()));
 
+  // Canvas for the variations of the systematics 
+  canv_variations->Draw();
+  lat->DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
+  lat->DrawLatex(0.7,0.94,Form("%s category",cats[c].c_str()));
+  canv_variations->SaveAs(Form("systematic_variations_%s.pdf",cats[c].c_str()));
+  canv_variations->SaveAs(Form("systematic_variations_%s.png",cats[c].c_str()));
+
+  canv_variations_ratio->Draw();
+  lat->DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
+  lat->DrawLatex(0.7,0.94,Form("%s category",cats[c].c_str()));
+  canv_variations_ratio->SaveAs(Form("systematic_variations_ratio_%s.pdf",cats[c].c_str()));
+  canv_variations_ratio->SaveAs(Form("systematic_variations_ratio_%s.png",cats[c].c_str()));
 }

@@ -1,8 +1,13 @@
-from combineControlRegions import *
+#from combineControlRegions import *
+from counting_experiment import *
 import ROOT as r 
 r.gROOT.SetBatch(1)
+r.gROOT.ProcessLine(".L diagonalizer.cc+")
+from ROOT import diagonalizer
 
-fkFactor = r.TFile.Open("/afs/cern.ch/work/n/nckw/public/monojet/Photon_Z_NLO_kfactors.root")
+
+#fkFactor = r.TFile.Open("/afs/cern.ch/work/n/nckw/public/monojet/Photon_Z_NLO_kfactors.root")
+fkFactor = r.TFile.Open("Photon_Z_NLO_kfactors.root")
 nlo_pho = fkFactor.Get("pho_NLO_LO")
 nlo_zjt = fkFactor.Get("Z_NLO_LO")
 nlo_pho_mrUp = fkFactor.Get("pho_NLO_LO_mrUp")
@@ -14,7 +19,7 @@ nlo_zjt_mfUp = fkFactor.Get("Z_NLO_LO_mfUp")
 nlo_pho_mfDown = fkFactor.Get("pho_NLO_LO_mfDown")
 nlo_zjt_mfDown = fkFactor.Get("Z_NLO_LO_mfDown")
 
-def cmodel(nam,_f,_fOut):
+def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   _fin = _f.Get("category_%s"%nam)
 
@@ -33,7 +38,6 @@ def cmodel(nam,_f,_fOut):
     metname = "mvamet_"
     gvptname = "genVpt_"
   # First we need to re-build the nominal templates from the datasets modifying the weights
-
   target = _fin.Get("signal_zjets")
   Zmm = _fin.Get("dimuon_zll")
   #Pho = _fin.Get("photon_gjet")
@@ -43,9 +47,7 @@ def cmodel(nam,_f,_fOut):
   # run through 3 datasets, photon, etc and generate a template from histograms 
   # We only nned to make NLO versions of Z(vv) and Photon :) 
   # This class lets us run through corrections 
-  r.gROOT.ProcessLine(".L diagonalizer.cc+")
-  from ROOT import diagonalizer
-  diag = diagonalizer(_wspace)
+  #diag = diagonalizer(_wspace)
  
   #Loop Over Systematics also?
   Pho = target.Clone(); Pho.SetName("photon_weights_denom_%s"%nam)
@@ -105,34 +107,97 @@ def cmodel(nam,_f,_fOut):
   _fOut.WriteTObject(PhotonScales)
   _fOut.WriteTObject(ZmmScales)
 
+
   _bins = []  # take bins from some histogram
   for b in range(target.GetNbinsX()+1):
     _bins.append(target.GetBinLowEdge(b+1))
 
   CRs = [
-  # Channel(_wspace,0,_wspace.data(_photon_datasetname),Zvv,"Purity:0.9399+(8.46e-5)*x")  # stupid linear fit of Purities, should move to flat 
-  # Channel(_wspace,0,_wspace.data(_photon_datasetname),Zvv,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
-   Channel("Photon+jet",_wspace,0,_wspace.data(_photon_datasetname),PhotonScales,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
- , Channel("Dimuon",_wspace,1,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
+   Channel("Photon+jet",_wspace,out_ws,cid,0,_wspace.data(_photon_datasetname),PhotonScales,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
+  ,Channel("Dimuon",_wspace,out_ws,cid,1,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
   ]
-  #Add Systematic -> Fit will be re-run once per systematic
+  #Add Systematic ? This time we add them as nuisance parameters.
 
-  #_control_regions[0].add_systematic_shape("MuonEfficiency",_fin)  # looks for weights of the form XXX _MuonEfficiency +1 and -1 sigma 
-  CRs[1].add_systematic_yield("MuonEfficiency",0.01)  # looks for weights of the form XXX _MuonEfficiency +1 and -1 sigma, a number means make a new global scaling (lnN)
-  CRs[0].add_systematic_shape("mr",_fOut) 
-  CRs[0].add_systematic_shape("mf",_fOut) 
-  CRs[0].add_systematic_yield("ewk",0.05) 
-  CRs[0].add_systematic_yield("PhotonEfficiency",0.01)  
+  CRs[0].add_nuisance_shape("mr",_fOut) 
+  CRs[0].add_nuisance_shape("mf",_fOut) 
+  CRs[0].add_nuisance("ewk",0.05) 
+  CRs[0].add_nuisance("PhotonEfficiency",0.01) 
+  CRs[1].add_nuisance("MuonEfficiency",0.01)
+  CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
+  CRs[1].add_nuisance("xs_dibosons",0.1,True)   # is a background systematic
+
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
-  CombinedControlRegionFit(nam,_fin,_fOut,_wspace,_bins,metname,"doubleExponential_dimuon_data","doubleExponential_dimuon_mc","signal_zjets",CRs)
+  return Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data%s"%nam,"doubleExponential_dimuon_mc%s"%nam,"signal_zjets",CRs,diag)
   
+#----------------------------------------------------------------------------------------------------------------------------------------------------------//
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
 categories = ["inclusive","resolved","boosted"]
+#categories = ["boosted","resolved"]
+#categories = ["inclusive"]
 _f = r.TFile.Open("mono-x-vtagged.root")
-for cn in categories: 
-        _fDir = _fOut.mkdir("category_%s"%cn)
-	cmodel(cn,_f,_fDir)
+out_ws = r.RooWorkspace("combinedws","Combined Workspace")
+out_ws._import = getattr(out_ws,"import")
 
+# Need to setup the things here for combined dataset, need to add all possible sample types first because otherwise RooFit throws a fit! 
+sampleType  = r.RooCategory("bin_number","Bin Number");
+obs         = r.RooRealVar("observed","Observed Events bin",1)
+
+out_ws._import(sampleType)  # Global variables for dataset
+out_ws._import(obs)
+obsargset   = r.RooArgSet(out_ws.var("observed"),out_ws.cat("bin_number"))
+
+cmb_categories=[]
+diag_combined = diagonalizer(out_ws)
+for cid,cn in enumerate(categories): 
+        _fDir = _fOut.mkdir("category_%s"%cn)
+	cmb_categories.append(cmodel(cid,cn,_f,_fDir,out_ws,diag_combined))
+# Had to define the types before adding to the combined dataset
+for cid,cn in enumerate(cmb_categories):
+	cn.init_channels()
+        channels = cn.ret_channels()
+        for ch in channels: ch.Print()
+out_ws.Print('v')
+# Next we want to build a list of all of the nuisance parameters which will be in the fit :), this is performed with add_nuisance
+ext_constraints = r.RooArgSet() 
+hasSys = False
+
+for cn in cmb_categories:
+ for cr in cn.ret_control_regions():
+  nuisances = cr.ret_nuisances()+cr.ret_bkg_nuisances()
+  for nuis in nuisances:
+   hasSys=True
+   ext_constraints.add(out_ws.pdf("const_%s"%nuis))
+
+ext_constraints.Print("v")
+# Now we have the observation and expectation of all of the bins, make a combined pdf and fit!
+# ------------------------------------------------------------
+# WRITE THE FIT PART HERE
+combined_pdf = r.RooSimultaneous("combined_pdf","combined_pdf",out_ws.cat(sampleType.GetName()))
+# Loop through every bin and add the Poisson Pdf
+for cid,cn in enumerate(cmb_categories):
+  channels = cn.ret_channels()
+  for ch in channels: 
+    combined_pdf.addPdf(out_ws.pdf("pdf_%s"%ch.ret_binid()),ch.ret_binid())
+if hasSys: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save(),r.RooFit.ExternalConstraints(ext_constraints))
+else: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save())
+# ------------------------------------------------------------
+# Now Generate the systematics coming from the fitting 
+npars = diag_combined.generateVariations(combined_fit_result)
+h2covar = diag_combined.retCovariance()
+_fOut.WriteTObject(h2covar)
+# ------------------------------------------------------------
+for cat in cmb_categories:
+   cat.save_model(diag_combined)          # Saves the nominal model and makes templates for variations from each uncorrelated parameter :) 
+   cat.generate_systematic_templates(diag_combined,npars)
+   cat.make_post_fit_plots() # Makes Post-fit to CR plots including approximated error bands from fit variations 
+   cat.save() # make plots, save histograms and canvases
+
+for cid,cn in enumerate(cmb_categories):
+   channels = cn.ret_channels()
+   for ch in channels: ch.Print()
+
+# END
 print "Produced combined Z(mm) + photon fits -> ", _fOut.GetName()
 _fOut.Close()
+# END
