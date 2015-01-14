@@ -471,7 +471,7 @@ void RecoilCorrector::metDistributionType1(float &iMet,float &iMPhi,double iGenP
   
   //Uncertainty propagation
   if(iFluc != 0 || iScale != 0) { 
-    double lEUR1    = getError(iGenPt,iU1RZMCFit ,PFU1);
+    double lEUR1    = getError(iGenPt,iU1RZMCFit ,PFU1)  ;
     double lEU1Frac = getError(iGenPt,iU1MSZMCFit,PFMSU1);
     double lEU2Frac = getError(iGenPt,iU2MSZMCFit,PFMSU2);
     //Modify all the different parameters the choice of signs makes it maximal
