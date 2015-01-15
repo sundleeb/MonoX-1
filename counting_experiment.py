@@ -499,8 +499,8 @@ class Category:
    sys_c=0
 
    for par in range(npars):
-    hist_up = r.TH1F("%s_combined_model_par_%d_Up"%(self.cname,par),"combined_model par %d Up 1 sigma"%par  ,len(self._bins)-1,array.array('d',self._bins))
-    hist_dn = r.TH1F("%s_combined_model_par_%d_Down"%(self.cname,par),"combined_model par %d Up 1 sigma"%par,len(self._bins)-1,array.array('d',self._bins))
+    hist_up = r.TH1F("combined_model_par_%d_Up"%(par),"combined_model par %d Up 1 sigma - %s "%(par,self.cname)  ,len(self._bins)-1,array.array('d',self._bins))
+    hist_dn = r.TH1F("combined_model_par_%d_Down"%(par),"combined_model par %d Down 1 sigma - %s"%(par,self.cname),len(self._bins)-1,array.array('d',self._bins))
  
     diag.setEigenset(par,1)  # up variation
     #fillModelHist(hist_up,channels)
@@ -571,13 +571,14 @@ class Category:
 
   def save_model(self,diag):
    # Need to make ratio 
-   self.model_hist = r.TH1F("%s_combined_model"%self.cname,"combined_model",len(self._bins)-1,array.array('d',self._bins))
+   self.model_hist = r.TH1F("%s_combined_model"%(self.cname),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
    #fillModelHist(model_hist,channels)
    diag.generateWeightedTemplate(self.model_hist,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
    self.model_hist.SetLineWidth(2)
    self.model_hist.SetLineColor(1)
    #_fout = r.TFile("combined_model.root","RECREATE")
    #_fout.WriteTObject(self.model_hist)
+   self.model_hist.SetName("combined_model")
    self.histograms.append(self.model_hist)
 
 

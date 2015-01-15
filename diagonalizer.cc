@@ -44,6 +44,7 @@ class diagonalizer {
     void generateWeightedTemplate(TH1F *, RooFormulaVar *, RooRealVar &, RooDataSet *);
     void generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::string wvar, RooRealVar &var, RooDataSet *data);
     TH2F *retCovariance();
+    TH2F *retCorrelation();
     
   private:
     RooDataSet *_data_;
@@ -56,6 +57,7 @@ class diagonalizer {
     TMatrixD _evec;
     TVectorD _eval;
     TH2F *_h2covar;
+    TH2F *_h2corr;
     int _n_par;
 
     void getArgSetParameters(RooArgList & params,std::vector<double> &val);
@@ -77,6 +79,14 @@ TH2F* diagonalizer::retCovariance(){
 	return 0;
    }
 }
+TH2F* diagonalizer::retCorrelation(){
+  
+   if (_h2corr) return _h2corr;
+   else { 
+	std::cout << "NO COVARIANCE MATRIX, DID YOU DIAGONALIZE YET?" << std::endl;
+	return 0;
+   }
+}
 int diagonalizer::generateVariations(RooFitResult *res_ptr){// std::string dataSetName){
   //RooDataSet *data = (RooDataSet*)_wspace->data(dataSetName.c_str());  // weird but sure
   //assert(data);
@@ -91,9 +101,12 @@ int diagonalizer::generateVariations(RooFitResult *res_ptr){// std::string dataS
   evec.Print();
   _evec.ResizeTo(_n_par,_n_par);
   _h2covar = new TH2F(Form("covariance_fit_%s",res_ptr->GetName()),"Covariance",_n_par,0,_n_par,_n_par,0,_n_par);
+  _h2corr  = new TH2F(Form("correlation_fit_%s",res_ptr->GetName()),"Correlation",_n_par,0,_n_par,_n_par,0,_n_par);
+  TMatrixD cor  = res_ptr->correlationMatrix();
   for (int l=0;l<_n_par;l++){
     for (int m=0;m<_n_par;m++){
       _h2covar->SetBinContent(l+1,m+1,cov(l,m));
+      _h2corr->SetBinContent(l+1,m+1,cor(l,m));
       _evec(l,m) = evec(l,m); 
     }
   }
@@ -113,6 +126,8 @@ int diagonalizer::generateVariations(RooFitResult *res_ptr){// std::string dataS
      rooParameters.add(*vit);
      _h2covar->GetXaxis()->SetBinLabel(pcount,vit->GetName());
      _h2covar->GetYaxis()->SetBinLabel(pcount,vit->GetName());
+     _h2corr->GetXaxis()->SetBinLabel(pcount,vit->GetName());
+     _h2corr->GetYaxis()->SetBinLabel(pcount,vit->GetName());
      pcount++;
   }
   getArgSetParameters(rooParameters,original_values);

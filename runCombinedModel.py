@@ -186,6 +186,8 @@ else: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.Roo
 npars = diag_combined.generateVariations(combined_fit_result)
 h2covar = diag_combined.retCovariance()
 _fOut.WriteTObject(h2covar)
+h2corr = diag_combined.retCorrelation()
+_fOut.WriteTObject(h2corr)
 # ------------------------------------------------------------
 for cat in cmb_categories:
    cat.save_model(diag_combined)          # Saves the nominal model and makes templates for variations from each uncorrelated parameter :) 
