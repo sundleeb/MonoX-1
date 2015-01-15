@@ -3,7 +3,7 @@ import array, sys
 
 # Configurations Read in from Separate .py files
 sys.path.append("configs")
-import categories_config_vtag_met as x
+import categories_config_vtag as x
 #x = __import__(sys.argv[1]) 
 
 # book category should read list of samples and append them to as histograms 
