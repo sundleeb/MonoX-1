@@ -71,6 +71,7 @@ class ModelBuilder {
 
   private:
   const char * doubleexp(RooWorkspace *ws,RooRealVar &x,std::string ext);
+  const char * singleexp(RooWorkspace *ws,RooRealVar &x,std::string ext);
   const char * powerlaw(RooWorkspace *ws,RooRealVar &x,std::string ext);
   const char * turnon(RooWorkspace *ws,RooRealVar &x,std::string ext);
   void saveHist(TH1F*);

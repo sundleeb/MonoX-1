@@ -60,7 +60,13 @@ const char * ModelBuilder::doubleexp(RooWorkspace *ws,RooRealVar &x,std::string 
    ws->import(*sumexp);
    return sumexp->GetName(); 
 }
-
+const char * ModelBuilder::singleexp(RooWorkspace *ws,RooRealVar &x,std::string ext){ 
+   ext += catname;
+   RooRealVar m1(Form("m3_%s",ext.c_str()),"m3",-0.02,-0.3,0.05);
+   RooExponential* exp1 =new RooExponential(Form("doubleExponential_%s",ext.c_str()),Form("exp3_%s",ext.c_str()),x,m1);
+   ws->import(*exp1);
+   return exp1->GetName(); 
+}
 void ModelBuilder::save(){
   std::map<std::string, TH1F*>::iterator it = save_hists.begin();
   for (;it!=save_hists.end();it++){
@@ -184,10 +190,8 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
      pdf_mc 	       = wspace->pdf(doubleexp(wspace,*x,Form("%s_mc",cr.name.c_str())));
      pdf_background_mc = wspace->pdf(doubleexp(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
    } else if (_pdfmodel==1) {
-   
-   // Why not use one power law for the resolved (lower stat) case?
-    std::cout << "Using PowerLaw for fitting functions -- " <<  _pdfmodel <<std::endl;
-   
+     // Why not use one power law for the resolved (lower stat) case?
+     std::cout << "Using PowerLaw for fitting functions -- " <<  _pdfmodel <<std::endl;
      pdf 		= wspace->pdf(powerlaw(wspace,*x,Form("%s_data",cr.name.c_str())));
      pdf_mc 	   	= wspace->pdf(powerlaw(wspace,*x,Form("%s_mc",cr.name.c_str())));
      pdf_background_mc = wspace->pdf(powerlaw(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
@@ -196,7 +200,12 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
     std::cout << "Using PowerLaw + Log-normal for fitting functions -- " << _pdfmodel <<std::endl;
      pdf 		= wspace->pdf(turnon(wspace,*x,Form("%s_data",cr.name.c_str())));
      pdf_mc 	   	= wspace->pdf(turnon(wspace,*x,Form("%s_mc",cr.name.c_str())));
-     pdf_background_mc = wspace->pdf(turnon(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
+     pdf_background_mc  = wspace->pdf(turnon(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
+   } else if (_pdfmodel==3) {
+     std::cout << "Using Single Exponential for fitting functions -- " << _pdfmodel << std::endl;
+     pdf 	       = wspace->pdf(singleexp(wspace,*x,Form("%s_data"  ,cr.name.c_str())));
+     pdf_mc 	       = wspace->pdf(singleexp(wspace,*x,Form("%s_mc"    ,cr.name.c_str())));
+     pdf_background_mc = wspace->pdf(singleexp(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
    } else {
 	std::cout << "! No Pdf Model for type " << _pdfmodel << std::endl;
 	assert(0);
@@ -361,22 +370,25 @@ void ModelBuilder::addSample(std::string name, std::string region, std::string p
    else if (is_signal) type=-1;
    else type=1;
 
+   TString tRegion = region;
+   tRegion.ReplaceAll("_Met","");
+   std::string pRegion = tRegion.Data();
    if (it_sample!=v_samples.end()) {
 
      bool proc_exists = has_process((*it_sample).second,process);
 
      if (proc_exists){
-     	save_hists[region+std::string("_")+process]->Add(tmp_hist);
-	save_datas[region+std::string("_")+process]->append(*tmp_data);
+        save_hists[pRegion+std::string("_")+process]->Add(tmp_hist);
+	save_datas[pRegion+std::string("_")+process]->append(*tmp_data);
 	//((TH1F*)fOut->Get(Form("%s_%s",region.c_str(),process.c_str())))->Add(tmp_hist);
-	std::cout << "Adding to existing sample -- " <<region+std::string("_")+process << " -> " <<  name.c_str() << ", dataset=" << tmp_data->sumEntries()  << " histogram=" <<tmp_hist->Integral() << std::endl; 
+	std::cout << "Adding to existing sample -- " <<pRegion+std::string("_")+process << " -> " <<  name.c_str() << ", dataset=" << tmp_data->sumEntries()  << " histogram=" <<tmp_hist->Integral() << std::endl; 
      } else {
      	//std::cout << "CREATE NEW PROCESS" << process << ", sample" << name << std::endl;
-   	tmp_hist->SetName(Form("%s_%s",region.c_str(),process.c_str()));
-	tmp_data->SetName(Form("%s_%s",region.c_str(),process.c_str()));
+   	tmp_hist->SetName(Form("%s_%s",pRegion.c_str(),process.c_str()));
+	tmp_data->SetName(Form("%s_%s",pRegion.c_str(),process.c_str()));
 	//fOut->WriteTObject(tmp_hist);
-	save_hists[region+std::string("_")+process] = tmp_hist;
-	save_datas[region+std::string("_")+process] = tmp_data;
+	save_hists[pRegion+std::string("_")+process] = tmp_hist;
+	save_datas[pRegion+std::string("_")+process] = tmp_data;
 
 	((*it_sample).second).procs.push_back(std::pair<std::string,int> (process,type));
 
@@ -388,11 +400,11 @@ void ModelBuilder::addSample(std::string name, std::string region, std::string p
 	cregion.procs.push_back(std::pair<std::string,int> (process,type));
         v_samples[region] = cregion;
 
-   	tmp_hist->SetName(Form("%s_%s",region.c_str(),process.c_str()));
-	save_hists.insert(std::pair<std::string,TH1F*> (region+std::string("_")+process,tmp_hist));
+   	tmp_hist->SetName(Form("%s_%s",pRegion.c_str(),process.c_str()));
+	save_hists.insert(std::pair<std::string,TH1F*> (pRegion+std::string("_")+process,tmp_hist));
 
-   	tmp_data->SetName(Form("%s_%s",region.c_str(),process.c_str()));
-	save_datas.insert(std::pair<std::string,RooDataSet*> (region+std::string("_")+process,tmp_data));
+   	tmp_data->SetName(Form("%s_%s",pRegion.c_str(),process.c_str()));
+	save_datas.insert(std::pair<std::string,RooDataSet*> (pRegion+std::string("_")+process,tmp_data));
 	//fOut->WriteTObject(tmp_hist);
    } 
 

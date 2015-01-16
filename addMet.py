@@ -23,8 +23,12 @@ def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
     lTree.SetBranchAddress( 'mvametphi', AddressOf(lMet,"metPhi"))
     for i0 in range(0,iNtuple.GetEntriesFast()):
         iNtuple.GetEntry(i0)
-        pPt       = iNtuple.genjetpt
-        pMet      = iRecoil.CorrectType1(iNtuple.mvamet,iNtuple.mvametphi,pPt,0,0,0,0,0, iUnc, iUnc,0)
+        pPt       = iNtuple.genjetpt * 1.15 # correction factor from gen jet pT to recoil pT
+        #if (iNtuple.GetName()).find('H') > 0:
+        #    pPt       = iNtuple.dmpt
+        if iNtuple.genVpt > 5 :
+            pPt       = iNtuple.genVpt
+        pMet      = iRecoil.CorrectType1(iNtuple.mvamet,iNtuple.mvametphi,pPt,0,0,0,0,0, iUnc, -iUnc,0)
         lMet.metV   = pMet[0]
         lMet.metPhi = pMet[1]
         lTree.Fill()
