@@ -39,19 +39,40 @@ const char * ModelBuilder::turnon(RooWorkspace *ws,RooRealVar &x,std::string ext
 
 const char * ModelBuilder::powerlaw(RooWorkspace *ws,RooRealVar &x,std::string ext){
    ext += catname;
-   RooRealVar m1(Form("p_%s",ext.c_str()),"p",-4.,-10.,0.);
+   RooRealVar p(Form("p_%s",ext.c_str()),"p",-2.,-10.,0.01);
    //RooGenericPdf *pdf = new RooGenericPdf(Form("powerLaw_%s",ext.c_str()), Form("powerLaw_%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,m1));
+   ws->import(p);
    // Same name as exponential for now
-   RooGenericPdf *pdf = new RooGenericPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,m1));
+   RooGenericPdf *pdf = new RooGenericPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,*(ws->var(p.GetName()))));
    ws->import(*pdf);
    return pdf->GetName(); 
 }
+/*
+const char * ModelBuilder::doubleexp(RooWorkspace *ws,RooRealVar &x,std::string ext){ 
+   ext += catname;
+   // Double exponential model
+  // RooRealVar frac(Form("f_%s",ext.c_str()),"f",0.8,0.,1.);
+  // RooRealVar m1(Form("m1_%s",ext.c_str()),"m1",-0.02,-0.3,0.0);
+  // RooRealVar m2(Form("m2_%s",ext.c_str()),"m2",-0.01,-0.3,0.0);
+   RooRealVar a(Form("a_%s",ext.c_str()),"a",-0.2,-2,2.0);
+   RooRealVar b(Form("b_%s",ext.c_str()),"b",0,-2,2.0);
+
+   //RooExponential exp1(Form("exp1_%s",ext.c_str()),Form("exp1_%s",ext.c_str()),x,m1);
+   //RooExponential exp2(Form("exp2_%s",ext.c_str()),Form("exp2_%s",ext.c_str()),x,m2);
+
+   //RooAddPdf *sumexp = new RooAddPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),RooArgList(exp1,exp2),RooArgList(frac));
+   RooGenericPdf *sumexp = new RooGenericPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),"TMath::Exp(@1*@0+@2*@0*@0)",RooArgList(x,a,b));
+   ws->import(*sumexp);
+   return sumexp->GetName(); 
+}
+*/
+
 const char * ModelBuilder::doubleexp(RooWorkspace *ws,RooRealVar &x,std::string ext){ 
    ext += catname;
    // Double exponential model
    RooRealVar frac(Form("f_%s",ext.c_str()),"f",0.8,0.,1.);
-   RooRealVar m1(Form("m1_%s",ext.c_str()),"m1",-0.02,-0.3,0.05);
-   RooRealVar m2(Form("m2_%s",ext.c_str()),"m2",-0.01,-0.3,0.05);
+   RooRealVar m1(Form("m1_%s",ext.c_str()),"m1",-0.002,-0.1,0.0);
+   RooRealVar m2(Form("m2_%s",ext.c_str()),"m2",-0.001,-0.1,0.0);
 
    RooExponential exp1(Form("exp1_%s",ext.c_str()),Form("exp1_%s",ext.c_str()),x,m1);
    RooExponential exp2(Form("exp2_%s",ext.c_str()),Form("exp2_%s",ext.c_str()),x,m2);
@@ -60,6 +81,7 @@ const char * ModelBuilder::doubleexp(RooWorkspace *ws,RooRealVar &x,std::string 
    ws->import(*sumexp);
    return sumexp->GetName(); 
 }
+
 const char * ModelBuilder::singleexp(RooWorkspace *ws,RooRealVar &x,std::string ext){ 
    ext += catname;
    RooRealVar m1(Form("m3_%s",ext.c_str()),"m3",-0.02,-0.3,0.05);
@@ -371,7 +393,7 @@ void ModelBuilder::addSample(std::string name, std::string region, std::string p
    else type=1;
 
    TString tRegion = region;
-   tRegion.ReplaceAll("_Met","");
+   //tRegion.ReplaceAll("_Met","");
    std::string pRegion = tRegion.Data();
    if (it_sample!=v_samples.end()) {
 
