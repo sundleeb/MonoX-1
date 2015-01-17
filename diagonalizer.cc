@@ -9,7 +9,9 @@
 #include "TMatrixD.h"
 #include "TVectorD.h"
 #include "TIterator.h"
+#include "TDirectory.h"
 #include "TH2F.h"
+#include "TF1.h"
 
 // RooFit includes
 #include "RooDataSet.h"
@@ -43,6 +45,7 @@ class diagonalizer {
     void freezeParameters(RooArgSet *args, bool freeze=true);
     void generateWeightedTemplate(TH1F *, RooFormulaVar *, RooRealVar &, RooDataSet *);
     void generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::string wvar, RooRealVar &var, RooDataSet *data);
+    void setOutFile(TDirectory *);
     TH2F *retCovariance();
     TH2F *retCorrelation();
     
@@ -60,8 +63,10 @@ class diagonalizer {
     TH2F *_h2corr;
     int _n_par;
 
+    double getIntegral(TF1 *,double, double);
     void getArgSetParameters(RooArgList & params,std::vector<double> &val);
     void setArgSetParameters(RooArgList & params,std::vector<double> &val);
+    TDirectory *_fDiagnostics;
 };
 
 diagonalizer::diagonalizer(RooWorkspace *wspace){//, RooAbsPdf *pdf){
@@ -70,6 +75,19 @@ diagonalizer::diagonalizer(RooWorkspace *wspace){//, RooAbsPdf *pdf){
     _wspace = wspace;
 }
 
+void diagonalizer::setOutFile(TDirectory *dir){
+	_fDiagnostics = dir->mkdir("Diagnostics");
+}
+
+double diagonalizer::getIntegral(TF1 *f, double x1, double x2){
+	double step = (x2-x1)/10;
+	double sum=0;
+	for (double x = x1;x<x2;x+=step){
+		sum+=step*f->Eval(x);
+	}
+	std::cout<< "Sum = " << sum << std::endl;
+	return sum;
+}
 
 TH2F* diagonalizer::retCovariance(){
   
@@ -131,7 +149,10 @@ int diagonalizer::generateVariations(RooFitResult *res_ptr){// std::string dataS
      pcount++;
   }
   getArgSetParameters(rooParameters,original_values);
-
+  if (_fDiagnostics) {
+     _fDiagnostics->WriteTObject(_h2covar);
+     _fDiagnostics->WriteTObject(_h2corr);
+  }
   return _n_par;
 }
 void diagonalizer::resetPars(){
@@ -195,7 +216,15 @@ void diagonalizer::freezeParameters(RooArgSet *args, bool freeze){
       rrv->setConstant(freeze);
   }
 }
+/*
 void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::string wvar, RooRealVar &var, RooDataSet *data){
+ 
+  
+  //TH1F tmpH("tmp","tmp",200,histNew->GetBinLowEdge(1),histNew->GetBinLowEdge(histNew->GetNbinsX()+1));
+  TH1F *tmpH = (TH1F*)histNew->Clone();
+  tmpH->SetName("tmp");
+  // Turn it into a spectrum 
+  //for (int b = 1;b<=histNew->GetNbinsX();b++) tmpH->SetBinContent(tmpH->GetBinContent()/
 
   int nevents = data->numEntries();
   const char *varname = var.GetName();
@@ -210,13 +239,60 @@ void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::s
     if (pdf_num) { 
 	//std::cout << wvar<< ", " << wval << ", Weight = "<< cweight << " x " << pdf_num->GetBinContent(pdf_num->FindBin(wval)) << std::endl;
     	cweight *= pdf_num->GetBinContent(pdf_num->FindBin(wval));
-    } else {
-    	std::cout <<"Correction function NULL "<<std::endl;
-	assert(0);
-    }
+    }    //histNew->Fill(val,cweight);
+    tmpH->Fill(val,cweight);
+  }
+  for (int b = 1;b<=histNew->GetNbinsX();b++) tmpH->SetBinContent(b,tmpH->GetBinContent(b)/tmpH->GetBinWidth(b));
+  //TF1 func("dbexp","[0]*TMath::Exp([1]*x)+[2]*TMath::Exp([3]*x)",histNew->GetBinLowEdge(1),histNew->GetBinLowEdge(histNew->GetNbinsX()+1));
+  //func.SetParameter(0,100);
+  //func.SetParameter(1,-0.02);
+  //func.SetParameter(2,50);
+  //func.SetParameter(3,-0.03);
+  TF1 func("dbexp","[0]*TMath::Power(x,[1])+[2]*TMath::Exp([3]*x)",histNew->GetBinLowEdge(1),histNew->GetBinLowEdge(histNew->GetNbinsX()+1));
+  func.SetParameter(0,100);
+  func.SetParameter(1,-3);
+  func.SetParameter(2,50);
+  func.SetParameter(3,-0.01);
+  tmpH->Fit("expo","");
+  for (int b = 1;b<=histNew->GetNbinsX();b++){
+  	double xl = histNew->GetBinLowEdge(b);
+  	double xh = histNew->GetBinLowEdge(b+1);
+	histNew->SetBinContent(b,getIntegral(tmpH->GetFunction("expo"),xl,xh));
+	histNew->SetBinError(b,0);
+  }
+  histNew->GetXaxis()->SetTitle(varname);
+  tmpH->SetName(Form("DiagnosticsSmoothFit_%s",histNew->GetName()));
+  if (_fDiagnostics) _fDiagnostics->WriteTObject(tmpH);
+ 
+}
+*/
+
+void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::string wvar, RooRealVar &var, RooDataSet *data){
+  int nevents = data->numEntries();
+  const char *varname = var.GetName();
+  for (int b = 1;b<=histNew->GetNbinsX();b++){
+	histNew->SetBinError(b,0);
+  }
+  histNew->Sumw2();
+  for (int ev=0;ev<nevents;ev++){
+    const RooArgSet *vw = data->get(ev);
+    double val    = vw->getRealValue(varname);
+    double weight = data->weight();
+    //std::cout << val << ", " << weight <<std::endl;
+    var.setVal(val);
+    double wval  = vw->getRealValue(wvar.c_str());
+    double cweight = weight;
+    if (pdf_num) { 
+	//std::cout << wvar<< ", " << wval << ", Weight = "<< cweight << " x " << pdf_num->GetBinContent(pdf_num->FindBin(wval)) << std::endl;
+    	cweight *= pdf_num->GetBinContent(pdf_num->FindBin(wval));
+    } //else {
+    //	std::cout <<"Correction function NULL "<<std::endl;
+//	assert(0);
+ //   }
     histNew->Fill(val,cweight);
   }
   histNew->GetXaxis()->SetTitle(varname);
+ 
 }
 
 void diagonalizer::generateWeightedTemplate(TH1F *histNew, RooFormulaVar *pdf_num, RooRealVar &var, RooDataSet *data){

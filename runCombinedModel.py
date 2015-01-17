@@ -39,10 +39,18 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
     gvptname = "genVpt_"
   # First we need to re-build the nominal templates from the datasets modifying the weights
   target = _fin.Get("signal_zjets")
-  Zmm = _fin.Get("dimuon_zll")
+  #Zmm = _fin.Get("dimuon_zll")
+
   #Pho = _fin.Get("photon_gjet")
   ZmmScales = target.Clone(); ZmmScales.SetName("zmm_weights_%s"%nam)
+  for b in range(ZmmScales.GetNbinsX()): ZmmScales.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(ZmmScales,None,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  ZllScales = target.Clone(); ZllScales.SetName("zmm_weights_%s_denom"%nam)
+  for b in range(ZllScales.GetNbinsX()): ZllScales.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(ZllScales,None,gvptname,_wspace.var(metname),_wspace.data("dimuon_zll"))
   #PhotonScales = target.Clone(); PhotonScales.SetName("photon_weights_%s"%nam)
+  #target = ZmmScales.Clone()
+  Zmm    = ZllScales.Clone()
 
   # run through 3 datasets, photon, etc and generate a template from histograms 
   # We only nned to make NLO versions of Z(vv) and Photon :) 
@@ -60,7 +68,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   
   #################################################################################################################
   # now do systematic parts
-  Pho_mrUp = target.Clone(); Pho.SetName("photon_weights_denom_mrUp_%s"%nam)
+  Pho_mrUp = target.Clone(); Pho_mrUp.SetName("photon_weights_denom_mrUp_%s"%nam)
   for b in range(Pho_mrUp.GetNbinsX()): Pho_mrUp.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Pho_mrUp,nlo_pho_mrUp,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
 
@@ -68,7 +76,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   for b in range(Zvv_mrUp.GetNbinsX()):Zvv_mrUp.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv_mrUp,nlo_zjt_mrUp,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
 
-  Pho_mrDown = target.Clone(); Pho.SetName("photon_weights_denom_mrDown_%s"%nam)
+  Pho_mrDown = target.Clone(); Pho_mrDown.SetName("photon_weights_denom_mrDown_%s"%nam)
   for b in range(Pho_mrDown.GetNbinsX()): Pho_mrDown.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Pho_mrDown,nlo_pho_mrDown,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
 
@@ -76,7 +84,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   for b in range(Zvv_mrDown.GetNbinsX()): Zvv_mrDown.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv_mrDown,nlo_zjt_mrDown,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
 
-  Pho_mfUp = target.Clone(); Pho.SetName("photon_weights_denom_mfUp_%s"%nam)
+  Pho_mfUp = target.Clone(); Pho_mfUp.SetName("photon_weights_denom_mfUp_%s"%nam)
   for b in range(Pho_mfUp.GetNbinsX()): Pho_mfUp.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Pho_mfUp,nlo_pho_mfUp,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
 
@@ -84,7 +92,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   for b in range(Zvv_mfUp.GetNbinsX()): Zvv_mfUp.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv_mfUp,nlo_zjt_mfUp,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
 
-  Pho_mfDown = target.Clone(); Pho.SetName("photon_weights_denom_mfDown_%s"%nam)
+  Pho_mfDown = target.Clone(); Pho_mfDown.SetName("photon_weights_denom_mfDown_%s"%nam)
   for b in range(Pho_mfDown.GetNbinsX()): Pho_mfDown.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Pho_mfDown,nlo_pho_mfDown,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
 
@@ -100,7 +108,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_mfUp.Divide(Pho_mfUp); 	 Zvv_mfUp.SetName("photon_weights_%s_mf_Up"%nam);_fOut.WriteTObject(Zvv_mfUp)
   Zvv_mfDown.Divide(Pho_mfDown); Zvv_mfDown.SetName("photon_weights_%s_mf_Down"%nam);_fOut.WriteTObject(Zvv_mfDown)
 
-  ZmmScales.Divide(Zmm)
+  ZmmScales.Divide(Zmm); ZmmScales.SetName("zmm_weights_%s"%nam)
   PhotonScales = Zvv.Clone()
 
   #_fOut.WriteTObject(Zvv) # these are photon scales
@@ -126,6 +134,41 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
   CRs[1].add_nuisance("xs_dibosons",0.1,True)   # is a background systematic
 
+  # Make bin-to-bin errors ?!
+  for b in range(1,ZmmScales.GetNbinsX()+1):
+  	err  = ZmmScales.GetBinError(b);
+	cen  = ZmmScales.GetBinContent(b);
+	exp  = target.GetBinContent(b)
+	exppoiss = exp**0.5  # Expected Poisson Uncert
+	if (err/cen) < 0.2*(exppoiss/exp) : continue
+	else: print "Adding MC Stat Uncertainty for - ",  ZmmScales.GetName(), ", Bin",b
+	ZmmUp = ZmmScales.Clone(); ZmmUp.SetName("zmm_weights_%s_%s_StatBin_Zmm%d_Up"%(nam,nam,b))
+	ZmmDn = ZmmScales.Clone(); ZmmDn.SetName("zmm_weights_%s_%s_StatBin_Zmm%d_Down"%(nam,nam,b))
+	# If size of error is >0.1*expected poisson uncertanty
+	ZmmUp.SetBinContent(b,ZmmUp.GetBinContent(b)+err)
+	ZmmDn.SetBinContent(b,ZmmDn.GetBinContent(b)-err)
+	_fOut.WriteTObject(ZmmUp)
+	_fOut.WriteTObject(ZmmDn)
+	print ZmmUp.GetName(), ZmmDn.GetName()
+	CRs[1].add_nuisance_shape("%s_StatBin_Zmm%d"%(nam,b),_fOut)
+  
+  for b in range(1,PhotonScales.GetNbinsX()+1):
+  	err  = PhotonScales.GetBinError(b);
+	cen  = PhotonScales.GetBinContent(b);
+	exp  = target.GetBinContent(b)
+	exppoiss = exp**0.5  # Expected Poisson Uncert
+	if (err/cen) < 0.2*(exppoiss/exp) : continue
+	else: print "Adding MC Stat Uncertainty for - ",  PhotonScales.GetName(), ", Bin",b
+	PhotonUp = PhotonScales.Clone(); PhotonUp.SetName("photon_weights_%s_%s_StatBin_Photon%d_Up"%(nam,nam,b))
+	PhotonDn = PhotonScales.Clone(); PhotonDn.SetName("photon_weights_%s_%s_StatBin_Photon%d_Down"%(nam,nam,b))
+	# If size of error is >0.1*expected poisson uncertanty
+	PhotonUp.SetBinContent(b,PhotonUp.GetBinContent(b)+err)
+	PhotonDn.SetBinContent(b,PhotonDn.GetBinContent(b)-err)
+	_fOut.WriteTObject(PhotonUp)
+	_fOut.WriteTObject(PhotonDn)
+
+	CRs[0].add_nuisance_shape("%s_StatBin_Photon%d"%(nam,b),_fOut)
+
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
   return Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data%s"%nam,"doubleExponential_dimuon_mc%s"%nam,"signal_zjets",CRs,diag)
   
@@ -149,6 +192,8 @@ obsargset   = r.RooArgSet(out_ws.var("observed"),out_ws.cat("bin_number"))
 
 cmb_categories=[]
 diag_combined = diagonalizer(out_ws)
+# optional add the output file
+diag_combined.setOutFile(_fOut)
 for cid,cn in enumerate(categories): 
         _fDir = _fOut.mkdir("category_%s"%cn)
 	cmb_categories.append(cmodel(cid,cn,_f,_fDir,out_ws,diag_combined))
@@ -184,10 +229,10 @@ else: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.Roo
 # ------------------------------------------------------------
 # Now Generate the systematics coming from the fitting 
 npars = diag_combined.generateVariations(combined_fit_result)
-h2covar = diag_combined.retCovariance()
-_fOut.WriteTObject(h2covar)
-h2corr = diag_combined.retCorrelation()
-_fOut.WriteTObject(h2corr)
+#h2covar = diag_combined.retCovariance()
+#_fOut.WriteTObject(h2covar)
+#h2corr = diag_combined.retCorrelation()
+#_fOut.WriteTObject(h2corr)
 # ------------------------------------------------------------
 for cat in cmb_categories:
    cat.save_model(diag_combined)          # Saves the nominal model and makes templates for variations from each uncorrelated parameter :) 
