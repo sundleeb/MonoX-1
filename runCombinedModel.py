@@ -18,6 +18,9 @@ nlo_pho_mfUp = fkFactor.Get("pho_NLO_LO_mfUp")
 nlo_zjt_mfUp = fkFactor.Get("Z_NLO_LO_mfUp")
 nlo_pho_mfDown = fkFactor.Get("pho_NLO_LO_mfDown")
 nlo_zjt_mfDown = fkFactor.Get("Z_NLO_LO_mfDown")
+nlo_ewkUp    = fkFactor.Get("EWK_Up")
+nlo_ewkDown  = fkFactor.Get("EWK_Dwon")
+print "!!!!!",nlo_ewkUp.GetName()," -- ",nlo_ewkDown.GetName()
 
 def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
@@ -91,6 +94,14 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_mfDown = target.Clone(); Zvv_mfDown.SetName("photon_weights_nom_mfDown_%s"%nam)
   for b in range(Zvv_mfDown.GetNbinsX()): Zvv_mfDown.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv_mfDown,nlo_zjt_mfDown,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+
+  Zvv_ewkDown = target.Clone(); Zvv_ewkDown.SetName("photon_weights_%s_ewk_Down"%nam)
+  for b in range(Zvv_ewkDown.GetNbinsX()): Zvv_ewkDown.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_ewkDown,nlo_ewkDown,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+
+  Zvv_ewkUp   = target.Clone(); Zvv_ewkUp   .SetName("photon_weights_%s_ewk_Up"%nam)
+  for b in range(Zvv_ewkUp.GetNbinsX()): Zvv_ewkUp.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_ewkUp,nlo_ewkUp,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
   ##################################################################################################################
 
   # Have to also add one per systematic variation :(, 
@@ -99,6 +110,9 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_mrDown.Divide(Pho_mrDown); Zvv_mrDown.SetName("photon_weights_%s_mr_Down"%nam);_fOut.WriteTObject(Zvv_mrDown)
   Zvv_mfUp.Divide(Pho_mfUp); 	 Zvv_mfUp.SetName("photon_weights_%s_mf_Up"%nam);_fOut.WriteTObject(Zvv_mfUp)
   Zvv_mfDown.Divide(Pho_mfDown); Zvv_mfDown.SetName("photon_weights_%s_mf_Down"%nam);_fOut.WriteTObject(Zvv_mfDown)
+
+  _fOut.WriteTObject(Zvv_ewkDown)
+  _fOut.WriteTObject(Zvv_ewkUp)
 
   ZmmScales.Divide(Zmm)
   PhotonScales = Zvv.Clone()
@@ -120,7 +134,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   CRs[0].add_nuisance_shape("mr",_fOut) 
   CRs[0].add_nuisance_shape("mf",_fOut) 
-  CRs[0].add_nuisance("ewk",0.05) 
+#  CRs[0].add_nuisance("ewk",0.05) 
+  CRs[0].add_nuisance_shape("ewk",_fOut) 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
   CRs[1].add_nuisance("MuonEfficiency",0.01)
   CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
