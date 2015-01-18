@@ -110,6 +110,10 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_mrDown.Divide(Pho_mrDown); Zvv_mrDown.SetName("photon_weights_%s_mr_Down"%nam);_fOut.WriteTObject(Zvv_mrDown)
   Zvv_mfUp.Divide(Pho_mfUp); 	 Zvv_mfUp.SetName("photon_weights_%s_mf_Up"%nam);_fOut.WriteTObject(Zvv_mfUp)
   Zvv_mfDown.Divide(Pho_mfDown); Zvv_mfDown.SetName("photon_weights_%s_mf_Down"%nam);_fOut.WriteTObject(Zvv_mfDown)
+  
+  # Divide out the nominal photon for the EWK corrections as this is already the relative difference
+  Zvv_ewkUp.Divide(Pho)
+  Zvv_ewkDown.Divide(Pho)
 
   _fOut.WriteTObject(Zvv_ewkDown)
   _fOut.WriteTObject(Zvv_ewkUp)
