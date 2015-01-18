@@ -102,6 +102,12 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_ewkUp   = target.Clone(); Zvv_ewkUp   .SetName("photon_weights_%s_ewk_Up"%nam)
   for b in range(Zvv_ewkUp.GetNbinsX()): Zvv_ewkUp.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv_ewkUp,nlo_ewkUp,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  
+  nlo_ewkFlat = nlo_ewkUp.Clone("ewk_Base")
+  nlo_ewkFlat.Divide(nlo_ewkFlat)
+  Zvv_ewkBase = target.Clone(); Zvv_ewkBase  .SetName("photon_weights_%s_ewk_Base"%nam)
+  for b in range(Zvv_ewkBase.GetNbinsX()): Zvv_ewkBase.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_ewkBase,nlo_ewkFlat,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
   ##################################################################################################################
 
   # Have to also add one per systematic variation :(, 
@@ -112,9 +118,11 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_mfDown.Divide(Pho_mfDown); Zvv_mfDown.SetName("photon_weights_%s_mf_Down"%nam);_fOut.WriteTObject(Zvv_mfDown)
   
   # Divide out the nominal photon for the EWK corrections as this is already the relative difference
-  Zvv_ewkUp.Divide(Pho)
-  Zvv_ewkDown.Divide(Pho)
-
+  Zvv_ewkUp  .Divide(Zvv_ewkBase)
+  Zvv_ewkDown.Divide(Zvv_ewkBase)
+  Zvv_ewkUp  .Multiply(Zvv)
+  Zvv_ewkDown.Multiply(Zvv)
+  
   _fOut.WriteTObject(Zvv_ewkDown)
   _fOut.WriteTObject(Zvv_ewkUp)
 
@@ -138,7 +146,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   CRs[0].add_nuisance_shape("mr",_fOut) 
   CRs[0].add_nuisance_shape("mf",_fOut) 
-#  CRs[0].add_nuisance("ewk",0.05) 
+  #CRs[0].add_nuisance("ewk",0.05) 
   CRs[0].add_nuisance_shape("ewk",_fOut) 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
   CRs[1].add_nuisance("MuonEfficiency",0.01)
