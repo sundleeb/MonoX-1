@@ -36,7 +36,8 @@ def correctNtuple(iFile,iSample,iFileName,iScale):
     lTree.Write()
 
 sys.path.append("configs")
-import categories_config_vtag_met as x
+#import categories_config_vtag_met as x
+x = __import__(sys.argv[1]) 
 
 for cat_id,cat in enumerate(x.categories):
     lBaseFile  = r.TFile.Open(cat['in_file_name'])

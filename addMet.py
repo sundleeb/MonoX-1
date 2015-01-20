@@ -35,7 +35,8 @@ def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
     lTree.Write()
 
 sys.path.append("configs")
-import categories_config_vtag as x
+#import categories_config_vtag as x
+x = __import__(sys.argv[1]) 
 
 r.gROOT.SetBatch(1)
 r.gROOT.ProcessLine('.L ./RecoilCorrector.hh+')

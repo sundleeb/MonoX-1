@@ -3,6 +3,20 @@ out_file_name = 'mono-x-vtagged.root'
 BINS = [250.0 , 260.0 , 270.0 , 280.0 , 290.0 , 300.0 , 310.0 , 320.0 , 330.0,340,360,380,420,510,1000]
 BINS = range(250,550,50)
 BINS.append(1000)
+METSAMPLES={  # Define Sampls which are to have Recoil corrections applied
+                    #Di Muon Control Region
+                    "Zll_di_muon_control","Znunu_di_muon_control","Wjets_di_muon_control","WW_di_muon_control","WZ_di_muon_control","ZZ_di_muon_control",
+                    "ttbar_di_muon_control","SingleTop_di_muon_control",
+                    #Single Muon Control Region
+                    "Wjets_single_muon_control","Zll_single_muon_control","WW_single_muon_control","WZ_single_muon_control","ZZ_single_muon_control","ttbar_single_muon_control",
+                    "SingleTop_single_muon_control",
+                    #Photon Control Region
+                    "Photon_photon_control","Wjets_photon_control","Zll_photon_control","WW_photon_control","ZZ_photon_control","ttbar_photon_control","SingleTop_photon_control",
+                    "QCD_photon_control",
+                    #Signal Region
+                    "Wjets_signal","Zll_signal","WW_signal","WZ_signal","ZZ_signal","ttbar_signal","SingleTop_signal","QCD_signal",
+                    "ggH125_signal"    	,"VBFH125_signal"   	,"WH125_signal"   	,"ZH125_signal","Znunu_signal"
+},
 categories = [
 	{
             'name':"resolved"
@@ -33,6 +47,10 @@ categories = [
 		  ,"VBFH125_signalMet"            :['signal','vbf',1,1]
 		  ,"WH125_signalMet"              :['signal','wh',1,1]
 		  ,"ZH125_signalMet"              :['signal','zh',1,1]
+		  ,"ggH125_signalMet"             :['signal','Higgs125',1,1]
+		  ,"VBFH125_signalMet"            :['signal','Higgs125',1,1]
+		  ,"WH125_signalMet"              :['signal','Higgs125',1,1]
+		  ,"ZH125_signalMet"              :['signal','Higgs125',1,1]
 		  ,"data_signal"	           :['signal','data',0,0]
 
 		  # Di muon-Control
@@ -71,21 +89,7 @@ categories = [
 		  ,"QCD_photon_control"		   :['photon','qcd',1,0]
 
 	   	}
-                ,"metsamples": # For Recoil Corrections
-	   	{ 
-                    #Di Muon Control Region
-                    "Zll_di_muon_control","Znunu_di_muon_control","Wjets_di_muon_control","WW_di_muon_control","WZ_di_muon_control","ZZ_di_muon_control",
-                    "ttbar_di_muon_control","SingleTop_di_muon_control",
-                    #Single Muon Control Region
-                    "Wjets_single_muon_control","Zll_single_muon_control","WW_single_muon_control","WZ_single_muon_control","ZZ_single_muon_control","ttbar_single_muon_control",
-                    "SingleTop_single_muon_control",
-                    #Photon Control Region
-                    "Photon_photon_control","Wjets_photon_control","Zll_photon_control","WW_photon_control","ZZ_photon_control","ttbar_photon_control","SingleTop_photon_control",
-                    "QCD_photon_control",
-                    #Signal Region
-                    "Wjets_signal","Zll_signal","WW_signal","WZ_signal","ZZ_signal","ttbar_signal","SingleTop_signal","QCD_signal",
-                    "ggH125_signal"    	,"VBFH125_signal"   	,"WH125_signal"   	,"ZH125_signal","Znunu_signal"
-                    },
+                ,"metsamples":METSAMPLES[:] # For Recoil Corrections
         },
 	{
 	    'name':"boosted"
@@ -116,6 +120,10 @@ categories = [
 		  ,"VBFH125_signalMet"         :['signal','vbf',1,1]
 		  ,"WH125_signalMet"   	:['signal','wh',1,1]
 		  ,"ZH125_signalMet"   	:['signal','zh',1,1]
+		  ,"ggH125_signalMet"             :['signal','Higgs125',1,1]
+		  ,"VBFH125_signalMet"            :['signal','Higgs125',1,1]
+		  ,"WH125_signalMet"              :['signal','Higgs125',1,1]
+		  ,"ZH125_signalMet"              :['signal','Higgs125',1,1]
 		  #,"GV_signal"   	        :['signal','gv',1,0]
 		  ,"data_signal"    	        :['signal','data',0,0]
 
@@ -155,27 +163,13 @@ categories = [
 		  ,"SingleTop_photon_controlMet"   :['photon','top',1,0]
                    ,"QCD_photon_control"	   :['photon','qcd',1,0]
 	   	},
-                "metsamples":
-	   	{ 
-                    #Di Muon Control Region
-                    "Zll_di_muon_control","Znunu_di_muon_control","Wjets_di_muon_control","WW_di_muon_control","WZ_di_muon_control","ZZ_di_muon_control",
-                    "ttbar_di_muon_control","SingleTop_di_muon_control",
-                    #Single Muon Control Region
-                    "Wjets_single_muon_control","Zll_single_muon_control","WW_single_muon_control","WZ_single_muon_control","ZZ_single_muon_control","ttbar_single_muon_control",
-                    "SingleTop_single_muon_control",
-                    #Photon Control Region
-                    "Photon_photon_control","Wjets_photon_control","Zll_photon_control","WW_photon_control","ZZ_photon_control","ttbar_photon_control","SingleTop_photon_control",
-                    "QCD_photon_control",
-                    #Signal Region
-                    "Wjets_signal","Zll_signal","WW_signal","WZ_signal","ZZ_signal","ttbar_signal","SingleTop_signal","QCD_signal",
-                    "ggH125_signal"           ,"VBFH125_signal"      ,"WH125_signal"   	,"ZH125_signal","Znunu_signal"
-                },
+                ,"metsamples":METSAMPLES[:] # For Recoil Corrections
         },                     
     	{
 	    'name':"inclusive"
 	   ,'in_file_name':"monojet-combo.root"
 	   #,'in_file_name':"inclusive-combo.root"
-	   ,"cutstring":"mvamet>200 && mvamet<1000"
+	   ,"cutstring":"mvamet>200 && mvamet<1000 &&weight<100"
 	   ,"varstring":["mvamet",200,1000]
 	   ,"weightname":"weight"
 	   ,"bins":[200.0 , 210.0 , 220.0 , 230.0 , 240.0 , 250.0 , 260.0 , 270.0 , 280.0 , 290.0 , 300.0 , 310.0 , 320.0 , 330.0,340,360,380,420,510,1000]
@@ -240,20 +234,6 @@ categories = [
 		  ,"SingleTop_photon_controlMet"   :['photon','top',1,0]
                   ,"QCD_photon_control"	           :['photon','qcd',1,0]
 	   	},
-                "metsamples":
-	   	{
-                    #Di Muon Control Region
-                    "Zll_di_muon_control","Znunu_di_muon_control","Wjets_di_muon_control","WW_di_muon_control","WZ_di_muon_control","ZZ_di_muon_control",
-                    "ttbar_di_muon_control","SingleTop_di_muon_control",
-                    #Single Muon Control Region
-                    "Wjets_single_muon_control","Zll_single_muon_control","WW_single_muon_control","WZ_single_muon_control","ZZ_single_muon_control","ttbar_single_muon_control",
-                    "SingleTop_single_muon_control",
-                    #Photon Control Region
-                    "Photon_photon_control","Wjets_photon_control","Zll_photon_control","WW_photon_control","ZZ_photon_control","ttbar_photon_control","SingleTop_photon_control",
-                    "QCD_photon_control",
-                    #Signal Region
-                    "Wjets_signal","Zll_signal","WW_signal","WZ_signal","ZZ_signal","ttbar_signal","SingleTop_signal","QCD_signal",
-                    "ggH125_signal"    	,"VBFH125_signal"   	,"WH125_signal"   	,"ZH125_signal","Znunu_signal"
-                },
+                "metsamples":METSAMPLES[:]
 	}
 ]
