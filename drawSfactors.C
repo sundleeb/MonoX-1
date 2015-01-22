@@ -123,4 +123,29 @@ lat->SetTextFont(42);
   lat->DrawLatex(0.7,0.94,Form("%s category",cats[c].c_str()));
   canv_variations_ratio->SaveAs(Form("systematic_variations_ratio_%s.pdf",cats[c].c_str()));
   canv_variations_ratio->SaveAs(Form("systematic_variations_ratio_%s.png",cats[c].c_str()));
+
+
+  // Finally make a ratio of the pre->post fit expectation of the Z(vv) template!, bit of a pain but can do it!
+  TCanvas *canCorr  = new TCanvas();
+  double xmin = hpho->GetBinLowEdge(1);
+  double xmax = hpho->GetBinLowEdge(hpho->GetNbinsX()+1);
+  RooCurve *crv_mc = (RooCurve*) (zjets_signalregion_mc_fit_before_after->GetListOfPrimitives()->FindObject(Form("doubleExponential_dimuon_mc%s_Norm[mvamet]",cats[c].c_str())));
+  RooCurve *crv_da = (RooCurve*) (zjets_signalregion_mc_fit_before_after->GetListOfPrimitives()->FindObject(Form("doubleExponential_dimuon_data%s_Norm[mvamet]",cats[c].c_str())));
+  TGraph *gr = new TGraph();
+  int pt=0;
+  for (double x=xmin;x<=xmax;x+=1){
+	double num = crv_da->Eval(x);
+	double denum = crv_mc->Eval(x);
+	gr->SetPoint(pt,x,num/denum);
+	pt++;
+  }
+  gr->SetLineColor(4); gr->SetLineWidth(2);
+  gr->Draw("AL");
+  gr->GetXaxis()->SetTitle("E_{T}^{miss}");
+  gr->GetYaxis()->SetTitle("r(E_{T}^{miss}) - Z#nu#nu Correction function");
+  lat->DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
+  lat->DrawLatex(0.7,0.94,Form("%s category",cats[c].c_str()));
+  canCorr->SaveAs(Form("correction_zvv_ratio_%s.pdf",cats[c].c_str()));
+  canCorr->SaveAs(Form("correction_zvv_ratio_%s.png",cats[c].c_str()));
+
 }
