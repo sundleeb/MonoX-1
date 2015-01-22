@@ -17,7 +17,7 @@ def getNormalizedHist(hist):
 
 
 class Bin:
- def __init__(self,catid,chid,id,var,datasetname,pdf,norm,wspace,wspace_out,xmin,xmax):
+ def __init__(self,catid,chid,id,var,datasetname,wspace,wspace_out,xmin,xmax):
 
    self.chid	  = chid# This is the thing that links two bins from different controls togeher
    self.id        = id
@@ -26,13 +26,9 @@ class Bin:
    self.binid     = "cat_%d_ch_%d_bin_%d"%(catid,chid,id)
    self.wspace_out = wspace_out
    self.set_wspace(wspace)
-   self.set_norm_var(norm)
 
    self.var	  = self.wspace_out.var(var.GetName())
-   #self.var	  = self.wspace.var(var.GetName())
    self.dataset   = self.wspace.data(datasetname)
-   if not self.wspace_out.pdf(pdf.GetName()): self.wspace_out._import(pdf,r.RooFit.RecycleConflictNodes())
-   self.pdf	  = self.wspace_out.pdf(pdf.GetName())
 
    self.rngename = "rnge_%s"%self.binid
    self.var.setRange(self.rngename,xmin,xmax)
@@ -40,19 +36,15 @@ class Bin:
    self.xmax = xmax
    self.cen = (xmax+xmin)/2
 
+   self.initY     = 0 
    self.binerror = 0
 
    self.o	= self.dataset.sumEntries("%s>=%g && %s<%g "%(var.GetName(),xmin,var.GetName(),xmax))
-   #self.o	= (self.wspace.data(datasetname)).sumEntries("1>0",self.rngename)
    self.obs	= self.wspace_out.var("observed")#r.RooRealVar("observed","Observed Events bin",1)
-   #self.setup_expect_var(self)
+
    self.argset = r.RooArgSet(wspace.var(self.var.GetName())) # <-------------------------- Check this is cool
    self.obsargset=r.RooArgSet(self.wspace_out.var("observed"),self.wspace_out.cat("bin_number"))
-   self.var.setRange("fullRange_%d"%self.catid,self.wspace.var(self.var.GetName()).getMin(),self.wspace.var(self.var.GetName()).getMax())
    
-   self.pdfFullInt = pdf.createIntegral(self.argset,r.RooFit.Range("fullRange_%d"%self.catid),r.RooFit.NormSet(self.argset))
-   #if not self.wspace.var(self.pdfFullInt.GetName()) : self.wspace._import(self.pdfFullInt)
-   self.wspace_out._import(self.pdfFullInt)
    self.b  = 0
    #self.constBkg = True
 
@@ -89,6 +81,12 @@ class Bin:
    self.wspace_out._import(self.b)
    self.b = self.wspace_out.function(self.b.GetName())
 
+ def ret_initY(self):
+   return self.initY
+
+ def set_initY(self,mcdataset):
+   self.initY = self.wspace.data(mcdataset).sumEntries("%s>=%g && %s<%g"%(self.var.GetName(),self.xmin,self.var.GetName(),self.xmax),self.rngename)
+
  def set_label(self,cat):
    self.categoryname = cat.GetName()
    #self.wspace._import(cat,r.RooFit.RecycleConflictNodes())
@@ -97,9 +95,6 @@ class Bin:
    self.wspace = w
    self.wspace._import = getattr(self.wspace,"import") # workaround: import is a python keyword
 
- def set_norm_var(self,v):
-   if not self.wspace_out.var(v.GetName()) : self.wspace_out._import(v)
-   self.normvar = self.wspace_out.var(v.GetName())
 
  def set_sfactor(self,val):
    #print "Scale Factor for " ,self.binid,val
@@ -113,16 +108,10 @@ class Bin:
      self.wspace_out._import(self.sfactor,r.RooFit.RecycleConflictNodes())
 
  def setup_expect_var(self):
-   # This will be the RooRealVar containing the value of the number of expected events in this bin
-   self.integral = self.pdf.createIntegral(self.argset,r.RooFit.Range(self.rngename),r.RooFit.NormSet(self.argset))
-   self.wspace_out._import(self.integral,r.RooFit.RecycleConflictNodes())
-   if not self.wspace_out.function("model_mu_cat_%d_bin_%d"%(self.catid,self.id,)):
-     self.model_mu = r.RooFormulaVar("model_mu_cat_%d_bin_%d"%(self.catid,self.id),"Model of N expected events in %d"%self.id,"@0*@1/@2",r.RooArgList(
-        self.wspace_out.function(self.integral.GetName())
-     	,self.wspace_out.var(self.normvar.GetName())
-	,self.wspace_out.function(self.pdfFullInt.GetName()))) # in reality this will be given and depend on the integral of the pdf!
-     self.wspace_out._import(self.model_mu,r.RooFit.RecycleConflictNodes())
-   else: self.model_mu = self.wspace_out.function("model_mu_cat_%d_bin_%d"%(self.catid,self.id))
+   if not self.wspace_out.var("model_mu_cat_%d_bin_%d"%(self.catid,self.id,)):
+     self.model_mu = r.RooRealVar("model_mu_cat_%d_bin_%d"%(self.catid,self.id),"Model of N expected events in %d"%self.id,self.initY,1,10000)
+     self.model_mu.removeMax()
+   else: self.model_mu = self.wspace_out.var("model_mu_cat_%d_bin_%d"%(self.catid,self.id))
 
    arglist = r.RooArgList((self.model_mu),self.wspace_out.var(self.sfactor.GetName()))
 
@@ -169,7 +158,7 @@ class Bin:
    if not self.wspace_out.data("combinedData"): 
      obsdata = r.RooDataSet("combinedData","Data in all Bins",local_obsargset)
      self.wspace_out._import(obsdata)
-   else:obsdata = self.wspace_out.data("combinedData")
+   obsdata = self.wspace_out.data("combinedData")
    obsdata.addFast(local_obsargset)
   
  def set_control_region(self,control):
@@ -192,14 +181,16 @@ class Bin:
    #if self.constBkg: return self.b
    #else: return (1-self.b)*(self.ret_expected())
    return self.wspace_out.function(self.b.GetName()).getVal()
+ def ret_correction(self):
+   return self.wspace_out.var(self.model_mu.GetName()).getVal()/self.initY
  def ret_model(self):
-   return self.wspace_out.function(self.model_mu.GetName()).getVal()
+   return self.wspace_out.var(self.model_mu.GetName()).getVal()
  def ret_model_err(self):
    print self.model_mu.GetName(), self.model_mu.getVal()
-   return self.wspace_out.function(self.model_mu.GetName()).getError()
+   return self.wspace_out.var(self.model_mu.GetName()).getError()
 
  def Print(self):
-   print "Channel/Bin -> ", self.chid,self.binid, ", Var -> ",self.var.GetName(), ", Range -> ", self.xmin,self.xmax 
+   print "Channel/Bin -> ", self.chid,self.binid, ", Var -> ",self.var.GetName(), ", Range -> ", self.xmin,self.xmax , "MODEL MU (prefit/current state)= ",self.initY,"/",self.ret_model()
    print " .... observed = ",self.o, ", expected = ", self.wspace_out.function(self.mu.GetName()).getVal(), " (of which %f is background)"%self.ret_background(), ", scale factor = ", self.wspace_out.function(self.sfactor.GetName()).getVal() 
 
 class Channel:
@@ -335,6 +326,7 @@ class Category:
    ,_control_regions 	# CRs constructed 
    ,diag		# a diagonalizer object
   ):
+   print "THIS VERSION WILL NOT USE THE PDF, THE ARGUMENT IS THERE FOR BACK-COMPATIBILITY"
    self.cname = cname;
    self.catid = catid;
    # A crappy way to store canvases to be saved in the end
@@ -358,7 +350,7 @@ class Category:
    self._control_regions = _control_regions
    self._pdf      = _wspace.pdf(_pdfname)
    self._pdf_orig = _wspace.pdf(_pdfname_zvv)
-   self._data_mc  = _wspace.data(_target_datasetname)
+   #self._data_mc  = _wspace.data(_target_datasetname)
    self._pdfname = _pdfname
    self._pdfname_zvv  =_pdfname_zvv
    self._target_datasetname = _target_datasetname
@@ -366,47 +358,15 @@ class Category:
    self._obsvar = self._wspace_out.var("observed")
    #self._obsdata = self._wspace_out.data("combinedData")
    if self._wspace_out.var(self._var.GetName()): a = 1
-#     if self._var.getMin()< self._wspace_out.var(self._var.GetName()).getMin() : self._wspace_out.var(self._var.GetName()).setMin(self._var.getMin())
-#     if self._var.getMax()> self._wspace_out.var(self._var.GetName()).getMax() : self._wspace_out.var(self._var.GetName()).setMin(self._var.getMax())
-#     if self._var.getMin()> self._wspace_out.var(self._var.GetName()).getMin() : self._var.setMin(self._wspace_out.var(self._var.GetName()).getMin())
-#     if self._var.getMax()< self._wspace_out.var(self._var.GetName()).getMax() : self._var.setMax(self._wspace_out.var(self._var.GetName()).getMax())
 
    else: self._wspace_out._import(self._var,r.RooFit.RecycleConflictNodes())
    self._var = self._wspace_out.var(self._var.GetName())
-   self._norm = r.RooRealVar("%s_%s_norm"%(cname,_target_datasetname),"Norm",_wspace.data(_target_datasetname).sumEntries(),0,100000)
-   self._norm.removeMax()
-   self._norm_orig= r.RooRealVar("%s_%s_norm_orig"%(cname,_target_datasetname),"Norm_orig",_wspace.data(_target_datasetname).sumEntries(),0,10000)
-   self._norm.setConstant(False)
-   self._norm_orig.setConstant(True)
-   self._wspace_out._import(self._norm)
-   self._wspace_out._import(self._norm_orig)
-   self._wspace_out._import(self._pdf)
-   self._wspace_out._import(self._pdf_orig)
 
-   diag.freezeParameters(self._pdf_orig.getParameters(self._data_mc),False)
-   self._pdf_orig.fitTo(self._data_mc)  # Just initialises parameters 
-   self._pdf.fitTo(self._data_mc)       # Just initialises parameters 
-   # Now we loop over the CR's and bins to produce the counting experiments for this category 
-   # A fit of the original pdf to the Zvv data will help kick things off
-   self._pdf      = self._wspace_out.pdf(_pdfname)
-   diag.freezeParameters(self._pdf_orig.getParameters(self._data_mc),True)
-   self._norm_orig.setConstant(True)
    for j,cr in enumerate(self._control_regions):
     for i,bl in enumerate(self._bins):
      if i >= len(self._bins)-1 : continue
      self.sample.defineType("cat_%d_ch_%d_bin_%d"%(self.catid,j,i),10*MAXBINS*catid+MAXBINS*j+i)
      self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
-
-  
-   # Now we have to build the ratio (correction) and import to new workspace
-   ratioargs = r.RooArgList(self._wspace_out.var(self._norm.GetName())
-   	                   ,self._wspace_out.pdf(self._pdf.GetName())
-			   ,self._wspace_out.var(self._norm_orig.GetName())
-			   ,self._wspace_out.pdf(self._pdf_orig.GetName()))
-   self.pdf_ratio = r.RooFormulaVar("ratio_correction_%s"%cname,"Correction for Zvv from dimuon+photon control regions","@0*@1/(@2*@3)",ratioargs)
-   self._wspace_out._import(self.pdf_ratio)
-   self._wspace._import(self.pdf_ratio)
-
    
   def fillExpectedHist(self,cr,expected_hist):
    bc=0
@@ -436,6 +396,13 @@ class Category:
      if i>=len(self._bins)-1: break
      model_hist.SetBinContent(i+1,ch.ret_model())
 
+  def makeWeightHists(self):
+   hist = r.TH1F("control_weights","Expected Post-fit/Pre-fit",len(self._bins)-1,array.array('d',self._bins))
+   for i,ch in enumerate(self.channels):
+     if i>=len(self._bins)-1: break
+     hist.SetBinContent(i+1,ch.ret_correction())
+   return hist
+
   def init_channels(self):
    sample = self._wspace_out.cat("bin_number") #r.RooCategory("bin_number","bin_number")
    #for j,cr in enumerate(self._control_regions):
@@ -443,10 +410,11 @@ class Category:
     for i,bl in enumerate(self._bins):
      if i >= len(self._bins)-1 : continue
      xmin,xmax = bl,self._bins[i+1]
-     ch = Bin(self.catid,j,i,self._var,cr.ret_dataset(),self._pdf,self._norm,self._wspace,self._wspace_out,xmin,xmax)
+     ch = Bin(self.catid,j,i,self._var,cr.ret_dataset(),self._wspace,self._wspace_out,xmin,xmax)
      ch.set_control_region(cr)
      if cr.has_background(): ch.add_background(cr.ret_background())
      ch.set_label(sample) # should import the sample category label
+     ch.set_initY(self._target_datasetname)
      ch.set_sfactor(cr.ret_sfactor(i))
      # This has to the the last thing
      ch.setup_expect_var()
@@ -505,7 +473,8 @@ class Category:
  
     diag.setEigenset(par,1)  # up variation
     #fillModelHist(hist_up,channels)
-    diag.generateWeightedTemplate(hist_up,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
+    histW = self.makeWeightHists()
+    diag.generateWeightedTemplate(hist_up,histW,self._varname,self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
 
     # Also want to calculate for each control region an error per bin associated, its very easy to do, but only do it for "Up" variation and the error will symmetrize itself
     for j,cr in enumerate(self._control_regions):
@@ -517,7 +486,8 @@ class Category:
 
     diag.setEigenset(par,-1)  # up variation
     #fillModelHist(hist_dn,channels)
-    diag.generateWeightedTemplate(hist_dn,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
+    histW = self.makeWeightHists()
+    diag.generateWeightedTemplate(hist_dn,histW,self._varname,self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
 
     # Reset parameter values 
     diag.resetPars()
@@ -574,27 +544,39 @@ class Category:
    # Need to make ratio 
    self.model_hist = r.TH1F("%s_combined_model"%(self.cname),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
    #fillModelHist(model_hist,channels)
-   diag.generateWeightedTemplate(self.model_hist,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
+
+   histW = self.makeWeightHists()
+   diag.generateWeightedTemplate(self.model_hist,histW,self._varname,self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
    self.model_hist.SetLineWidth(2)
    self.model_hist.SetLineColor(1)
    #_fout = r.TFile("combined_model.root","RECREATE")
    #_fout.WriteTObject(self.model_hist)
    self.model_hist.SetName("combined_model")
    self.histograms.append(self.model_hist)
+   histW.SetName("correction_weights_%s"%self.cname)
+   histW.SetLineWidth(2)
+   histW.SetLineColor(4)
+   self.histograms.append(histW)
 
 
   def make_post_fit_plots(self):
-   # first put central value post fit curve onto canvas
-   # Now start making the first plot
-   self.fr = self._wspace.var(self._var.GetName()).frame()
-   self._wspace.data(self._target_datasetname).plotOn(self.fr,r.RooFit.Binning(200))
-   self._pdf_orig.plotOn(self.fr,r.RooFit.LineColor(r.kRed))
    c = r.TCanvas("zjets_signalregion_mc_fit_before_after")
-   self.fr.GetXaxis().SetTitle("fake MET (GeV)")
-   self.fr.GetYaxis().SetTitle("Events/GeV")
-   self.fr.SetTitle("")
-   self._pdf.plotOn(self.fr,r.RooFit.LineColor(r.kBlue))
-   self.fr.Draw()
+   hist_original = r.TH1F("%s_OriginalZvv"%(self.cname),"Expected %s Zvv (prefit)"%self.cname,len(self._bins)-1,array.array('d',self._bins)) 
+   hist_post     = r.TH1F("%s_NewZvv"%(self.cname),"Expected %s Zvv (postfit)"%self.cname,len(self._bins)-1,array.array('d',self._bins)) 
+   for i,ch in enumerate(self.channels):
+     if i>=len(self._bins)-1: break
+     hist_original.SetBinContent(i+1,ch.ret_initY())
+     hist_post.SetBinContent(i+1,ch.ret_model())
+   hist_original.GetXaxis().SetTitle("fake MET (GeV)")
+   hist_original.GetXaxis().SetTitle("Events/GeV")
+   hist_original.SetLineWidth(2)
+   hist_post.SetLineWidth(2)
+   hist_original.SetLineColor(2)
+   hist_post.SetLineColor(4)
+   hist_original = getNormalizedHist(hist_original)
+   hist_post     = getNormalizedHist(hist_post)
+   hist_original.Draw("hist")
+   hist_post.Draw("histsame")
    self._fout.WriteTObject(c)    
  
    lat = r.TLatex();

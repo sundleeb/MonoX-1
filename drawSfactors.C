@@ -47,9 +47,8 @@ lat->SetTextFont(42);
   
   fi->cd(Form("category_%s",cats[c].c_str()));
   TLegend *ld = new TLegend(0.5,0.65,0.89,0.89);ld->SetFillColor(0);
-  ld->AddEntry(&dat,"Z(#rightarrow#nu#nu)+jets MC","PE1");
-  ld->AddEntry(&mcfit,"Pdf fit to Z(#rightarrow#nu#nu) MC","L");
-  ld->AddEntry(&datafit,"Pdf post-fit to control regions","L");
+  ld->AddEntry(&mcfit,"Z(#rightarrow#nu#nu) MC","L");
+  ld->AddEntry(&datafit,"Corrected Z(#rightarrow#nu#nu) MC","L");
   zjets_signalregion_mc_fit_before_after->SetLogy(); 
   zjets_signalregion_mc_fit_before_after->Draw();
   ld->Draw();
@@ -127,6 +126,7 @@ lat->SetTextFont(42);
 
   // Finally make a ratio of the pre->post fit expectation of the Z(vv) template!, bit of a pain but can do it!
   TCanvas *canCorr  = new TCanvas();
+  /*
   double xmin = hpho->GetBinLowEdge(1);
   double xmax = hpho->GetBinLowEdge(hpho->GetNbinsX()+1);
   RooCurve *crv_mc = (RooCurve*) (zjets_signalregion_mc_fit_before_after->GetListOfPrimitives()->FindObject(Form("doubleExponential_dimuon_mc%s_Norm[mvamet]",cats[c].c_str())));
@@ -143,6 +143,12 @@ lat->SetTextFont(42);
   gr->Draw("AL");
   gr->GetXaxis()->SetTitle("E_{T}^{miss}");
   gr->GetYaxis()->SetTitle("r(E_{T}^{miss}) - Z#nu#nu Correction function");
+  */
+  TH1F *hc = (TH1F*)fi->Get(Form("category_%s/correction_weights_%s",cats[c].c_str(),cats[c].c_str()));
+  hc->SetTitle("");
+  hc->GetXaxis()->SetTitle("E_{T}^{miss}");
+  hc->GetYaxis()->SetTitle("r(E_{T}^{miss}) - Z#nu#nu Correction function");
+  hc->Draw("hist");
   lat->DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
   lat->DrawLatex(0.7,0.94,Form("%s category",cats[c].c_str()));
   canCorr->SaveAs(Form("correction_zvv_ratio_%s.pdf",cats[c].c_str()));
