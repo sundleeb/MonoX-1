@@ -158,6 +158,7 @@ class Bin:
    self.wspace_out._import(self.obs,r.RooFit.RecycleConflictNodes())
    self.wspace_out.factory("Poisson::pdf_%s(observed,mu_%s)"%(self.binid,self.binid))
 
+
  def add_to_dataset(self):
    # create a dataset called observed
    self.wspace_out.var("observed").setVal(self.o)
@@ -244,8 +245,6 @@ class Channel:
       self.wspace_out._import(nuis)
       cont = r.RooGaussian("const_%s"%name,"Constraint - %s"%name,self.wspace_out.var(nuis.GetName()),r.RooFit.RooConst(0),r.RooFit.RooConst(1));
       self.wspace_out._import(cont)
-      if bkg: self.bkg_nuisances.append(name)
-      else:   self.nuisances.append(name)
 
     # run through all of the bins in the control regions and create a function to interpolate
     for b in range(self.nbins):
@@ -255,6 +254,8 @@ class Channel:
       if not self.wspace_out.function(func.GetName()) :self.wspace_out._import(func)
     # else 
     #  nuis = self.wspace_out.var("nuis_%s"%name)
+    if bkg: self.bkg_nuisances.append(name)
+    else:   self.nuisances.append(name)
     
   def add_nuisance_shape(self,name,file):
     if not(self.wspace_out.var("nuis_%s"%name)) :
@@ -262,7 +263,6 @@ class Channel:
       self.wspace_out._import(nuis)
       cont = r.RooGaussian("const_%s"%name,"Constraint - %s"%name,self.wspace_out.var(nuis.GetName()),r.RooFit.RooConst(0),r.RooFit.RooConst(1));
       self.wspace_out._import(cont)
-      self.nuisances.append(name)
 
     sfup = self.scalefactors.GetName()+"_%s_"%name+"Up"
     sfdn = self.scalefactors.GetName()+"_%s_"%name+"Down"
@@ -282,6 +282,7 @@ class Channel:
 		,r.RooArgList(self.wspace_out.var("nuis_%s"%name))) # this is now relative deviation, SF-SF_0 = func => SF = SF_0*(1+func/SF_0)
 	self.wspace_out.var("nuis_%s"%name).setVal(0)
         if not self.wspace_out.function(func.GetName()) :self.wspace_out._import(func)
+    self.nuisances.append(name)
 
   def set_wspace(self,w):
    self.wspace = w
@@ -451,7 +452,7 @@ class Category:
      ch.setup_expect_var()
      ch.add_to_dataset()
      self.channels.append(ch)
-   
+
    
    for j,cr in enumerate(self._control_regions):
    #save the prefit histos
@@ -695,7 +696,7 @@ class Category:
     self.all_hists.append(eline)
     for b in range(ratio.GetNbinsX()):
       eline.SetBinContent(b+1,1)
-      eline.SetBinError(b+1,cr_hist.GetBinError(b+1)/cr_hist.GetBinContent(b+1))
+      if cr_hist.GetBinContent(b+1)>0: eline.SetBinError(b+1,cr_hist.GetBinError(b+1)/cr_hist.GetBinContent(b+1))
     eline.SetFillColor(r.kBlue-10)
     eline.SetLineColor(r.kBlue-10)
     eline.SetMarkerSize(0)
