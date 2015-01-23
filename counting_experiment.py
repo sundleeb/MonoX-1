@@ -109,7 +109,7 @@ class Bin:
 
  def setup_expect_var(self):
    if not self.wspace_out.var("model_mu_cat_%d_bin_%d"%(self.catid,self.id,)):
-     self.model_mu = r.RooRealVar("model_mu_cat_%d_bin_%d"%(self.catid,self.id),"Model of N expected events in %d"%self.id,self.initY,1,10000)
+     self.model_mu = r.RooRealVar("model_mu_cat_%d_bin_%d"%(self.catid,self.id),"Model of N expected events in %d"%self.id,self.initY,0,10000)
      self.model_mu.removeMax()
    else: self.model_mu = self.wspace_out.var("model_mu_cat_%d_bin_%d"%(self.catid,self.id))
 
@@ -182,7 +182,7 @@ class Bin:
    #else: return (1-self.b)*(self.ret_expected())
    return self.wspace_out.function(self.b.GetName()).getVal()
  def ret_correction(self):
-   return self.wspace_out.var(self.model_mu.GetName()).getVal()/self.initY
+   return (self.wspace_out.var(self.model_mu.GetName()).getVal())/self.initY
  def ret_model(self):
    return self.wspace_out.var(self.model_mu.GetName()).getVal()
  def ret_model_err(self):
@@ -397,7 +397,7 @@ class Category:
    for i,ch in enumerate(self.channels):
      if i>=len(self._bins)-1: break
      hist.SetBinContent(i+1,ch.ret_correction())
-   return hist
+   return hist.Clone()
 
   def init_channels(self):
    sample = self._wspace_out.cat("bin_number") #r.RooCategory("bin_number","bin_number")
