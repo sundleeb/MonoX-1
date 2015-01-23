@@ -169,7 +169,7 @@ class Bin:
    if not self.wspace_out.data("combinedData"): 
      obsdata = r.RooDataSet("combinedData","Data in all Bins",local_obsargset)
      self.wspace_out._import(obsdata)
-   else:obsdata = self.wspace_out.data("combinedData")
+   obsdata = self.wspace_out.data("combinedData")
    obsdata.addFast(local_obsargset)
   
  def set_control_region(self,control):
