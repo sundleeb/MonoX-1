@@ -141,20 +141,22 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs = [
    Channel("Photon+jet",_wspace,out_ws,cid,0,_wspace.data(_photon_datasetname),PhotonScales,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
   ,Channel("Dimuon",_wspace,out_ws,cid,1,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
+  #Channel("Photon+jet",_wspace,out_ws,cid,0,_wspace.data(_photon_datasetname),PhotonScales,"Purity:0.97")  # stupid linear fit of Purities, should move to flat 
+  #Channel("Dimuon",_wspace,out_ws,cid,0,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
   ]
   #Add Systematic ? This time we add them as nuisance parameters.
 
   CRs[0].add_nuisance_shape("mr",_fOut) 
   CRs[0].add_nuisance_shape("mf",_fOut) 
-  #CRs[0].add_nuisance("ewk",0.05) 
   CRs[0].add_nuisance_shape("ewk",_fOut) 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
   CRs[1].add_nuisance("MuonEfficiency",0.01)
   CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
   CRs[1].add_nuisance("xs_dibosons",0.1,True)   # is a background systematic
 
+  # Make bin-to-bin errors ?!
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
-  return Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data%s"%nam,"doubleExponential_dimuon_mc%s"%nam,"signal_zjets",CRs,diag)
+  return Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"signal_zjets",CRs,diag)
   
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
@@ -163,7 +165,7 @@ categories = ["inclusive","resolved","boosted"]
 #categories = ["boosted","resolved"]
 #categories = ["inclusive"]
 _f = r.TFile.Open("mono-x-vtagged.root")
-out_ws = r.RooWorkspace("combinedws","Combined Workspace")
+out_ws = r.RooWorkspace("combinedws","ZJets")
 out_ws._import = getattr(out_ws,"import")
 
 # Need to setup the things here for combined dataset, need to add all possible sample types first because otherwise RooFit throws a fit! 
@@ -185,6 +187,10 @@ for cid,cn in enumerate(cmb_categories):
         channels = cn.ret_channels()
         for ch in channels: ch.Print()
 out_ws.Print('v')
+for cid,cn in enumerate(cmb_categories):
+   channels = cn.ret_channels()
+   for ch in channels: ch.Print()
+#sys.exit()
 # Next we want to build a list of all of the nuisance parameters which will be in the fit :), this is performed with add_nuisance
 ext_constraints = r.RooArgSet() 
 hasSys = False
@@ -208,6 +214,10 @@ for cid,cn in enumerate(cmb_categories):
     combined_pdf.addPdf(out_ws.pdf("pdf_%s"%ch.ret_binid()),ch.ret_binid())
 if hasSys: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save(),r.RooFit.ExternalConstraints(ext_constraints))
 else: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save())
+_fOut.WriteTObject(out_ws)
+for cid,cn in enumerate(cmb_categories):
+   channels = cn.ret_channels()
+   for ch in channels: ch.Print()
 # ------------------------------------------------------------
 # Now Generate the systematics coming from the fitting 
 npars = diag_combined.generateVariations(combined_fit_result)

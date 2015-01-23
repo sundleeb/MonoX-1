@@ -313,6 +313,7 @@ class Category:
   # the target dataset for this channel 
   def __init__(self,
    catid
+
    ,cname 		# name for the parametric variation templates
    ,_fin 		# TDirectory   
    ,_fout 		# and output file 
@@ -320,8 +321,6 @@ class Category:
    ,_wspace_out 	# RooWorkspace (out)
    ,_bins  		# just get the bins
    ,_varname	    	# name of the variale
-   ,_pdfname	    	# name of a double exp pdf
-   ,_pdfname_zvv	# name of a double exp pdf to use as zvv mc fit
    ,_target_datasetname # only for initial fit values
    ,_control_regions 	# CRs constructed 
    ,diag		# a diagonalizer object
@@ -336,6 +335,7 @@ class Category:
    self._fin  = _fin 
    self._fout = _fout
 
+   self.GNAME = _wspace_out.GetTitle()
    self._wspace = _wspace
    self._wspace_out = _wspace_out
    #self.diag = diag
@@ -348,11 +348,7 @@ class Category:
    self._varname  = _varname
    self._bins     = _bins[:]
    self._control_regions = _control_regions
-   self._pdf      = _wspace.pdf(_pdfname)
-   self._pdf_orig = _wspace.pdf(_pdfname_zvv)
    #self._data_mc  = _wspace.data(_target_datasetname)
-   self._pdfname = _pdfname
-   self._pdfname_zvv  =_pdfname_zvv
    self._target_datasetname = _target_datasetname
    self.sample = self._wspace_out.cat("bin_number")
    self._obsvar = self._wspace_out.var("observed")
@@ -468,8 +464,8 @@ class Category:
    sys_c=0
 
    for par in range(npars):
-    hist_up = r.TH1F("combined_model_par_%d_Up"%(par),"combined_model par %d Up 1 sigma - %s "%(par,self.cname)  ,len(self._bins)-1,array.array('d',self._bins))
-    hist_dn = r.TH1F("combined_model_par_%d_Down"%(par),"combined_model par %d Down 1 sigma - %s"%(par,self.cname),len(self._bins)-1,array.array('d',self._bins))
+    hist_up = r.TH1F("%s_combined_model_par_%d_Up"%(self.GNAME,par),"combined_model par %d Up 1 sigma - %s "%(par,self.cname)  ,len(self._bins)-1,array.array('d',self._bins))
+    hist_dn = r.TH1F("%s_combined_model_par_%d_Down"%(self.GNAME,par),"combined_model par %d Down 1 sigma - %s"%(par,self.cname),len(self._bins)-1,array.array('d',self._bins))
  
     diag.setEigenset(par,1)  # up variation
     #fillModelHist(hist_up,channels)
@@ -551,7 +547,7 @@ class Category:
    self.model_hist.SetLineColor(1)
    #_fout = r.TFile("combined_model.root","RECREATE")
    #_fout.WriteTObject(self.model_hist)
-   self.model_hist.SetName("combined_model")
+   self.model_hist.SetName("%s_combined_model"%self.GNAME)
    self.histograms.append(self.model_hist)
    histW.SetName("correction_weights_%s"%self.cname)
    histW.SetLineWidth(2)
