@@ -153,8 +153,10 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
   CRs[1].add_nuisance("xs_dibosons",0.1,True)   # is a background systematic
 
-  # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
-  return Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data%s"%nam,"doubleExponential_dimuon_mc%s"%nam,"signal_zjets",CRs,diag)
+  # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three
+  cat =  Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data%s"%nam,"doubleExponential_dimuon_mc%s"%nam,"signal_zjets",CRs,diag)
+  cat.addVar("jet1pt",25,150,1000)
+  return cat 
   
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
