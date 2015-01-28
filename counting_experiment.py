@@ -601,7 +601,7 @@ class Category:
      self.histograms.append(model_hist_vx.Clone())
 
      for tg in self.additional_targets:
-       model_hist_vx_tg = r.TH1F("combined_model%s"%(varx),"combined_model - %s"%(self.cname),nb,min,max)
+       model_hist_vx_tg = r.TH1F("%s_combined_model%s"%(tg,varx),"combined_model - %s"%(self.cname),nb,min,max)
        diag.generateWeightedTemplate(model_hist_vx_tg,self._wspace_out.function(self.pdf_ratio.GetName()),varx,self._wspace_out.var(self._var.GetName()),self._wspace.data(tg))
        self.histograms.append(model_hist_vx_tg.Clone())
 
