@@ -339,6 +339,7 @@ class Category:
    self._wspace = _wspace
    self._wspace_out = _wspace_out
    #self.diag = diag
+   self.additional_vars = {}
 
    self.channels = []
    self.all_hists = []
@@ -364,6 +365,10 @@ class Category:
      self.sample.defineType("cat_%d_ch_%d_bin_%d"%(self.catid,j,i),10*MAXBINS*catid+MAXBINS*j+i)
      self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
    
+
+  def addVar(self,vnam,n,xmin,xmax):
+   self.additional_vars[vnam] = [n,xmin,xmax]
+
   def fillExpectedHist(self,cr,expected_hist):
    bc=0
    for i,ch in enumerate(self.channels):
@@ -470,7 +475,7 @@ class Category:
     diag.setEigenset(par,1)  # up variation
     #fillModelHist(hist_up,channels)
     histW = self.makeWeightHists()
-    diag.generateWeightedTemplate(hist_up,histW,self._varname,self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
+    diag.generateWeightedTemplate(hist_up,histW,self._varname,self._varname,self._wspace.data(self._target_datasetname))
 
     # Also want to calculate for each control region an error per bin associated, its very easy to do, but only do it for "Up" variation and the error will symmetrize itself
     for j,cr in enumerate(self._control_regions):
@@ -483,7 +488,7 @@ class Category:
     diag.setEigenset(par,-1)  # up variation
     #fillModelHist(hist_dn,channels)
     histW = self.makeWeightHists()
-    diag.generateWeightedTemplate(hist_dn,histW,self._varname,self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
+    diag.generateWeightedTemplate(hist_dn,histW,self._varname,self._varname,self._wspace.data(self._target_datasetname))
 
     # Reset parameter values 
     diag.resetPars()
@@ -542,7 +547,7 @@ class Category:
    #fillModelHist(model_hist,channels)
 
    histW = self.makeWeightHists()
-   diag.generateWeightedTemplate(self.model_hist,histW,self._varname,self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
+   diag.generateWeightedTemplate(self.model_hist,histW,self._varname,self._varname,self._wspace.data(self._target_datasetname))
    self.model_hist.SetLineWidth(2)
    self.model_hist.SetLineColor(1)
    #_fout = r.TFile("combined_model.root","RECREATE")
@@ -553,6 +558,14 @@ class Category:
    histW.SetLineWidth(2)
    histW.SetLineColor(4)
    self.histograms.append(histW)
+   
+   # Also make a weighted version of each other variable
+   for varx in self.additional_vars.keys():
+     nb = self.additional_vars[varx][0]; min = self.additional_vars[varx][1]; max = self.additional_vars[varx][2]
+     model_hist_vx = r.TH1F("combined_model%s"%(varx),"combined_model - %s"%(self.cname),nb,min,max)
+     print "Also Plotting variable", varx 
+     diag.generateWeightedTemplate(self.model_hist,histW,self._varname,varx,self._wspace.data(self._target_datasetname))
+     self.histograms.append(model_hist_vx.Clone())
 
 
   def make_post_fit_plots(self):
