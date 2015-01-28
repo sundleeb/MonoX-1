@@ -348,6 +348,7 @@ class Category:
    self._wspace_out = _wspace_out
    #self.diag = diag
    self.additional_vars = {}
+   self.additional_targets = []
 
    self.channels = []
    self.all_hists = []
@@ -408,6 +409,8 @@ class Category:
    self._wspace_out._import(self.pdf_ratio)
    self._wspace._import(self.pdf_ratio)
 
+  def addTarget(self,vn):
+   self.additional_targets.append(vn)
   def addVar(self,vnam,n,xmin,xmax):
    self.additional_vars[vnam] = [n,xmin,xmax]
 
@@ -585,12 +588,22 @@ class Category:
    self.model_hist.SetName("combined_model")
    self.histograms.append(self.model_hist)
 
+   for tg in self.additional_targets:
+     model_tg = r.TH1F("%s_combined_model"%(tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+     diag.generateWeightedTemplate(model_tg,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(tg))
+     self.histograms.append(model_tg)
+     
    # Also make a weighted version of each other variable
    for varx in self.additional_vars.keys():
      nb = self.additional_vars[varx][0]; min = self.additional_vars[varx][1]; max = self.additional_vars[varx][2]
      model_hist_vx = r.TH1F("combined_model%s"%(varx),"combined_model - %s"%(self.cname),nb,min,max)
      diag.generateWeightedTemplate(model_hist_vx,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
      self.histograms.append(model_hist_vx.Clone())
+
+     for tg in self.additional_targets:
+       model_hist_vx_tg = r.TH1F("combined_model%s"%(varx),"combined_model - %s"%(self.cname),nb,min,max)
+       diag.generateWeightedTemplate(model_hist_vx_tg,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(tg))
+       self.histograms.append(model_hist_vx_tg.Clone())
 
 
 

@@ -55,59 +55,59 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   #Loop Over Systematics also?
   Pho = target.Clone(); Pho.SetName("photon_weights_denom_%s"%nam)
   for b in range(Pho.GetNbinsX()): Pho.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Pho,nlo_pho,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
+  diag.generateWeightedTemplate(Pho,nlo_pho,gvptname,metname,_wspace.data(_gjet_mcname))
 
   Zvv = target.Clone(); Zvv.SetName("photon_weights_nom_%s"%nam)
   for b in range(Zvv.GetNbinsX()): Zvv.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv,nlo_zjt,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv,nlo_zjt,gvptname,metname,_wspace.data("signal_zjets"))
   
   #################################################################################################################
   # now do systematic parts
   Pho_mrUp = target.Clone(); Pho.SetName("photon_weights_denom_mrUp_%s"%nam)
   for b in range(Pho_mrUp.GetNbinsX()): Pho_mrUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Pho_mrUp,nlo_pho_mrUp,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
+  diag.generateWeightedTemplate(Pho_mrUp,nlo_pho_mrUp,gvptname,metname,_wspace.data(_gjet_mcname))
 
   Zvv_mrUp = target.Clone(); Zvv_mrUp.SetName("photon_weights_nom_mrUp_%s"%nam)
   for b in range(Zvv_mrUp.GetNbinsX()):Zvv_mrUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_mrUp,nlo_zjt_mrUp,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_mrUp,nlo_zjt_mrUp,gvptname,metname,_wspace.data("signal_zjets"))
 
   Pho_mrDown = target.Clone(); Pho.SetName("photon_weights_denom_mrDown_%s"%nam)
   for b in range(Pho_mrDown.GetNbinsX()): Pho_mrDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Pho_mrDown,nlo_pho_mrDown,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
+  diag.generateWeightedTemplate(Pho_mrDown,nlo_pho_mrDown,gvptname,metname,_wspace.data(_gjet_mcname))
 
   Zvv_mrDown = target.Clone(); Zvv_mrDown.SetName("photon_weights_nom_mrDown_%s"%nam)
   for b in range(Zvv_mrDown.GetNbinsX()): Zvv_mrDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_mrDown,nlo_zjt_mrDown,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_mrDown,nlo_zjt_mrDown,gvptname,metname,_wspace.data("signal_zjets"))
 
   Pho_mfUp = target.Clone(); Pho.SetName("photon_weights_denom_mfUp_%s"%nam)
   for b in range(Pho_mfUp.GetNbinsX()): Pho_mfUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Pho_mfUp,nlo_pho_mfUp,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
+  diag.generateWeightedTemplate(Pho_mfUp,nlo_pho_mfUp,gvptname,metname,_wspace.data(_gjet_mcname))
 
   Zvv_mfUp = target.Clone(); Zvv_mfUp.SetName("photon_weights_nom_mfUp_%s"%nam)
   for b in range(Zvv_mfUp.GetNbinsX()): Zvv_mfUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_mfUp,nlo_zjt_mfUp,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_mfUp,nlo_zjt_mfUp,gvptname,metname,_wspace.data("signal_zjets"))
 
   Pho_mfDown = target.Clone(); Pho.SetName("photon_weights_denom_mfDown_%s"%nam)
   for b in range(Pho_mfDown.GetNbinsX()): Pho_mfDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Pho_mfDown,nlo_pho_mfDown,gvptname,_wspace.var(metname),_wspace.data(_gjet_mcname))
+  diag.generateWeightedTemplate(Pho_mfDown,nlo_pho_mfDown,gvptname,metname,_wspace.data(_gjet_mcname))
 
   Zvv_mfDown = target.Clone(); Zvv_mfDown.SetName("photon_weights_nom_mfDown_%s"%nam)
   for b in range(Zvv_mfDown.GetNbinsX()): Zvv_mfDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_mfDown,nlo_zjt_mfDown,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_mfDown,nlo_zjt_mfDown,gvptname,metname,_wspace.data("signal_zjets"))
 
   Zvv_ewkDown = target.Clone(); Zvv_ewkDown.SetName("photon_weights_%s_ewk_Down"%nam)
   for b in range(Zvv_ewkDown.GetNbinsX()): Zvv_ewkDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_ewkDown,nlo_ewkDown,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_ewkDown,nlo_ewkDown,gvptname,metname,_wspace.data("signal_zjets"))
 
   Zvv_ewkUp   = target.Clone(); Zvv_ewkUp   .SetName("photon_weights_%s_ewk_Up"%nam)
   for b in range(Zvv_ewkUp.GetNbinsX()): Zvv_ewkUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_ewkUp,nlo_ewkUp,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_ewkUp,nlo_ewkUp,gvptname,metname,_wspace.data("signal_zjets"))
   
   nlo_ewkFlat = nlo_ewkUp.Clone("ewk_Base")
   nlo_ewkFlat.Divide(nlo_ewkFlat)
   Zvv_ewkBase = target.Clone(); Zvv_ewkBase  .SetName("photon_weights_%s_ewk_Base"%nam)
   for b in range(Zvv_ewkBase.GetNbinsX()): Zvv_ewkBase.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_ewkBase,nlo_ewkFlat,gvptname,_wspace.var(metname),_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_ewkBase,nlo_ewkFlat,gvptname,metname,_wspace.data("signal_zjets"))
   ##################################################################################################################
 
   # Have to also add one per systematic variation :(, 
@@ -156,6 +156,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three
   cat =  Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data%s"%nam,"doubleExponential_dimuon_mc%s"%nam,"signal_zjets",CRs,diag)
   cat.addVar("jet1pt",25,150,1000)
+  cat.addTarget("dimuon_zll")
   return cat 
   
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -228,6 +229,7 @@ for cid,cn in enumerate(cmb_categories):
    channels = cn.ret_channels()
    for ch in channels: ch.Print()
 
+combined_fit_result.floatParsFinal().Print("v")
 # END
 print "Produced combined Z(mm) + photon fits -> ", _fOut.GetName()
 _fOut.Close()
