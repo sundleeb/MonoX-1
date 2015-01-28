@@ -340,6 +340,7 @@ class Category:
    self._wspace_out = _wspace_out
    #self.diag = diag
    self.additional_vars = {}
+   self.additional_targets = []
 
    self.channels = []
    self.all_hists = []
@@ -366,6 +367,8 @@ class Category:
      self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
    
 
+  def addTarget(self,vn):
+   self.additional_targets.append(vn)
   def addVar(self,vnam,n,xmin,xmax):
    self.additional_vars[vnam] = [n,xmin,xmax]
 
@@ -559,6 +562,12 @@ class Category:
    histW.SetLineColor(4)
    self.histograms.append(histW)
    
+   for tg in self.additional_targets:
+     model_tg = r.TH1F("%s_combined_model"%(tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+     diag.generateWeightedTemplate(model_tg,histW,self._varname,self._varname,self._wspace.data(tg))
+     self.histograms.append(model_tg.Clone())
+		         
+
    # Also make a weighted version of each other variable
    for varx in self.additional_vars.keys():
      nb = self.additional_vars[varx][0]; min = self.additional_vars[varx][1]; max = self.additional_vars[varx][2]
@@ -566,6 +575,13 @@ class Category:
      print "Also Plotting variable", varx 
      diag.generateWeightedTemplate(self.model_hist,histW,self._varname,varx,self._wspace.data(self._target_datasetname))
      self.histograms.append(model_hist_vx.Clone())
+
+     for tg in self.additional_targets:
+       model_hist_vx_tg = r.TH1F("combined_model%s"%(varx),"combined_model - %s"%(self.cname),nb,min,max)
+       diag.generateWeightedTemplate(model_hist_vx_tg,histW,self._varname,varx,self._wspace.data(tg))
+       self.histograms.append(model_hist_vx_tg.Clone())
+
+   
 
 
   def make_post_fit_plots(self):
