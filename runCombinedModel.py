@@ -147,7 +147,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[0].add_nuisance_shape("mr",_fOut) 
   CRs[0].add_nuisance_shape("mf",_fOut) 
   #CRs[0].add_nuisance("ewk",0.05) 
-  CRs[0].add_nuisance_shape("ewk",_fOut) 
+  #CRs[0].add_nuisance_shape("ewk",_fOut,"SetTo=1") 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
   CRs[1].add_nuisance("MuonEfficiency",0.01)
   CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
@@ -155,8 +155,14 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three
   cat =  Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data%s"%nam,"doubleExponential_dimuon_mc%s"%nam,"signal_zjets",CRs,diag)
-  cat.addVar("jet1pt",25,150,1000)
-  cat.addTarget("dimuon_zll")
+#  cat.addVar("jet1pt",25,150,1000)
+#  cat.addVar("mll",25,75,125)
+#  cat.addVar("mt",30,50,200)
+#  cat.addVar("njets",10,0,10)
+#  cat.addVar("lep1pt",25,0,500)
+#  cat.addVar("ptll",40,100,1000)
+#  cat.addTarget("dimuon_zll",1)
+#  cat.addTarget("singlemuon_zll",1)
   return cat 
   
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -229,6 +235,9 @@ for cid,cn in enumerate(cmb_categories):
    channels = cn.ret_channels()
    for ch in channels: ch.Print()
 
+print "Init pars"
+combined_fit_result.floatParsInit().Print("v")
+print "Final pars"
 combined_fit_result.floatParsFinal().Print("v")
 # END
 print "Produced combined Z(mm) + photon fits -> ", _fOut.GetName()

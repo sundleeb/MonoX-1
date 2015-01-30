@@ -13,11 +13,9 @@ backgrounds = {
 		"top":			  [["signal_top"],		r.kRed+1,   0]
 		,"Dibosons":		  [["signal_dibosons"],		r.kGray,    0]
 		,"Z(#rightarrow ll)+jets":[["signal_zll"],		r.kGreen+3, 0]
-		,"W#rightarrow #mu#nu":   [["signal_wjets"], 		r.kAzure-3, 0]
-		#,"W(#rightarrow l#nu)+jets":  [["corrected_signal_wjets"], 	r.kAzure-3, 0]
-		,"Z#rightarrow #nu#nu":   [["signal_zjets"],		r.kBlue-9,  0]
-		#,"Z#rightarrow #nu#nu":  [["corrected_signal_zjets"],	r.kBlue-9,  0]
-		,"QCD":	  		  [["signal_qcd"],		r.kRed+2,   0]
+		,"W(#rightarrow l#nu)+jets":    [["signal_wjets"], 	r.kAzure-3, 0]
+		,"Z(#rightarrow #nu#nu)+jets":  [["signal_zjets"],	r.kBlue-9,   0]
+		,"QCD":	  		        [["signal_qcd"],		r.kRed+2,   0]
 
 	      }
 

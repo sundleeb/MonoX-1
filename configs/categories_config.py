@@ -4,13 +4,13 @@ bins = range(200,1050,50)
 categories = [
 	{
 	    'name':"monojet"
-	   ,'in_file_name':"monojet.root"
+	   ,'in_file_name':"monojet-pfmetraw-fj200.root"
 	   #,'in_file_name':"inclusive-combo.root"
 	   ,"cutstring":"mvamet>200 && mvamet<1000 &&weight<500"
 	   ,"varstring":["mvamet",200,1000]
 	   ,"weightname":"weight"
 	   ,"bins":bins[:]
-  	   ,"additionalvars":[['jet1pt',25,150,1000]]
+  	   ,"additionalvars":[['jet1pt',25,150,1000],['mll',50,75,125],['mt',50,50,200],['njets',10,0,10],["lep1pt",50,0,500]]
 	   ,"pdfmodel":0
            ,"recoilMC"  :"recoilfits/recoilfit_Zgj_pfmetraw_2012_mc.root"
            ,"recoilData":"recoilfits/recoilfit_Zgj_pfmetraw_2012_data.root"
