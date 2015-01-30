@@ -4,7 +4,9 @@ MonoX
 change to others as you see fit)
 
 Prepare the trees ...
+
   1) python addMet.py categories_config_vtag_Bacon
+
   2) python addEff.py categories_config_vtag_Bacon
 
 MonoX fitting etc
