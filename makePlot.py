@@ -4,11 +4,14 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-d","--tdir",default='',help="pick histos from a different directory (will be catgeory of course!)")
 parser.add_option("-c","--cat",default='',help="pick up a category name for $CAT")
+parser.add_option("-v","--var",default='',help="pick up a variable name for $VAR")
 parser.add_option("-o","--outext",default='',help="Add Extension to output name")
 parser.add_option("-x","--xlab",default='',help="Set the Label for X-axis")
 parser.add_option("-b","--batch",default=False,action='store_true',help="always run in batch and save .pdf with config name instead of drawing canvas")
 parser.add_option("-g","--gendata",default=False,action='store_true',help="Generate Pretend data from the background")
 parser.add_option("-p","--pull",default=False,action='store_true',help="replace the ratio plot with a pull (data-background)/(sigma_{data+bkg})")
+parser.add_option("","--nolog",default=False,action='store_true',help="Turn of log plot")
+parser.add_option("","--nospec",default=False,action='store_true',help="Don't make a spectrum plot")
 (options,args) = parser.parse_args()
 
 import ROOT as r 
@@ -26,9 +29,12 @@ def getNormalizedHist(hist, templatehist):
   thret = templatehist.Clone()
   for b in range(1,nb+1): 
     sfactor = 1./templatehist.GetBinWidth(b)
+    if options.nospec: sfactor = 1
     thret.SetBinContent(b,hist.GetBinContent(b)*sfactor)
     thret.SetBinError(b,hist.GetBinError(b)*sfactor)
   thret.GetYaxis().SetTitle("Events/GeV")
+  if options.nospec: 
+        thret.GetYaxis().SetTitle("Events")
   return thret
 
 sys.path.append("configs")
@@ -48,14 +54,27 @@ for ic,config in enumerate(configs) :
 
  # first run through signals, backgrounds and data to check if we need to replace things
  for s in x.signals.keys():
-  x.signals[s][0] = x.signals[s][0].replace("$CAT",options.cat)
-  x.signals[s][0] = x.signals[s][0].replace("$DIRECTORY",options.tdir)
+  #x.signals[s][0] = x.signals[s][0].replace("$CAT",options.cat)
+  #x.signals[s][0] = x.signals[s][0].replace("$VAR",options.var)
+  #x.signals[s][0] = x.signals[s][0].replace("$DIRECTORY",options.tdir)
+  # replace the Key
+  snew  =  s.replace("$CAT",options.cat)
+  snew  =  snew.replace("$VAR",options.var)
+  snew  =  snew.replace("$DIRECTORY",options.tdir)
+
+  x.signals[snew] =  x.signals[s]; 
+  x.signals.pop(s)
+
  for b in x.backgrounds.keys():
   for i in range(len(x.backgrounds[b][0])):
    x.backgrounds[b][0][i]=x.backgrounds[b][0][i].replace("$CAT",options.cat)
+   x.backgrounds[b][0][i]=x.backgrounds[b][0][i].replace("$VAR",options.var)
    x.backgrounds[b][0][i]=x.backgrounds[b][0][i].replace("$DIRECTORY",options.tdir)
  x.dataname = x.dataname.replace("$CAT",options.cat)
+ x.dataname = x.dataname.replace("$VAR",options.var)
  x.dataname = x.dataname.replace("$DIRECTORY",options.tdir)
+
+ print x.signals
 
  if x.directory!="":x.directory+="/"
  if ":" in x.dataname: 
@@ -141,8 +160,11 @@ for ic,config in enumerate(configs) :
   if ":" in sig:
      fi,datnam = sig.split(":")
      tfi = r.TFile.Open(fi)
+     print "Getting signal %s"%tfi.GetName()+datname
      tmp = tfi.Get(datnam)
-  else: tmp = di.Get(x.directory+"/"+sig)
+  else: 
+    print "Getting signal %s"%x.directory+"/"+sig
+    tmp = di.Get(x.directory+"/"+sig)
   if sig_i==0: totalsignal = tmp.Clone()
   else: totalsignal.Add(tmp)
   tmp = getNormalizedHist(tmp,data)
@@ -178,7 +200,7 @@ for ic,config in enumerate(configs) :
  data.SetMarkerStyle(20)
  data.Draw("same")
  leg.Draw()
- pad1.SetLogy()
+ if not options.nolog: pad1.SetLogy()
  pad1.RedrawAxis()
  lat.DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}") 
  if options.cat : lat.DrawLatex(0.76,0.92,options.cat) 

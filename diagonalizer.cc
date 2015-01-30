@@ -208,8 +208,9 @@ void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::s
     double wval  = vw->getRealValue(wvar.c_str());
     double cweight = weight;
     if (pdf_num) { 
-	//std::cout << wvar<< ", " << wval << ", Weight = "<< cweight << " x " << pdf_num->GetBinContent(pdf_num->FindBin(wval)) << std::endl;
+	//std::cout << "Dataset "<< data->GetName() << " X = " << val << " Weighting Var = " << wval << ", Weight = "<< cweight << " x-weight " << pdf_num->GetBinContent(pdf_num->FindBin(wval)) << std::endl;
     	cweight *= pdf_num->GetBinContent(pdf_num->FindBin(wval));
+	
     } else {
     	std::cout <<"Correction function NULL "<<std::endl;
 	assert(0);
@@ -232,6 +233,7 @@ void diagonalizer::generateWeightedTemplate(TH1F *histNew, RooFormulaVar *pdf_nu
     var.setVal(val);
     double cweight = weight;
     if (pdf_num) { 
+	//std::cout << "Dataset " << data->GetName() << " X = " << pval << " Weighting Var = " << var.getVal() << ", Weight = "<< cweight << " x-weight " << pdf_num->getVal(var) << std::endl;
     	cweight *= pdf_num->getVal(var);
     } else {
     	std::cout <<"Correction function NULL "<<std::endl;

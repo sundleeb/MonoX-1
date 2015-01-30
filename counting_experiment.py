@@ -54,6 +54,7 @@ class Bin:
    #if not self.wspace.var(self.pdfFullInt.GetName()) : self.wspace._import(self.pdfFullInt)
    self.wspace_out._import(self.pdfFullInt)
    self.b  = 0
+   self.expected_init = 0
    #self.constBkg = True
 
  def add_background(self,bkg):
@@ -88,6 +89,7 @@ class Bin:
    else: self.b = r.RooFormulaVar("background_%s"%self.binid,"Number of expected background events in %s"%self.binid,"@0",r.RooArgList(r.RooFit.RooConst(b)))
    self.wspace_out._import(self.b)
    self.b = self.wspace_out.function(self.b.GetName())
+   self.b_init = self.wspace_out.function(self.b.GetName()).getVal()
 
  def set_label(self,cat):
    self.categoryname = cat.GetName()
@@ -157,6 +159,7 @@ class Bin:
    self.wspace_out._import(self.mu,r.RooFit.RecycleConflictNodes())
    self.wspace_out._import(self.obs,r.RooFit.RecycleConflictNodes())
    self.wspace_out.factory("Poisson::pdf_%s(observed,mu_%s)"%(self.binid,self.binid))
+   self.expected_init = self.mu.getVal()
 
 
  def add_to_dataset(self):
@@ -186,12 +189,16 @@ class Bin:
    self.binerror = (self.binerror**2+e**2)**0.5
  def ret_expected(self):
    return self.wspace_out.function(self.mu.GetName()).getVal()
+ def ret_expected_init(self):
+   return self.expected_init
  def ret_expected_err(self):
    return self.wspace_out.function(self.mu.GetName()).getError()
  def ret_background(self):
    #if self.constBkg: return self.b
    #else: return (1-self.b)*(self.ret_expected())
    return self.wspace_out.function(self.b.GetName()).getVal()
+ def ret_background_init(self):
+   return self.b_init
  def ret_model(self):
    return self.wspace_out.function(self.model_mu.GetName()).getVal()
  def ret_model_err(self):
@@ -257,11 +264,15 @@ class Channel:
     if bkg: self.bkg_nuisances.append(name)
     else:   self.nuisances.append(name)
     
-  def add_nuisance_shape(self,name,file):
+  def add_nuisance_shape(self,name,file,setv=""):
     if not(self.wspace_out.var("nuis_%s"%name)) :
       nuis = r.RooRealVar("nuis_%s"%name,"Nuisance - %s"%name,0,-3,3);
       self.wspace_out._import(nuis)
-      cont = r.RooGaussian("const_%s"%name,"Constraint - %s"%name,self.wspace_out.var(nuis.GetName()),r.RooFit.RooConst(0),r.RooFit.RooConst(1));
+      nuis_IN = r.RooRealVar("nuis_IN_%s"%name,"Constraint Mean - %s"%name,0,-10,10);
+      nuis_IN.setConstant()
+      self.wspace_out._import(nuis_IN)
+
+      cont = r.RooGaussian("const_%s"%name,"Constraint - %s"%name,self.wspace_out.var(nuis.GetName()),self.wspace_out.var(nuis_IN.GetName()),r.RooFit.RooConst(1));
       self.wspace_out._import(cont)
 
     sfup = self.scalefactors.GetName()+"_%s_"%name+"Up"
@@ -282,6 +293,11 @@ class Channel:
 		,r.RooArgList(self.wspace_out.var("nuis_%s"%name))) # this is now relative deviation, SF-SF_0 = func => SF = SF_0*(1+func/SF_0)
 	self.wspace_out.var("nuis_%s"%name).setVal(0)
         if not self.wspace_out.function(func.GetName()) :self.wspace_out._import(func)
+    if setv!="":
+      if "SetTo" in setv: 
+       vv = float(setv.split("=")[1])
+       self.wspace_out.var("nuis_IN_%s"%name).setVal(vv)
+       self.wspace_out.var("nuis_%s"%name).setVal(vv)
     self.nuisances.append(name)
 
   def set_wspace(self,w):
@@ -409,8 +425,8 @@ class Category:
    self._wspace_out._import(self.pdf_ratio)
    self._wspace._import(self.pdf_ratio)
 
-  def addTarget(self,vn):
-   self.additional_targets.append(vn)
+  def addTarget(self,vn,CR):  # Note, I need to know WHICH correction to run, signal is -1, others are 0,1 etc you know!
+   self.additional_targets.append([vn,CR])
   def addVar(self,vnam,n,xmin,xmax):
    self.additional_vars[vnam] = [n,xmin,xmax]
 
@@ -420,6 +436,22 @@ class Category:
      if ch.chid == cr.chid:
        bc+=1
        expected_hist.SetBinContent(bc,ch.ret_expected())
+       expected_hist.SetBinError(bc,ch.ret_err())
+  
+  def fillExpectedMinusBkgHistOrig(self,cr,expected_hist):
+   bc=0
+   for i,ch in enumerate(self.channels):
+     if ch.chid == cr.chid:
+       bc+=1
+       expected_hist.SetBinContent(bc,ch.ret_expected_init()-ch.ret_background_init())
+       expected_hist.SetBinError(bc,0)
+
+  def fillExpectedMinusBkgHist(self,cr,expected_hist):
+   bc=0
+   for i,ch in enumerate(self.channels):
+     if ch.chid == cr.chid:
+       bc+=1
+       expected_hist.SetBinContent(bc,ch.ret_expected()-ch.ret_background())
        expected_hist.SetBinError(bc,ch.ret_err())
 
   def fillObservedHist(self,cr,observed_hist):
@@ -588,11 +620,22 @@ class Category:
    self.model_hist.SetName("combined_model")
    self.histograms.append(self.model_hist)
 
-   for tg in self.additional_targets:
+   for tg_v in self.additional_targets:
+     tg = tg_v[0] 
+     cr_i = tg_v[1]
+     # Make the ratio of post-to-pre fit for the given CR 
      model_tg = r.TH1F("%s_combined_model"%(tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
-     diag.generateWeightedTemplate(model_tg,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(tg))
+     if cr_i<0:
+       diag.generateWeightedTemplate(model_tg,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(tg))
+     else: 
+       histCorr =r.TH1F("%s_TMPCORRECION_"%(tg),"combined_model CORRECION - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins)) 
+       self.fillExpectedMinusBkgHist(self._control_regions[cr_i],histCorr) 
+       histDenum =r.TH1F("%s_TMPCORRECION_DEMONIMATOR"%(tg),"combined_model CORRECION - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins)) 
+       self.fillExpectedMinusBkgHistOrig(self._control_regions[cr_i],histDenum)
+       histCorr.Divide(histDenum)
+       diag.generateWeightedTemplate(model_tg,histCorr,self._varname,self._varname,self._wspace.data(tg)) 
      self.histograms.append(model_tg.Clone())
-     
+
    # Also make a weighted version of each other variable
    for varx in self.additional_vars.keys():
      nb = self.additional_vars[varx][0]; min = self.additional_vars[varx][1]; max = self.additional_vars[varx][2]
@@ -600,9 +643,19 @@ class Category:
      diag.generateWeightedTemplate(model_hist_vx,self._wspace_out.function(self.pdf_ratio.GetName()),varx,self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
      self.histograms.append(model_hist_vx.Clone())
 
-     for tg in self.additional_targets:
+     for ti,tg_v in enumerate(self.additional_targets):
+       tg = tg_v[0] 
+       cr_i = tg_v[1]
        model_hist_vx_tg = r.TH1F("%s_combined_model%s"%(tg,varx),"combined_model - %s"%(self.cname),nb,min,max)
-       diag.generateWeightedTemplate(model_hist_vx_tg,self._wspace_out.function(self.pdf_ratio.GetName()),varx,self._wspace_out.var(self._var.GetName()),self._wspace.data(tg))
+       if cr_i<0 :
+         diag.generateWeightedTemplate(model_hist_vx_tg,self._wspace_out.function(self.pdf_ratio.GetName()),varx,self._wspace_out.var(self._var.GetName()),self._wspace.data(tg))
+       else :
+         histCorr =r.TH1F("%s_TMPCORRECION_"%(tg),"combined_model CORRECION - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins)) 
+         self.fillExpectedMinusBkgHist(self._control_regions[cr_i],histCorr) 
+         histDenum =r.TH1F("%s_TMPCORRECION_DEMONIMATOR"%(tg),"combined_model CORRECION - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins)) 
+         self.fillExpectedMinusBkgHistOrig(self._control_regions[cr_i],histDenum)
+         histCorr.Divide(histDenum)
+         diag.generateWeightedTemplate(model_hist_vx_tg,histCorr,self._varname,varx,self._wspace.data(tg))
        self.histograms.append(model_hist_vx_tg.Clone())
 
 

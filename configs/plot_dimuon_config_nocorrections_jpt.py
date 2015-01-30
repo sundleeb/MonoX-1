@@ -10,7 +10,9 @@ key_order = ["Dibosons","Top","Z#rightarrow #mu#mu"]
 backgrounds = { 
 		"Top":			  [["dimuon_top$VAR"],		r.kRed+1,   0]
 		,"Dibosons":		  [["dimuon_dibosons$VAR"],		r.kGray,   0]
-		,"Z#rightarrow #mu#mu":	  [["photon_dimuon_combined_model.root:$DIRECTORY/dimuon_zll_combined_model$VAR"],		r.kGreen+3,   0]
+		,"Z#rightarrow #mu#mu":	  [["dimuon_zll$VAR"],		r.kGreen+3,   0]
+		#,"Z#rightarrow #mu#mu":	  [["dimuon_zll"],	r.kGreen+3,   0]
+		#,"QCD":	  		  [["dimuon_qcd"],		r.kRed+2,   0]
 
 	      }
 

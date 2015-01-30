@@ -94,9 +94,10 @@ TH1F *generateTemplate(TH1F *base, RooFormulaVar *pdf_num, RooRealVar &var, RooD
   const char *varname = var.GetName();
   for (int ev=0;ev<nevents;ev++){
     const RooArgSet *vw = data->get(ev);
-    double val;
-    if (pvar!="") val = vw->getRealValue(pvar.c_str());
-    else val = vw->getRealValue(varname);
+    double val = vw->getRealValue(varname);
+    double pval;
+    if (pvar!="") pval = vw->getRealValue(pvar.c_str());
+    else pval = vw->getRealValue(varname);
 
     double weight = data->weight();
     //std::cout << val << ", " << weight <<std::endl;
@@ -105,12 +106,13 @@ TH1F *generateTemplate(TH1F *base, RooFormulaVar *pdf_num, RooRealVar &var, RooD
     if (pdf_num) { 
       if (dir>=0){
     	cweight *= pdf_num->getVal(var);
-//	std::cout << "EVT - " << ev << " Corrected " <<var.getVal() << ", orig = " << weight*weightsf << ", new = " << cweight << std::endl;  
+	//std::cout << "VAr, pVAr " << var.GetName() << " " << pvar.c_str() << std::endl;
+	//std::cout << "DATA " << data->GetName() << ", EVT - " << ev << " VAR " << var.getVal() << " plot VAR " << pval <<", orig = " << weight*weightsf << ", new = " << cweight << " , w corr = " << pdf_num->getVal(var) << std::endl;  
       } else if (dir<0){
     	cweight /= pdf_num->getVal(var);  // Uncorrect!
       } // if ==0, do nothing
     }
-    histNew->Fill(val,cweight);
+    histNew->Fill(pval,cweight);
   }
   histNew->GetXaxis()->SetTitle(varname);
   return histNew;
