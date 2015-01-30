@@ -14,7 +14,7 @@ MonoX fitting etc
 Produce templates from flat trees and additionally fit 
 (di)muon control regions to correct V+Jet templates. Modify the config to suit your ntuples
 
-  3) python buildModel.py config/categories_config_vtag_Bacon
+  3) python buildModel.py categories_config_vtag_Bacon
 
 Run photon+Jet + dimuon combined control samples, calculates scale-factors on the fly
 (Takes output from prefvious step as input)
