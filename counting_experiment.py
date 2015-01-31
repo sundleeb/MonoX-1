@@ -336,8 +336,8 @@ class Category:
   # This class holds a "category" which contains a bunch of channels
   # It needs to hold a combined_pdf object, a combined_dataset object and 
   # the target dataset for this channel 
-  def __init__(self,
-   catid
+  def __init__(self, corrname
+   ,catid
    ,cname 		# name for the parametric variation templates
    ,_fin 		# TDirectory   
    ,_fout 		# and output file 
@@ -351,6 +351,7 @@ class Category:
    ,_control_regions 	# CRs constructed 
    ,diag		# a diagonalizer object
   ):
+   self.GNAME = corrname
    self.cname = cname;
    self.catid = catid;
    # A crappy way to store canvases to be saved in the end
@@ -538,8 +539,8 @@ class Category:
    sys_c=0
 
    for par in range(npars):
-    hist_up = r.TH1F("combined_model_par_%d_Up"%(par),"combined_model par %d Up 1 sigma - %s "%(par,self.cname)  ,len(self._bins)-1,array.array('d',self._bins))
-    hist_dn = r.TH1F("combined_model_par_%d_Down"%(par),"combined_model par %d Down 1 sigma - %s"%(par,self.cname),len(self._bins)-1,array.array('d',self._bins))
+    hist_up = r.TH1F("%s_combined_model_par_%d_Up"%(self.GNAME,par),"combined_model par %d Up 1 sigma - %s "%(par,self.cname)  ,len(self._bins)-1,array.array('d',self._bins))
+    hist_dn = r.TH1F("%s_combined_model_par_%d_Down"%(self.GNAME,par),"combined_model par %d Down 1 sigma - %s"%(par,self.cname),len(self._bins)-1,array.array('d',self._bins))
  
     diag.setEigenset(par,1)  # up variation
     #fillModelHist(hist_up,channels)
@@ -617,7 +618,7 @@ class Category:
    self.model_hist.SetLineColor(1)
    #_fout = r.TFile("combined_model.root","RECREATE")
    #_fout.WriteTObject(self.model_hist)
-   self.model_hist.SetName("combined_model")
+   self.model_hist.SetName("%s_combined_model"%self.GNAME)
    self.histograms.append(self.model_hist)
 
    for tg_v in self.additional_targets:
@@ -666,7 +667,7 @@ class Category:
    self.fr = self._wspace.var(self._var.GetName()).frame()
    self._wspace.data(self._target_datasetname).plotOn(self.fr,r.RooFit.Binning(200))
    self._pdf_orig.plotOn(self.fr,r.RooFit.LineColor(r.kRed))
-   c = r.TCanvas("zjets_signalregion_mc_fit_before_after")
+   c = r.TCanvas("%sregion_mc_fit_before_after"%(self._target_datasetname))
    self.fr.GetXaxis().SetTitle("fake MET (GeV)")
    self.fr.GetYaxis().SetTitle("Events/GeV")
    self.fr.SetTitle("")

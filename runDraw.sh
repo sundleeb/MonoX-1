@@ -10,6 +10,10 @@ root -l -q -b 'drawSfactors.C("photon_dimuon_combined_model.root","inclusive")'
 root -l -b -q 'drawSfactors.C("photon_dimuon_combined_model.root","boosted")'
 root -l -b -q 'drawSfactors.C("photon_dimuon_combined_model.root","resolved")'
 
+root -l -q -b 'drawSfactorsW.C("photon_dimuon_combined_model.root","inclusive")'
+root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","boosted")'
+root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","resolved")'
+
 # Make dimuon/single muon CR plots (note for dimuon, the fake MET is obsolete) before and after corrections
 python makePlot.py mono-x-vtagged.root plot_dimuon_config plot_singlemuon_config plot_dimuon_config_nocorrections plot_singlemuon_config_nocorrections -d category_boosted  -x "fake E_{T}^{miss} (GeV)" -b  -c boosted  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
 python makePlot.py mono-x-vtagged.root plot_dimuon_config plot_singlemuon_config plot_dimuon_config_nocorrections plot_singlemuon_config_nocorrections -d category_resolved -x "fake E_{T}^{miss} (GeV)" -b  -c resolved  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  

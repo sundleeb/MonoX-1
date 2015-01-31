@@ -50,13 +50,13 @@ lat->SetTextFont(42);
   ld->AddEntry(&dat,"Z(#rightarrow#nu#nu)+jets MC","PE1");
   ld->AddEntry(&mcfit,"Pdf fit to Z(#rightarrow#nu#nu) MC","L");
   ld->AddEntry(&datafit,"Pdf post-fit to control regions","L");
-  zjets_signalregion_mc_fit_before_after->SetLogy(); 
-  zjets_signalregion_mc_fit_before_after->Draw();
+  signal_zjetsregion_mc_fit_before_after->SetLogy(); 
+  signal_zjetsregion_mc_fit_before_after->Draw();
   ld->Draw();
   lat->DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
   lat->DrawLatex(0.7,0.92,Form("%s category",cats[c].c_str()));
-  zjets_signalregion_mc_fit_before_after->SaveAs(Form("combined_post_fit_%s.pdf",cats[c].c_str()));
-  zjets_signalregion_mc_fit_before_after->SaveAs(Form("combined_post_fit_%s.png",cats[c].c_str()));
+  signal_zjetsregion_mc_fit_before_after->SaveAs(Form("combined_post_fit_%s.pdf",cats[c].c_str()));
+  signal_zjetsregion_mc_fit_before_after->SaveAs(Form("combined_post_fit_%s.png",cats[c].c_str()));
   
   TCanvas *c_pho = new TCanvas("cpho","cpho",800,550);
   TH1F *hpho = (TH1F*)fi->Get(Form("category_%s/photon_weights_%s",cats[c].c_str(),cats[c].c_str()));
@@ -129,8 +129,8 @@ lat->SetTextFont(42);
   TCanvas *canCorr  = new TCanvas();
   double xmin = hpho->GetBinLowEdge(1);
   double xmax = hpho->GetBinLowEdge(hpho->GetNbinsX()+1);
-  RooCurve *crv_mc = (RooCurve*) (zjets_signalregion_mc_fit_before_after->GetListOfPrimitives()->FindObject(Form("doubleExponential_dimuon_mc%s_Norm[mvamet]",cats[c].c_str())));
-  RooCurve *crv_da = (RooCurve*) (zjets_signalregion_mc_fit_before_after->GetListOfPrimitives()->FindObject(Form("doubleExponential_dimuon_data%s_Norm[mvamet]",cats[c].c_str())));
+  RooCurve *crv_mc = (RooCurve*) (signal_zjetsregion_mc_fit_before_after->GetListOfPrimitives()->FindObject(Form("doubleExponential_dimuon_mc%s_Norm[mvamet]",cats[c].c_str())));
+  RooCurve *crv_da = (RooCurve*) (signal_zjetsregion_mc_fit_before_after->GetListOfPrimitives()->FindObject(Form("doubleExponential_dimuon_data%s_Norm[mvamet]",cats[c].c_str())));
   TGraph *gr = new TGraph();
   int pt=0;
   for (double x=xmin;x<=xmax;x+=1){

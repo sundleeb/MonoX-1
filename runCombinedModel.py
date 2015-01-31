@@ -22,6 +22,45 @@ nlo_ewkUp    = fkFactor.Get("EWK_Up")
 nlo_ewkDown  = fkFactor.Get("EWK_Dwon")
 print "!!!!!",nlo_ewkUp.GetName()," -- ",nlo_ewkDown.GetName()
 
+def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
+  _fin = _f.Get("category_%s"%nam)
+
+  _wspace = _fin.Get("wspace_%s"%nam)
+  _singlemuon_datasetname = "singlemuon_data"
+  _singlemuon_backgroundsname = "singlemuon_all_background"
+
+  target = _fin.Get("signal_wjets")
+  Wmn    = _fin.Get("singlemuon_wjets")
+  WmnScales = target.Clone(); WmnScales.SetName("wmn_weights_%s"%nam)
+  WmnScales.Divide(Wmn)  # scales account for muon in/out of acceptance 
+  _fOut.WriteTObject(WmnScales)
+
+  metname = "mvamet"
+  gvptname= "genVpt"
+  try:
+    mt = _wspace.var(metname)
+    mt.GetName()
+  except:
+    metname = "mvamet_"
+    gvptname = "genVpt_"
+   
+  _bins = []  # take bins from some histogram
+  for b in range(target.GetNbinsX()+1):
+    _bins.append(target.GetBinLowEdge(b+1))
+
+  CRs = [
+  Channel("Singlemuon",_wspace,out_ws,cid,0,_wspace.data(_singlemuon_datasetname),WmnScales,_singlemuon_backgroundsname)
+  ]
+  #Add Systematic ? This time we add them as nuisance parameters.
+
+  CRs[0].add_nuisance("MuonEfficiency",0.01)
+  CRs[0].add_nuisance("xs_dibosons",0.1,True)   # is a background systematic
+
+  # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three
+  # Could rewrite this to need less arguments ?
+  cat =  Category("WJets",cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_singlemuon_data%s"%nam,"doubleExponential_singlemuon_mc%s"%nam,"signal_wjets",CRs,diag)
+  return cat
+
 def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   _fin = _f.Get("category_%s"%nam)
@@ -154,7 +193,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[1].add_nuisance("xs_dibosons",0.1,True)   # is a background systematic
 
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three
-  cat =  Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data%s"%nam,"doubleExponential_dimuon_mc%s"%nam,"signal_zjets",CRs,diag)
+  cat =  Category("ZJets",cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"doubleExponential_dimuon_data%s"%nam,"doubleExponential_dimuon_mc%s"%nam,"signal_zjets",CRs,diag)
 #  cat.addVar("jet1pt",25,150,1000)
 #  cat.addVar("mll",25,75,125)
 #  cat.addVar("mt",30,50,200)
@@ -188,6 +227,8 @@ diag_combined = diagonalizer(out_ws)
 for cid,cn in enumerate(categories): 
         _fDir = _fOut.mkdir("category_%s"%cn)
 	cmb_categories.append(cmodel(cid,cn,_f,_fDir,out_ws,diag_combined))
+        _fDirW = _fOut.mkdir("Wcategory_%s"%cn)
+	cmb_categories.append(cmodelW(10+cid,cn,_f,_fDirW,out_ws,diag_combined))
 # Had to define the types before adding to the combined dataset
 for cid,cn in enumerate(cmb_categories):
 	cn.init_channels()
