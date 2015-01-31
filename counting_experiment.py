@@ -311,9 +311,8 @@ class Category:
   # This class holds a "category" which contains a bunch of channels
   # It needs to hold a combined_pdf object, a combined_dataset object and 
   # the target dataset for this channel 
-  def __init__(self,
-   catid
-
+  def __init__(self,corrname
+   ,catid
    ,cname 		# name for the parametric variation templates
    ,_fin 		# TDirectory   
    ,_fout 		# and output file 
@@ -325,7 +324,7 @@ class Category:
    ,_control_regions 	# CRs constructed 
    ,diag		# a diagonalizer object
   ):
-   print "THIS VERSION WILL NOT USE THE PDF, THE ARGUMENT IS THERE FOR BACK-COMPATIBILITY"
+   self.GNAME = corrname
    self.cname = cname;
    self.catid = catid;
    # A crappy way to store canvases to be saved in the end
@@ -335,7 +334,6 @@ class Category:
    self._fin  = _fin 
    self._fout = _fout
 
-   self.GNAME = _wspace_out.GetTitle()
    self._wspace = _wspace
    self._wspace_out = _wspace_out
    #self.diag = diag
@@ -367,8 +365,8 @@ class Category:
      self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
    
 
-  def addTarget(self,vn):
-   self.additional_targets.append(vn)
+  def addTarget(self,vn,CR):
+   self.additional_targets.append([vn,CR])
   def addVar(self,vnam,n,xmin,xmax):
    self.additional_vars[vnam] = [n,xmin,xmax]
 
@@ -562,7 +560,9 @@ class Category:
    histW.SetLineColor(4)
    self.histograms.append(histW)
    
-   for tg in self.additional_targets:
+   for tg_v in self.additional_targets:
+     tg = tg_v[0] 
+     cr_i = tg_v[1]
      model_tg = r.TH1F("%s_combined_model"%(tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
      diag.generateWeightedTemplate(model_tg,histW,self._varname,self._varname,self._wspace.data(tg))
      self.histograms.append(model_tg.Clone())
@@ -576,7 +576,9 @@ class Category:
      diag.generateWeightedTemplate(self.model_hist,histW,self._varname,varx,self._wspace.data(self._target_datasetname))
      self.histograms.append(model_hist_vx.Clone())
 
-     for tg in self.additional_targets:
+     for tg_v in self.additional_targets:
+       tg = tg_v[0] 
+       cr_i = tg_v[1]
        model_hist_vx_tg = r.TH1F("combined_model%s"%(varx),"combined_model - %s"%(self.cname),nb,min,max)
        diag.generateWeightedTemplate(model_hist_vx_tg,histW,self._varname,varx,self._wspace.data(tg))
        self.histograms.append(model_hist_vx_tg.Clone())
@@ -585,7 +587,7 @@ class Category:
 
 
   def make_post_fit_plots(self):
-   c = r.TCanvas("zjets_signalregion_mc_fit_before_after")
+   c = r.TCanvas("%sregion_mc_fit_before_after"%self._target_datasetname)
    hist_original = r.TH1F("%s_OriginalZvv"%(self.cname),"Expected %s Zvv (prefit)"%self.cname,len(self._bins)-1,array.array('d',self._bins)) 
    hist_post     = r.TH1F("%s_NewZvv"%(self.cname),"Expected %s Zvv (postfit)"%self.cname,len(self._bins)-1,array.array('d',self._bins)) 
    for i,ch in enumerate(self.channels):

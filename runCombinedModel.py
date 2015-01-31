@@ -22,6 +22,44 @@ nlo_ewkUp    = fkFactor.Get("EWK_Up")
 nlo_ewkDown  = fkFactor.Get("EWK_Dwon")
 print "!!!!!",nlo_ewkUp.GetName()," -- ",nlo_ewkDown.GetName()
 
+def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
+
+  _fin = _f.Get("category_%s"%nam)
+  _wspace = _fin.Get("wspace_%s"%nam)
+  metname = "mvamet"
+  gvptname= "genVpt"
+
+  try:
+    mt = _wspace.var(metname)
+    mt.GetName()
+
+  except:
+    metname = "mvamet_"
+
+  # First we need to re-build the nominal templates from the datasets modifying the weights
+  targetmc     = _fin.Get("signal_wjets")
+  controlmc    = _fin.Get("singlemuon_wjets")  # defines in / out acceptance
+
+  WScales = targetmc.Clone(); WScales.SetName("wmn_weights_%s"%nam)
+  WScales.Divide(controlmc)
+  _fOut.WriteTObject(WScales)
+  _bins = []  # take bins from some histogram
+  for b in range(targetmc.GetNbinsX()+1):
+    _bins.append(targetmc.GetBinLowEdge(b+1))
+
+  CRs = [
+   Channel("W#rightarrow(#mu#nu)+jet",_wspace,out_ws,cid,0,_wspace.data("singlemuon_data"),WScales,"singlemuon_all_background")  # stupid linear fit of Purities, should move to flat 
+  #Channel("Dimuon",_wspace,out_ws,cid,0,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
+  ]
+  #Add Systematic ? This time we add them as nuisance parameters.
+
+  CRs[0].add_nuisance("MuonEfficiency",0.01)
+  CRs[0].add_nuisance("xs_backgrounds",0.1,True)   # is a background systematic
+
+  # Make bin-to-bin errors ?!
+  # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
+  return Category("WJets",cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"signal_wjets",CRs,diag)
+
 def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   _fin = _f.Get("category_%s"%nam)
@@ -152,13 +190,13 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
   CRs[1].add_nuisance("MuonEfficiency",0.01)
   CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
-  CRs[1].add_nuisance("xs_dibosons",0.1,True)   # is a background systematic
+  CRs[1].add_nuisance("xs_backgrounds",0.1,True)   # is a background systematic
 
   # Make bin-to-bin errors ?!
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
-  cat = Category(cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"signal_zjets",CRs,diag)
+  cat = Category("ZJets",cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"signal_zjets",CRs,diag)
   cat.addVar("jet1pt",25,50,1000)
-  cat.addTarget("dimuon_zll",25,50,1000)
+  cat.addTarget("dimuon_zll",1)
   return cat 
   
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -168,7 +206,7 @@ categories = ["inclusive","resolved","boosted"]
 #categories = ["boosted","resolved"]
 #categories = ["inclusive"]
 _f = r.TFile.Open("mono-x-vtagged.root")
-out_ws = r.RooWorkspace("combinedws","ZJets")
+out_ws = r.RooWorkspace("combinedws")
 out_ws._import = getattr(out_ws,"import")
 
 # Need to setup the things here for combined dataset, need to add all possible sample types first because otherwise RooFit throws a fit! 
@@ -184,6 +222,8 @@ diag_combined = diagonalizer(out_ws)
 for cid,cn in enumerate(categories): 
         _fDir = _fOut.mkdir("category_%s"%cn)
 	cmb_categories.append(cmodel(cid,cn,_f,_fDir,out_ws,diag_combined))
+	_fDirW = _fOut.mkdir("Wcategory_%s"%cn)
+	cmb_categories.append(cmodelW(10+cid,cn,_f,_fDirW,out_ws,diag_combined))
 # Had to define the types before adding to the combined dataset
 for cid,cn in enumerate(cmb_categories):
 	cn.init_channels()
