@@ -28,14 +28,19 @@ def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
         #    pPt       = iNtuple.dmpt
         if iNtuple.genVpt > 5 :
             pPt       = iNtuple.genVpt
-        pMet      = iRecoil.CorrectType1(iNtuple.mvamet,iNtuple.mvametphi,pPt,0,0,0,0,0, iUnc, -iUnc,0)
+        pPhi          = iNtuple.mvametphi#+r.TMath.Pi()
+        if iNtuple.genVphi != 0 : 
+            pPhi = iNtuple.genVphi
+        if pPhi > r.TMath.Pi():
+            pPhi = pPhi-r.TMath.Pi()
+        pMet      = iRecoil.CorrectType1(iNtuple.mvamet,iNtuple.mvametphi,pPt,pPhi,0,0,0,0, iUnc, -iUnc,0)
         lMet.metV   = pMet[0]
         lMet.metPhi = pMet[1]
         lTree.Fill()
     lTree.Write()
 
 sys.path.append("configs")
-x = __import__(sys.argv[1]) 
+import categories_config_vtag_Bambu as x
 
 r.gROOT.SetBatch(1)
 r.gROOT.ProcessLine('.L ./RecoilCorrector.hh+')
