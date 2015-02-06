@@ -60,11 +60,10 @@ def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
   cat = Category("WJets",cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"signal_wjets",CRs,diag)
   cat.addVar("jet1pt",25,150,1000)
-  cat.addVar("mll",25,75,125)
   cat.addVar("mt",30,50,200)
   cat.addVar("njets",10,0,10)
   cat.addVar("lep1pt",25,0,500)
-  cat.addVar("ptll",40,100,1000)
+  cat.addTarget("singlemuon_wjets",0)
   return cat
 
 def cmodel(cid,nam,_f,_fOut, out_ws, diag):
@@ -208,8 +207,10 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   cat.addVar("njets",10,0,10)
   cat.addVar("lep1pt",25,0,500)
   cat.addVar("ptll",40,100,1000)
+  cat.addVar("ptpho",40,100,1000)
   cat.addTarget("dimuon_zll",1)
   cat.addTarget("singlemuon_zll",1)
+  cat.addTarget("photon_gjet",0)
   return cat 
   
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//

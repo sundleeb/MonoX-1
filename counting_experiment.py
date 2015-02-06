@@ -37,6 +37,8 @@ class Bin:
    self.cen = (xmax+xmin)/2
 
    self.initY     = 0 
+   self.initE     = 0 
+   self.initB     = 0 
    self.binerror = 0
    self.binerror_m = 0
 
@@ -87,6 +89,10 @@ class Bin:
 
  def set_initY(self,mcdataset):
    self.initY = self.wspace.data(mcdataset).sumEntries("%s>=%g && %s<%g"%(self.var.GetName(),self.xmin,self.var.GetName(),self.xmax),self.rngename)
+
+ def set_initE(self):
+   self.initE = self.ret_expected()
+   self.initB = self.ret_background()
 
  def set_label(self,cat):
    self.categoryname = cat.GetName()
@@ -391,6 +397,14 @@ class Category:
        expected_hist.SetBinContent(bc,ch.ret_expected())
        expected_hist.SetBinError(bc,ch.ret_err())
 
+  def fillExpectedCorr(self,cr,expected_hist):
+   bc=0
+   for i,ch in enumerate(self.channels):
+     if ch.chid == cr.chid:
+       bc+=1
+       expected_hist.SetBinContent(bc,(ch.ret_expected()-ch.ret_background())/(ch.initE-ch.initB))
+       expected_hist.SetBinError(bc,ch.ret_err()/(ch.initE-ch.initB))
+
   def fillObservedHist(self,cr,observed_hist):
    bc=0
    for i,ch in enumerate(self.channels):
@@ -411,12 +425,18 @@ class Category:
      if i>=len(self._bins)-1: break
      model_hist.SetBinContent(i+1,ch.ret_model())
 
-  def makeWeightHists(self):
-   hist = r.TH1F("control_weights","Expected Post-fit/Pre-fit",len(self._bins)-1,array.array('d',self._bins))
-   for i,ch in enumerate(self.channels):
-     if i>=len(self._bins)-1: break
-     hist.SetBinContent(i+1,ch.ret_correction())
-     hist.SetBinContent(i+1,ch.ret_correction_err())
+  def makeWeightHists(self, cr_i=-1):
+   hist = r.TH1F("control_Region_weights","Expected Post-fit/Pre-fit",len(self._bins)-1,array.array('d',self._bins))
+   if cr_i < 0 :
+     for i,ch in enumerate(self.channels):
+       if i>=len(self._bins)-1: break
+       hist.SetBinContent(i+1,ch.ret_correction())
+       hist.SetBinError(i+1,ch.ret_correction_err())
+   else : 
+   	print "WHATS the CR ? ", cr_i
+	print self._control_regions
+   	self.fillExpectedCorr(self._control_regions[cr_i],hist)
+     
    return hist.Clone()
 
   def init_channels(self):
@@ -434,6 +454,7 @@ class Category:
      ch.set_sfactor(cr.ret_sfactor(i))
      # This has to the the last thing
      ch.setup_expect_var()
+     ch.set_initE()  # initialise expected
      ch.add_to_dataset()
      self.channels.append(ch)
 
@@ -499,6 +520,13 @@ class Category:
        if ch.chid != cr.chid: continue
        derr = abs(ch.ret_expected()-nominals[j][chi])
        ch.add_err(derr); chi+=1
+
+    # also add in signalregion the errors 
+    for i,ch in enumerate(self.channels):
+       derr = abs(hist_up.GetBinContent(i+1)-self.model_hist.GetBinContent(i+1))
+       ch.add_model_err(derr)
+       if i>len(self._bins)-1: break
+      
 
     diag.setEigenset(par,-1)  # up variation
     #fillModelHist(hist_dn,channels)
@@ -588,27 +616,38 @@ class Category:
    for tg_v in self.additional_targets:
      tg = tg_v[0] 
      cr_i = tg_v[1]
+     histW   = self.makeWeightHists(cr_i)
+     histW_U = self.makeWeightHists(cr_i); 
+     histW.SetName("%s_%s_combined_model_WEIGHTS_CR_FORTARGET"%(self.GNAME,tg))
+     self.histograms.append(histW.Clone())
+     for b in range(histW_U.GetNbinsX()): histW_U.SetBinContent(b+1,histW_U.GetBinContent(b+1)+histW_U.GetBinError(b+1)) # now its ~the default correction +1 sigma
      model_tg = r.TH1F("%s_%s_combined_model"%(self.GNAME,tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
      diag.generateWeightedTemplate(model_tg,histW,self._varname,self._varname,self._wspace.data(tg))
      model_tg_errs = r.TH1F("%s_%s_combined_model_ERRORS"%(self.GNAME,tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
-     diag.generateWeightedTemplate(model_tg,histW_U,self._varname,self._varname,self._wspace.data(tg))
+     diag.generateWeightedTemplate(model_tg_errs,histW_U,self._varname,self._varname,self._wspace.data(tg))
      # Errors are set as 
      for b in range(model_tg_errs.GetNbinsX()): model_tg.SetBinError(b+1,abs(model_tg_errs.GetBinContent(b+1)-model_tg.GetBinContent(b+1)))
      self.histograms.append(model_tg.Clone())
 
    # Also make a weighted version of each other variable
    for varx in self.additional_vars.keys():
+     histW   = self.makeWeightHists()
+     histW_U = self.makeWeightHists(); 
+     for b in range(histW_U.GetNbinsX()): histW_U.SetBinContent(b+1,histW_U.GetBinContent(b+1)+histW_U.GetBinError(b+1)) # now its ~the default correction +1 sigma
      nb = self.additional_vars[varx][0]; min = self.additional_vars[varx][1]; max = self.additional_vars[varx][2]
      model_hist_vx = r.TH1F("%s_combined_model%s"%(self.GNAME,varx),"combined_model - %s"%(self.cname),nb,min,max)
      model_hist_vx_errs = r.TH1F("%s_combined_model%s_ERRORS"%(self.GNAME,varx),"combined_model - %s"%(self.cname),nb,min,max)
      diag.generateWeightedTemplate(model_hist_vx,histW,self._varname,varx,self._wspace.data(self._target_datasetname))
-     diag.generateWeightedTemplate(model_hist_vx,histW_U,self._varname,varx,self._wspace.data(self._target_datasetname))
+     diag.generateWeightedTemplate(model_hist_vx_errs,histW_U,self._varname,varx,self._wspace.data(self._target_datasetname))
      for b in range(model_hist_vx_errs.GetNbinsX()): model_hist_vx.SetBinError(b+1,abs(model_hist_vx_errs.GetBinContent(b+1)-model_hist_vx.GetBinContent(b+1)))
      self.histograms.append(model_hist_vx.Clone())
 
      for tg_v in self.additional_targets:
        tg = tg_v[0] 
        cr_i = tg_v[1]
+       histW   = self.makeWeightHists(cr_i)
+       histW_U = self.makeWeightHists(cr_i); 
+       for b in range(histW_U.GetNbinsX()): histW_U.SetBinContent(b+1,histW_U.GetBinContent(b+1)+histW_U.GetBinError(b+1)) # now its ~the default correction +1 sigma
        model_hist_vx_tg = r.TH1F("%s_%s_combined_model%s"%(self.GNAME,tg,varx),"combined_model - %s"%(self.cname),nb,min,max)
        model_hist_vx_tg_errs = r.TH1F("%s_%s_combined_model_ERRORS%s"%(self.GNAME,tg,varx),"combined_model - %s"%(self.cname),nb,min,max)
        diag.generateWeightedTemplate(model_hist_vx_tg,histW,self._varname,varx,self._wspace.data(tg))

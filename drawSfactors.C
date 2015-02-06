@@ -49,13 +49,13 @@ lat->SetTextFont(42);
   TLegend *ld = new TLegend(0.5,0.65,0.89,0.89);ld->SetFillColor(0);
   ld->AddEntry(&mcfit,"Z(#rightarrow#nu#nu) MC","L");
   ld->AddEntry(&datafit,"Corrected Z(#rightarrow#nu#nu) MC","L");
-  zjets_signalregion_mc_fit_before_after->SetLogy(); 
-  zjets_signalregion_mc_fit_before_after->Draw();
+  signal_zjetsregion_mc_fit_before_after->SetLogy(); 
+  signal_zjetsregion_mc_fit_before_after->Draw();
   ld->Draw();
   lat->DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
   lat->DrawLatex(0.7,0.92,Form("%s category",cats[c].c_str()));
-  zjets_signalregion_mc_fit_before_after->SaveAs(Form("combined_post_fit_%s.pdf",cats[c].c_str()));
-  zjets_signalregion_mc_fit_before_after->SaveAs(Form("combined_post_fit_%s.png",cats[c].c_str()));
+  signal_zjetsregion_mc_fit_before_after->SaveAs(Form("combined_post_fit_%s.pdf",cats[c].c_str()));
+  signal_zjetsregion_mc_fit_before_after->SaveAs(Form("combined_post_fit_%s.png",cats[c].c_str()));
   
   TCanvas *c_pho = new TCanvas("cpho","cpho",800,550);
   TH1F *hpho = (TH1F*)fi->Get(Form("category_%s/photon_weights_%s",cats[c].c_str(),cats[c].c_str()));
