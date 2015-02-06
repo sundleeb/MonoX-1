@@ -14,8 +14,8 @@ backgrounds = {
 		"top":			       [["signal_top$VAR"],		r.kRed+1,   0]
 		,"Dibosons":		       [["signal_dibosons$VAR"],	r.kGray,    0]
 		,"Z(#rightarrow ll)+jets":     [["signal_zll$VAR"],		r.kGreen+3, 0]
-		,"W(#rightarrow l#nu)+jets":   [["corrected_signal_wjets$VAR"], 	r.kAzure-3, 0]
-		,"Z(#rightarrow #nu#nu)+jets": [["photon_dimuon_combined_model.root:$DIRECTORY/combined_model$VAR"],		r.kBlue-9,  0]
+		,"W(#rightarrow l#nu)+jets":  [["photon_dimuon_combined_model.root:W$DIRECTORY/WJets_combined_model$VAR"], 	r.kAzure-3, 0]
+		,"Z(#rightarrow #nu#nu)+jets":  [["photon_dimuon_combined_model.root:$DIRECTORY/ZJets_combined_model$VAR"],	r.kBlue-9,   0]
 		,"QCD":	  		       [["signal_qcd$VAR"],		r.kRed+2,   0]
 
 	      }
