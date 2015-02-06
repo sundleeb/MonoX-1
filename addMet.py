@@ -40,7 +40,8 @@ def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
     lTree.Write()
 
 sys.path.append("configs")
-import categories_config_vtag_Bambu as x
+x = __import__(sys.argv[1]) 
+#import categories_config_vtag_Bambu as x
 
 r.gROOT.SetBatch(1)
 r.gROOT.ProcessLine('.L ./RecoilCorrector.hh+')
