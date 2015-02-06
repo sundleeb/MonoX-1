@@ -8,12 +8,12 @@ signals = {
 key_order = ["QCD","Z#rightarrow ll","Dibosons","Top","W#rightarrow#mu#nu"]
 
 backgrounds = { 
-		"Top":			  [["singlemuon_topjet1pt"],		r.kRed+1,   0]
-		,"Dibosons":		  [["singlemuon_dibosonsjet1pt"],		r.kGray,   0]
-		,"W#rightarrow#mu#nu":	  [["corrected_singlemuon_wjetsjet1pt"],				r.kAzure-3,  0]
-		,"QCD":	  		  [["singlemuon_qcdjet1pt"],		r.kRed+2,   0]
-		,"Z#rightarrow ll":	  [["corrected_singlemuon_zlljet1pt"],		r.kGreen+3,  0]
+		"Top":			  [["singlemuon_top$VAR"],		r.kRed+1,   0]
+		,"Dibosons":		  [["singlemuon_dibosons$VAR"],		r.kGray,   0]
+		,"W#rightarrow#mu#nu":	  [["corrected_singlemuon_wjets$VAR"],				r.kAzure-3,  0]
+		,"QCD":	  		  [["singlemuon_qcd$VAR"],		r.kRed+2,   0]
+		,"Z#rightarrow ll":	  [["photon_dimuon_combined_model.root:$DIRECTORY/singlemuon_zll_combined_model$VAR"],		r.kGreen+3,  0]
 
 	      }
 
-dataname  = "singlemuon_datajet1pt"
+dataname  = "singlemuon_data$VAR"
