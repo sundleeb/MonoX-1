@@ -147,6 +147,7 @@ for ic,config in enumerate(configs) :
   nullhist.SetFillStyle(1001)
   if totalc==0: totalbkg=nullhist.Clone()
   else : totalbkg.Add(nullhist)
+  totalbkg.Sumw2()
   x.backgrounds[bkg][2]=nullhist.Clone()
   thstack.Add(x.backgrounds[bkg][2])
   legentries.append([x.backgrounds[bkg][2],bkg,"F"])
@@ -179,7 +180,6 @@ for ic,config in enumerate(configs) :
  print "Total Background " , normtotalback.Integral("width")
  # now set totalbackground errors to 0 
  for b in range(normtotalback.GetNbinsX()):
-   print normtotalback.GetBinError(b+1)*normtotalback.GetBinWidth(b+1)
    totalbkg.SetBinError(b+1,0)
 
  if options.gendata: 

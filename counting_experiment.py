@@ -40,7 +40,8 @@ class Bin:
    self.xmax = xmax
    self.cen = (xmax+xmin)/2
 
-   self.binerror = 0
+   self.binerror   = 0
+   self.binerror_m = 0
 
    self.o	= self.dataset.sumEntries("%s>=%g && %s<%g "%(var.GetName(),xmin,var.GetName(),xmax))
    #self.o	= (self.wspace.data(datasetname)).sumEntries("1>0",self.rngename)
@@ -187,6 +188,8 @@ class Bin:
    return self.binerror
  def add_err(self,e):
    self.binerror = (self.binerror**2+e**2)**0.5
+ def add_model_err(self,e):
+   self.binerror_m = (self.binerror_m**2+e**2)**0.5
  def ret_expected(self):
    return self.wspace_out.function(self.mu.GetName()).getVal()
  def ret_expected_init(self):
@@ -202,8 +205,9 @@ class Bin:
  def ret_model(self):
    return self.wspace_out.function(self.model_mu.GetName()).getVal()
  def ret_model_err(self):
-   print self.model_mu.GetName(), self.model_mu.getVal()
-   return self.wspace_out.function(self.model_mu.GetName()).getError()
+   #print self.model_mu.GetName(), self.model_mu.getVal()
+   #return self.wspace_out.function(self.model_mu.GetName()).getError()
+   return self.binerror_m
 
  def Print(self):
    print "Channel/Bin -> ", self.chid,self.binid, ", Var -> ",self.var.GetName(), ", Range -> ", self.xmin,self.xmax 
@@ -383,6 +387,7 @@ class Category:
    self._target_datasetname = _target_datasetname
    self.sample = self._wspace_out.cat("bin_number")
    self._obsvar = self._wspace_out.var("observed")
+   self.model_prefit_hist = r.TH1F("%s_combined_model_PREFIT"%(self.cname),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
    #self._obsdata = self._wspace_out.data("combinedData")
    if self._wspace_out.var(self._var.GetName()): a = 1
 #     if self._var.getMin()< self._wspace_out.var(self._var.GetName()).getMin() : self._wspace_out.var(self._var.GetName()).setMin(self._var.getMin())
@@ -403,6 +408,7 @@ class Category:
    self._wspace_out._import(self._pdf_orig)
 
    diag.freezeParameters(self._pdf_orig.getParameters(self._data_mc),False)
+  
    self._pdf_orig.fitTo(self._data_mc)  # Just initialises parameters 
    self._pdf.fitTo(self._data_mc)       # Just initialises parameters 
    # Now we loop over the CR's and bins to produce the counting experiments for this category 
@@ -425,6 +431,7 @@ class Category:
    self.pdf_ratio = r.RooFormulaVar("ratio_correction_%s"%cname,"Correction for Zvv from dimuon+photon control regions","@0*@1/(@2*@3)",ratioargs)
    self._wspace_out._import(self.pdf_ratio)
    self._wspace._import(self.pdf_ratio)
+   # finally make a prefit hist 
 
   def addTarget(self,vn,CR):  # Note, I need to know WHICH correction to run, signal is -1, others are 0,1 etc you know!
    self.additional_targets.append([vn,CR])
@@ -474,6 +481,7 @@ class Category:
    for i,ch in enumerate(self.channels):
      if i>=len(self._bins)-1: break
      model_hist.SetBinContent(i+1,ch.ret_model())
+     model_hist.SetBinError(i+1,ch.ret_model_err())
 
   def init_channels(self):
    sample = self._wspace_out.cat("bin_number") #r.RooCategory("bin_number","bin_number")
@@ -501,6 +509,8 @@ class Category:
     cr_pre_hist.SetLineColor(r.kRed)
     self.all_hists.append(cr_pre_hist.Clone())
     self.cr_prefit_hists.append(cr_pre_hist.Clone())
+
+   self.fillModelHist(self.model_prefit_hist)
    
   def ret_control_regions(self): 
    return self._control_regions
@@ -553,6 +563,13 @@ class Category:
        if ch.chid != cr.chid: continue
        derr = abs(ch.ret_expected()-nominals[j][chi])
        ch.add_err(derr); chi+=1
+    
+    # also add in signalregion the errors 
+    for i,ch in enumerate(self.channels):
+       derr = abs(hist_up.GetBinContent(i+1)-self.model_hist.GetBinContent(i+1))
+       ch.add_model_err(derr)
+       if i>len(self._bins)-1: break
+      
 
     diag.setEigenset(par,-1)  # up variation
     #fillModelHist(hist_dn,channels)
@@ -612,53 +629,101 @@ class Category:
   def save_model(self,diag):
    # Need to make ratio 
    self.model_hist = r.TH1F("%s_combined_model"%(self.cname),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
-   #fillModelHist(model_hist,channels)
    diag.generateWeightedTemplate(self.model_hist,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
+   self.model_hist.SetName("%s_combined_model"%self.GNAME)
    self.model_hist.SetLineWidth(2)
    self.model_hist.SetLineColor(1)
-   #_fout = r.TFile("combined_model.root","RECREATE")
-   #_fout.WriteTObject(self.model_hist)
-   self.model_hist.SetName("%s_combined_model"%self.GNAME)
-   self.histograms.append(self.model_hist)
+   #self.histograms.append(self.model_hist)
+   # The above is actually all we NEED for the limits, the rest is so that we waste just a little bit more of our precious life on plotting useless things!!!
+
+  def save_all_models_internal(self,diag):
+   error_histogram_F  = r.TH1F("%s_combined_model_ERRORS"%(self.cname),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+   self.fillModelHist(error_histogram_F)  # Save for Later
 
    for tg_v in self.additional_targets:
-     tg = tg_v[0] 
-     cr_i = tg_v[1]
+     tg = tg_v[0] ; cr_i = tg_v[1]
+     model_tg = r.TH1F("%s_%s_combined_model"%(self.GNAME,tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+     error_histogram  = r.TH1F("%s_combined_model_ERRORS"%(self.cname),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
      # Make the ratio of post-to-pre fit for the given CR 
-     model_tg = r.TH1F("%s_combined_model"%(tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
-     if cr_i<0:
+     if cr_i<0: # This means a target in the signal region!
        diag.generateWeightedTemplate(model_tg,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(tg))
+       # generate the weighted dataset with the histogram version 
+       # 1) make a weights Up 1 sigma use diff as errors! # -------------------------------------------------------------------------------------
+       histWUp = r.TH1F("%s_combined_model_TMPWEIGHTSUP"%(tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+       self.fillModelHist(histWUp) # hist W up is now the the default target model. 
+       for b in range(histWUp.GetNbinsX()): histWUp.SetBinContent(b+1,histWUp.GetBinContent(b+1)+histWUp.GetBinError(b+1)) # now its ~the default correction +1 sigma
+       histWUp.Divide(self.model_prefit_hist)  # Hist Wup is now ~the default Correction
+       diag.generateWeightedTemplate(error_histogram,histWUp,self._wspace_out.var(self._var.GetName()),self._wspace.data(tg))
+       # ----------------------------------------------------------------------------------------------------------------------------------------
+
      else: 
        histCorr =r.TH1F("%s_TMPCORRECION_"%(tg),"combined_model CORRECION - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins)) 
        self.fillExpectedMinusBkgHist(self._control_regions[cr_i],histCorr) 
        histDenum =r.TH1F("%s_TMPCORRECION_DEMONIMATOR"%(tg),"combined_model CORRECION - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins)) 
        self.fillExpectedMinusBkgHistOrig(self._control_regions[cr_i],histDenum)
+       histCorrUp = histCorr.Clone()
        histCorr.Divide(histDenum)
        diag.generateWeightedTemplate(model_tg,histCorr,self._varname,self._varname,self._wspace.data(tg)) 
+       # 1) make a weights Up 1 sigma use diff as errors! # -------------------------------------------------------------------------------------
+       for b in range(histCorrUp.GetNbinsX()): histCorrUp.SetBinContent(b+1,histCorrUp.GetBinContent(b+1)+histCorrUp.GetBinError(b+1))
+       histCorrUp.Divide(histDenum)
+       diag.generateWeightedTemplate(error_histogram,histCorrUp,self._varname,self._varname,self._wspace.data(tg)) 
+       # ----------------------------------------------------------------------------------------------------------------------------------------
+     for b in range(error_histogram.GetNbinsX()): 
+     	print "Error for histogram ", model_tg.GetName(), " = ", abs(error_histogram.GetBinContent(b+1)-model_tg.GetBinContent(b+1))
+     	model_tg.SetBinError(b+1,abs(error_histogram.GetBinContent(b+1)-model_tg.GetBinContent(b+1)))
+
      self.histograms.append(model_tg.Clone())
 
    # Also make a weighted version of each other variable
    for varx in self.additional_vars.keys():
+     # Nominal (target)
      nb = self.additional_vars[varx][0]; min = self.additional_vars[varx][1]; max = self.additional_vars[varx][2]
-     model_hist_vx = r.TH1F("combined_model%s"%(varx),"combined_model - %s"%(self.cname),nb,min,max)
+     model_hist_vx = r.TH1F("%s_combined_model%s"%(self.GNAME,varx),"combined_model - %s"%(self.cname),nb,min,max)
+     error_histogram = r.TH1F("%s_combined_modelERRORSTMP%s"%(self.GNAME,varx),"combined_model - %s"%(self.cname),nb,min,max)
      diag.generateWeightedTemplate(model_hist_vx,self._wspace_out.function(self.pdf_ratio.GetName()),varx,self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
+     histWUp = r.TH1F("%s_combined_model_TMPWEIGHTSUP"%(self.GNAME),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+     self.fillModelHist(histWUp)
+     for b in range(histWUp.GetNbinsX()): histWUp.SetBinContent(b+1,histWUp.GetBinContent(b+1)+histWUp.GetBinError(b+1))
+     histWUp.Divide(self.model_prefit_hist)
+     diag.generateWeightedTemplate(error_histogram,histWUp,self._varname,varx,self._wspace.data(self._target_datasetname))
+     # Errors 
+     for b in range(error_histogram.GetNbinsX()):  
+     	print "Error for histogram ", model_hist_vx.GetName(), " = ", abs(error_histogram.GetBinContent(b+1)-model_hist_vx.GetBinContent(b+1))
+     	model_hist_vx.SetBinError(b+1,abs(error_histogram.GetBinContent(b+1)-model_hist_vx.GetBinContent(b+1)))
      self.histograms.append(model_hist_vx.Clone())
 
      for ti,tg_v in enumerate(self.additional_targets):
        tg = tg_v[0] 
        cr_i = tg_v[1]
-       model_hist_vx_tg = r.TH1F("%s_combined_model%s"%(tg,varx),"combined_model - %s"%(self.cname),nb,min,max)
+       model_hist_vx_tg = r.TH1F("%s_%s_combined_model%s"%(self.GNAME,tg,varx),"combined_model - %s"%(self.cname),nb,min,max)
+       error_histogram = r.TH1F("combined_model%s_ERRORMODE"%(varx),"combined_model - %s"%(self.cname),nb,min,max)
        if cr_i<0 :
          diag.generateWeightedTemplate(model_hist_vx_tg,self._wspace_out.function(self.pdf_ratio.GetName()),varx,self._wspace_out.var(self._var.GetName()),self._wspace.data(tg))
+         # 1) make a weights Up 1 sigma use diff as errors! # -------------------------------------------------------------------------------------
+         histWUp = r.TH1F("%s_combined_model_TMPWEIGHTSUP"%(tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+         self.fillModelHist(histWUp)
+         for b in range(histWUp.GetNbinsX()): histWUp.SetBinContent(b+1,histWUp.GetBinContent(b+1)+histWUp.GetBinError(b+1))	
+	 histWUp.Divide(self.model_prefit_hist)
+         diag.generateWeightedTemplate(error_histogram,histWUp,self._varname,varx,self._wspace.data(tg))
+       # ----------------------------------------------------------------------------------------------------------------------------------------
        else :
          histCorr =r.TH1F("%s_TMPCORRECION_"%(tg),"combined_model CORRECION - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins)) 
          self.fillExpectedMinusBkgHist(self._control_regions[cr_i],histCorr) 
          histDenum =r.TH1F("%s_TMPCORRECION_DEMONIMATOR"%(tg),"combined_model CORRECION - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins)) 
          self.fillExpectedMinusBkgHistOrig(self._control_regions[cr_i],histDenum)
+         histCorrUp = histCorr.Clone()
+         for b in range(histCorrUp.GetNbinsX()): histCorrUp.SetBinContent(b+1,histCorrUp.GetBinContent(b+1)+histCorrUp.GetBinError(b+1))
          histCorr.Divide(histDenum)
+	 histCorrUp.Divide(histDenum)
          diag.generateWeightedTemplate(model_hist_vx_tg,histCorr,self._varname,varx,self._wspace.data(tg))
+         diag.generateWeightedTemplate(error_histogram,histCorrUp,self._varname,varx,self._wspace.data(tg))
+
+       for b in range(error_histogram.GetNbinsX()): model_hist_vx_tg.SetBinError(b+1,abs(error_histogram.GetBinContent(b+1)-model_hist_vx_tg.GetBinContent(b+1)))
        self.histograms.append(model_hist_vx_tg.Clone())
 
+   # finally set model errors
+   for b in range(error_histogram_F.GetNbinsX()): self.model_hist.SetBinError(b+1,error_histogram_F.GetBinError(b+1))
 
 
   def make_post_fit_plots(self):
@@ -789,10 +854,12 @@ class Category:
     ratio.Draw("samepel")
     self.all_hists.append(line)
     pad2.RedrawAxis()
-    self._fout.WriteTObject(c) 
+    self._fout.WriteTObject(c)
 
   def save(self):
    #for canv in self.canvases.keys():
    #  self._fout.WriteTObject(self.canvases[canv])
+   # finally THE model
+   self._fout.WriteTObject(self.model_hist)
    for hist in self.histograms:
      self._fout.WriteTObject(hist)

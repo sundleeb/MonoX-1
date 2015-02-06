@@ -1,18 +1,18 @@
 #! /bin/bash
 # Make some pretty plots from canvases inside the root files produced from the fitting 
 # of the dimuon and single muon control regions
-root -l -q -b 'drawFits.C("mono-x-vtagged.root","inclusive")'
-root -l -b -q 'drawFits.C("mono-x-vtagged.root","boosted")'
-root -l -b -q 'drawFits.C("mono-x-vtagged.root","resolved")'
+#root -l -q -b 'drawFits.C("mono-x-vtagged.root","inclusive")'
+#root -l -b -q 'drawFits.C("mono-x-vtagged.root","boosted")'
+#root -l -b -q 'drawFits.C("mono-x-vtagged.root","resolved")'
 
 # Some more plots for the photon+Zmm control regions combined fit.
-root -l -q -b 'drawSfactors.C("photon_dimuon_combined_model.root","inclusive")'
-root -l -b -q 'drawSfactors.C("photon_dimuon_combined_model.root","boosted")'
-root -l -b -q 'drawSfactors.C("photon_dimuon_combined_model.root","resolved")'
+#root -l -q -b 'drawSfactors.C("photon_dimuon_combined_model.root","inclusive")'
+#root -l -b -q 'drawSfactors.C("photon_dimuon_combined_model.root","boosted")'
+#root -l -b -q 'drawSfactors.C("photon_dimuon_combined_model.root","resolved")'
 
-root -l -q -b 'drawSfactorsW.C("photon_dimuon_combined_model.root","inclusive")'
-root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","boosted")'
-root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","resolved")'
+#root -l -q -b 'drawSfactorsW.C("photon_dimuon_combined_model.root","inclusive")'
+#root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","boosted")'
+#root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","resolved")'
 
 # Make dimuon/single muon CR plots (note for dimuon, the fake MET is obsolete) before and after corrections
 python makePlot.py mono-x-vtagged.root plot_dimuon_config plot_singlemuon_config plot_dimuon_config_nocorrections plot_singlemuon_config_nocorrections -d category_boosted  -x "fake E_{T}^{miss} (GeV)" -b  -c boosted  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
@@ -20,9 +20,9 @@ python makePlot.py mono-x-vtagged.root plot_dimuon_config plot_singlemuon_config
 python makePlot.py mono-x-vtagged.root plot_dimuon_config plot_singlemuon_config plot_dimuon_config_nocorrections plot_singlemuon_config_nocorrections -d category_inclusive -x "fake E_{T}^{miss} (GeV)" -b  -c inclusive # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
 
 # Do the same but for additional variables 
-python makePlot.py mono-x-vtagged.root plot_dimuon_config_jpt plot_singlemuon_config_jpt plot_dimuon_config_nocorrections_jpt plot_singlemuon_config_nocorrections_jpt -v jet1pt -d category_boosted  -x "Lead Jet p_{T} (GeV)" -b  -c boosted  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
+python makePlot.py mono-x-vtagged.root plot_dimuon_config_jpt plot_singlemuon_config_jpt plot_dimuon_config_nocorrections_jpt plot_singlemuon_config_nocorrections_jpt -v jet1pt -d category_boosted  -x "ca08 Jet p_{T} (GeV)" -b  -c boosted  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
 python makePlot.py mono-x-vtagged.root plot_dimuon_config_jpt plot_singlemuon_config_jpt plot_dimuon_config_nocorrections_jpt plot_singlemuon_config_nocorrections_jpt -v jet1pt -d category_resolved -x "Dijet p_{T} (GeV)" -b  -c resolved  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
-python makePlot.py mono-x-vtagged.root plot_dimuon_config_jpt plot_singlemuon_config_jpt plot_dimuon_config_nocorrections_jpt plot_singlemuon_config_nocorrections_jpt -v jet1pt -d category_inclusive -x "ca08 Jet p_{T} (GeV)" -b  -c inclusive # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
+python makePlot.py mono-x-vtagged.root plot_dimuon_config_jpt plot_singlemuon_config_jpt plot_dimuon_config_nocorrections_jpt plot_singlemuon_config_nocorrections_jpt -v jet1pt -d category_inclusive -x "Lead Jet p_{T} (GeV)" -b  -c inclusive # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
 
 # Dimuon additionals 
 python makePlot.py mono-x-vtagged.root plot_dimuon_config_jpt plot_dimuon_config_nocorrections_jpt -v njets -o NJETS -d category_boosted  -x "N Jets" -b  -c boosted  --nospec 
