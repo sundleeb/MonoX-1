@@ -38,6 +38,7 @@ class Bin:
 
    self.initY     = 0 
    self.binerror = 0
+   self.binerror_m = 0
 
    self.o	= self.dataset.sumEntries("%s>=%g && %s<%g "%(var.GetName(),xmin,var.GetName(),xmax))
    self.obs	= self.wspace_out.var("observed")#r.RooRealVar("observed","Observed Events bin",1)
@@ -173,21 +174,24 @@ class Bin:
    return self.binerror
  def add_err(self,e):
    self.binerror = (self.binerror**2+e**2)**0.5
+ def add_model_err(self,e):
+   self.binerror_m = (self.binerror_m**2+e**2)**0.5
  def ret_expected(self):
    return self.wspace_out.function(self.mu.GetName()).getVal()
  def ret_expected_err(self):
    return self.wspace_out.function(self.mu.GetName()).getError()
+ def ret_model_err(self):
+   return self.binerror_m
  def ret_background(self):
    #if self.constBkg: return self.b
    #else: return (1-self.b)*(self.ret_expected())
    return self.wspace_out.function(self.b.GetName()).getVal()
  def ret_correction(self):
    return (self.wspace_out.var(self.model_mu.GetName()).getVal())/self.initY
+ def ret_correction_err(self):
+   return self.ret_model_err()/self.initY
  def ret_model(self):
    return self.wspace_out.var(self.model_mu.GetName()).getVal()
- def ret_model_err(self):
-   print self.model_mu.GetName(), self.model_mu.getVal()
-   return self.wspace_out.var(self.model_mu.GetName()).getError()
 
  def Print(self):
    print "Channel/Bin -> ", self.chid,self.binid, ", Var -> ",self.var.GetName(), ", Range -> ", self.xmin,self.xmax , "MODEL MU (prefit/current state)= ",self.initY,"/",self.ret_model()
@@ -248,11 +252,15 @@ class Channel:
     if bkg: self.bkg_nuisances.append(name)
     else:   self.nuisances.append(name)
     
-  def add_nuisance_shape(self,name,file):
+  def add_nuisance_shape(self,name,file,setv=""):
     if not(self.wspace_out.var("nuis_%s"%name)) :
       nuis = r.RooRealVar("nuis_%s"%name,"Nuisance - %s"%name,0,-3,3);
       self.wspace_out._import(nuis)
-      cont = r.RooGaussian("const_%s"%name,"Constraint - %s"%name,self.wspace_out.var(nuis.GetName()),r.RooFit.RooConst(0),r.RooFit.RooConst(1));
+      nuis_IN = r.RooRealVar("nuis_IN_%s"%name,"Constraint Mean - %s"%name,0,-10,10);
+      nuis_IN.setConstant()
+      self.wspace_out._import(nuis_IN)
+
+      cont = r.RooGaussian("const_%s"%name,"Constraint - %s"%name,self.wspace_out.var(nuis.GetName()),self.wspace_out.var(nuis_IN.GetName()),r.RooFit.RooConst(1));
       self.wspace_out._import(cont)
 
     sfup = self.scalefactors.GetName()+"_%s_"%name+"Up"
@@ -273,6 +281,11 @@ class Channel:
 		,r.RooArgList(self.wspace_out.var("nuis_%s"%name))) # this is now relative deviation, SF-SF_0 = func => SF = SF_0*(1+func/SF_0)
 	self.wspace_out.var("nuis_%s"%name).setVal(0)
         if not self.wspace_out.function(func.GetName()) :self.wspace_out._import(func)
+    if setv!="":
+      if "SetTo" in setv: 
+       vv = float(setv.split("=")[1])
+       self.wspace_out.var("nuis_IN_%s"%name).setVal(vv)
+       self.wspace_out.var("nuis_%s"%name).setVal(vv)
     self.nuisances.append(name)
 
   def set_wspace(self,w):
@@ -403,6 +416,7 @@ class Category:
    for i,ch in enumerate(self.channels):
      if i>=len(self._bins)-1: break
      hist.SetBinContent(i+1,ch.ret_correction())
+     hist.SetBinContent(i+1,ch.ret_correction_err())
    return hist.Clone()
 
   def init_channels(self):
@@ -551,40 +565,56 @@ class Category:
    diag.generateWeightedTemplate(self.model_hist,histW,self._varname,self._varname,self._wspace.data(self._target_datasetname))
    self.model_hist.SetLineWidth(2)
    self.model_hist.SetLineColor(1)
+
    #_fout = r.TFile("combined_model.root","RECREATE")
    #_fout.WriteTObject(self.model_hist)
    self.model_hist.SetName("%s_combined_model"%self.GNAME)
-   self.histograms.append(self.model_hist)
    histW.SetName("correction_weights_%s"%self.cname)
    histW.SetLineWidth(2)
    histW.SetLineColor(4)
    self.histograms.append(histW)
-   
+  
+  def save_all_models_internal(self,diag):
+  
+   # First we make errors for the nominal model histogram 
+   error_hist_F  = r.TH1F("%s_combined_model_ERRORS"%(self.cname),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+   histW   = self.makeWeightHists()
+   histW_U = self.makeWeightHists(); 
+   for b in range(histW_U.GetNbinsX()): histW_U.SetBinContent(b+1,histW_U.GetBinContent(b+1)+histW_U.GetBinError(b+1)) # now its ~the default correction +1 sigma
+   diag.generateWeightedTemplate(error_hist_F,histW_U,self._varname,self._varname,self._wspace.data(self._target_datasetname))
+   for b in range(error_hist_F.GetNbinsX()): self.model_hist.SetBinError(b+1,abs(error_hist_F.GetBinContent(b+1)-self.model_hist.GetBinContent(b+1)))
+
+
    for tg_v in self.additional_targets:
      tg = tg_v[0] 
      cr_i = tg_v[1]
-     model_tg = r.TH1F("%s_combined_model"%(tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+     model_tg = r.TH1F("%s_%s_combined_model"%(self.GNAME,tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
      diag.generateWeightedTemplate(model_tg,histW,self._varname,self._varname,self._wspace.data(tg))
+     model_tg_errs = r.TH1F("%s_%s_combined_model_ERRORS"%(self.GNAME,tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+     diag.generateWeightedTemplate(model_tg,histW_U,self._varname,self._varname,self._wspace.data(tg))
+     # Errors are set as 
+     for b in range(model_tg_errs.GetNbinsX()): model_tg.SetBinError(b+1,abs(model_tg_errs.GetBinContent(b+1)-model_tg.GetBinContent(b+1)))
      self.histograms.append(model_tg.Clone())
-		         
 
    # Also make a weighted version of each other variable
    for varx in self.additional_vars.keys():
      nb = self.additional_vars[varx][0]; min = self.additional_vars[varx][1]; max = self.additional_vars[varx][2]
-     model_hist_vx = r.TH1F("combined_model%s"%(varx),"combined_model - %s"%(self.cname),nb,min,max)
-     print "Also Plotting variable", varx 
-     diag.generateWeightedTemplate(self.model_hist,histW,self._varname,varx,self._wspace.data(self._target_datasetname))
+     model_hist_vx = r.TH1F("%s_combined_model%s"%(self.GNAME,varx),"combined_model - %s"%(self.cname),nb,min,max)
+     model_hist_vx_errs = r.TH1F("%s_combined_model%s_ERRORS"%(self.GNAME,varx),"combined_model - %s"%(self.cname),nb,min,max)
+     diag.generateWeightedTemplate(model_hist_vx,histW,self._varname,varx,self._wspace.data(self._target_datasetname))
+     diag.generateWeightedTemplate(model_hist_vx,histW_U,self._varname,varx,self._wspace.data(self._target_datasetname))
+     for b in range(model_hist_vx_errs.GetNbinsX()): model_hist_vx.SetBinError(b+1,abs(model_hist_vx_errs.GetBinContent(b+1)-model_hist_vx.GetBinContent(b+1)))
      self.histograms.append(model_hist_vx.Clone())
 
      for tg_v in self.additional_targets:
        tg = tg_v[0] 
        cr_i = tg_v[1]
-       model_hist_vx_tg = r.TH1F("combined_model%s"%(varx),"combined_model - %s"%(self.cname),nb,min,max)
+       model_hist_vx_tg = r.TH1F("%s_%s_combined_model%s"%(self.GNAME,tg,varx),"combined_model - %s"%(self.cname),nb,min,max)
+       model_hist_vx_tg_errs = r.TH1F("%s_%s_combined_model_ERRORS%s"%(self.GNAME,tg,varx),"combined_model - %s"%(self.cname),nb,min,max)
        diag.generateWeightedTemplate(model_hist_vx_tg,histW,self._varname,varx,self._wspace.data(tg))
+       diag.generateWeightedTemplate(model_hist_vx_tg_errs,histW_U,self._varname,varx,self._wspace.data(tg))
+       for b in range(model_hist_vx_tg_errs.GetNbinsX()): model_hist_vx_tg.SetBinError(b+1,abs(model_hist_vx_tg_errs.GetBinContent(b+1)-model_hist_vx_tg.GetBinContent(b+1)))
        self.histograms.append(model_hist_vx_tg.Clone())
-
-   
-
 
   def make_post_fit_plots(self):
    c = r.TCanvas("%sregion_mc_fit_before_after"%self._target_datasetname)
@@ -725,5 +755,7 @@ class Category:
   def save(self):
    #for canv in self.canvases.keys():
    #  self._fout.WriteTObject(self.canvases[canv])
+   # finally THE model
+   self._fout.WriteTObject(self.model_hist)
    for hist in self.histograms:
      self._fout.WriteTObject(hist)

@@ -58,7 +58,14 @@ def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
 
   # Make bin-to-bin errors ?!
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
-  return Category("WJets",cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"signal_wjets",CRs,diag)
+  cat = Category("WJets",cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"signal_wjets",CRs,diag)
+  cat.addVar("jet1pt",25,150,1000)
+  cat.addVar("mll",25,75,125)
+  cat.addVar("mt",30,50,200)
+  cat.addVar("njets",10,0,10)
+  cat.addVar("lep1pt",25,0,500)
+  cat.addVar("ptll",40,100,1000)
+  return cat
 
 def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
@@ -195,8 +202,14 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   # Make bin-to-bin errors ?!
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
   cat = Category("ZJets",cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"signal_zjets",CRs,diag)
-  cat.addVar("jet1pt",25,50,1000)
+  cat.addVar("jet1pt",25,150,1000)
+  cat.addVar("mll",25,75,125)
+  cat.addVar("mt",30,50,200)
+  cat.addVar("njets",10,0,10)
+  cat.addVar("lep1pt",25,0,500)
+  cat.addVar("ptll",40,100,1000)
   cat.addTarget("dimuon_zll",1)
+  cat.addTarget("singlemuon_zll",1)
   return cat 
   
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
@@ -272,13 +285,19 @@ _fOut.WriteTObject(h2corr)
 for cat in cmb_categories:
    cat.save_model(diag_combined)          # Saves the nominal model and makes templates for variations from each uncorrelated parameter :) 
    cat.generate_systematic_templates(diag_combined,npars)
-   cat.make_post_fit_plots() # Makes Post-fit to CR plots including approximated error bands from fit variations 
+   cat.make_post_fit_plots() # Makes Post-fit to CR plots including approximated error bands from fit variations
+   # plot additional vars and nonsence like that 
+   cat.save_all_models_internal(diag_combined)
    cat.save() # make plots, save histograms and canvases
 
 for cid,cn in enumerate(cmb_categories):
    channels = cn.ret_channels()
    for ch in channels: ch.Print()
 
+print "Init pars"
+combined_fit_result.floatParsInit().Print("v")
+print "Final pars"
+combined_fit_result.floatParsFinal().Print("v")
 # END
 print "Produced combined Z(mm) + photon fits -> ", _fOut.GetName()
 _fOut.Close()
