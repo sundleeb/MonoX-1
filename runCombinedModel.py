@@ -79,18 +79,20 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   metname = "mvamet"
   gvptname= "genVpt"
+  wvarname= "weight"
   try:
     mt = _wspace.var(metname)
     mt.GetName()
   except:
     metname = "mvamet_"
     gvptname = "genVpt_"
+    wvarname = "weight_"
   # First we need to re-build the nominal templates from the datasets modifying the weights
   target = _fin.Get("signal_zjets")
   Zmm = _fin.Get("dimuon_zll")
-  #Pho = _fin.Get("photon_gjet")
+  GJet = _fin.Get("photon_gjet")
   ZmmScales = target.Clone(); ZmmScales.SetName("zmm_weights_%s"%nam)
-  #PhotonScales = target.Clone(); PhotonScales.SetName("photon_weights_%s"%nam)
+
 
   # run through 3 datasets, photon, etc and generate a template from histograms 
   # We only nned to make NLO versions of Z(vv) and Photon :) 
@@ -105,7 +107,17 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv = target.Clone(); Zvv.SetName("photon_weights_nom_%s"%nam)
   for b in range(Zvv.GetNbinsX()): Zvv.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv,nlo_zjt,gvptname,metname,_wspace.data("signal_zjets"))
-  
+
+
+  # make a special dataset for photons  --------------------------------------------------------
+  PhotonOverZ = Pho.Clone(); PhotonOverZ.SetName("PhotonOverZNLO")
+  PhotonOverZ.Divide(Zvv)
+  PhotonOverZ.Multiply(target)
+  PhotonOverZ.Divide(GJet)
+  diag.generateWeightedDataset("photon_gjet_nlo",PhotonOverZ,wvarname,metname,_wspace,"photon_gjet")
+  # --------------------------------------------------------------------------------------------
+    
+
   #################################################################################################################
   # now do systematic parts
   Pho_mrUp = target.Clone(); Pho.SetName("photon_weights_denom_mrUp_%s"%nam)
@@ -208,6 +220,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   cat.addVar("ptll",40,100,1000)
   cat.addTarget("dimuon_zll",1)
   cat.addTarget("singlemuon_zll",1)
+  cat.addTarget("photon_gjet_nlo",0)
+  cat.addTarget("photon_gjet",0)
   return cat 
   
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
