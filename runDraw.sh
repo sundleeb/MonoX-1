@@ -6,13 +6,13 @@
 #root -l -b -q 'drawFits.C("mono-x-vtagged.root","resolved")'
 
 # Some more plots for the photon+Zmm control regions combined fit.
-#root -l -q -b 'drawSfactors.C("photon_dimuon_combined_model.root","inclusive")'
-#root -l -b -q 'drawSfactors.C("photon_dimuon_combined_model.root","boosted")'
-#root -l -b -q 'drawSfactors.C("photon_dimuon_combined_model.root","resolved")'
+root -l -q -b 'drawSfactors.C("photon_dimuon_combined_model.root","inclusive")'
+root -l -b -q 'drawSfactors.C("photon_dimuon_combined_model.root","boosted")'
+root -l -b -q 'drawSfactors.C("photon_dimuon_combined_model.root","resolved")'
 
-#root -l -q -b 'drawSfactorsW.C("photon_dimuon_combined_model.root","inclusive")'
-#root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","boosted")'
-#root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","resolved")'
+root -l -q -b 'drawSfactorsW.C("photon_dimuon_combined_model.root","inclusive")'
+root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","boosted")'
+root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","resolved")'
 
 # Make dimuon/single muon CR plots (note for dimuon, the fake MET is obsolete) before and after corrections
 python makePlot.py mono-x-vtagged.root plot_dimuon_config plot_singlemuon_config plot_dimuon_config_nocorrections plot_singlemuon_config_nocorrections -d category_boosted  -x "fake E_{T}^{miss} (GeV)" -b  -c boosted  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
@@ -67,8 +67,7 @@ python makePlot.py mono-x.root plot_config_combsignal     -d category_monojet  	
 python makePlot.py mono-x.root plot_config_combsignal_jpt -d category_monojet  -v jet1pt  -x "Lead Jet p_{T} (GeV)" -b  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind 
 python makePlot.py mono-x.root plot_config_combsignal_jpt -d category_monojet  -v njets  -o NJETS -x "N Jets" -b  --nospec  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
 
-
 # Finally the photons !
-python makePlot.py mono-x-vtagged.root  plot_photon_config -d category_inclusive -x "photon p_{T} (GeV)" -v "ptpho" -c inclusive 
-python makePlot.py mono-x-vtagged.root  plot_photon_config -d category_boosted -x "photon p_{T} (GeV)" -v "ptpho" -c boosted 
-python makePlot.py mono-x-vtagged.root  plot_photon_config -d category_resolved -x "photon p_{T} (GeV)" -v "ptpho" -c resolved 
+python makePlot.py mono-x-vtagged.root  plot_photon_config plot_photon_config_nocorrection -d category_inclusive -x "photon p_{T} (GeV)" -v "ptpho" -c inclusive 
+python makePlot.py mono-x-vtagged.root  plot_photon_config plot_photon_config_nocorrection -d category_boosted -x "photon p_{T} (GeV)" -v "ptpho" -c boosted 
+python makePlot.py mono-x-vtagged.root  plot_photon_config plot_photon_config_nocorrection -d category_resolved -x "photon p_{T} (GeV)" -v "ptpho" -c resolved 
