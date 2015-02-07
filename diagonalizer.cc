@@ -43,6 +43,7 @@ class diagonalizer {
     void freezeParameters(RooArgSet *args, bool freeze=true);
     void generateWeightedTemplate(TH1F *, RooFormulaVar *, RooRealVar &, RooDataSet *);
     void generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::string wvar, std::string var, RooDataSet *data);
+    void generateWeightedDataset(std::string newname, TH1F *pdf_num, std::string wvarname, std::string wvar, RooWorkspace *wspace, std::string dataname);
     TH2F *retCovariance();
     TH2F *retCorrelation();
     
@@ -240,6 +241,31 @@ void diagonalizer::generateWeightedTemplate(TH1F *histNew, RooFormulaVar *pdf_nu
     histNew->Fill(val,cweight);
   }
   histNew->GetXaxis()->SetTitle(varname);
+}
+void diagonalizer::generateWeightedDataset(std::string newname, TH1F *pdf_num, std::string wvarname, std::string wvar, RooWorkspace *wspace, std::string dataname){
+
+  RooDataSet *data =(RooDataSet*) wspace->data(dataname.c_str());
+  RooArgSet *args = (RooArgSet*)data->get(0);
+  RooRealVar *rwvar = wspace->var(wvarname.c_str());
+  RooDataSet datanew(newname.c_str(),newname.c_str(),RooArgSet(*args,*rwvar),wvarname.c_str());
+
+  int nevents = data->numEntries();
+  for (int ev=0;ev<nevents;ev++){
+    const RooArgSet *vw = data->get(ev);
+    double wval    = vw->getRealValue(wvar.c_str());
+    double weight = data->weight();
+    if (pdf_num) { 
+//	std::cout << wval << ", old weight" << weight << std::endl;
+    	weight *= pdf_num->GetBinContent(pdf_num->FindBin(wval));
+//	std::cout << wval << ", new weight" << weight << std::endl;
+    } else {
+    	std::cout <<"Correction function NULL "<<std::endl;
+	assert(0);
+    }
+    rwvar->setVal(weight);
+    datanew.add(*vw,weight);
+  }
+  wspace->import(datanew);
 }
 
 #endif

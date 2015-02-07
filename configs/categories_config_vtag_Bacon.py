@@ -3,6 +3,16 @@ out_file_name = 'mono-x-vtagged.root'
 BINS = [250.0 , 260.0 , 270.0 , 280.0 , 290.0 , 300.0 , 310.0 , 320.0 , 330.0,340,360,380,420,510,1000]
 BINS = range(250,550,50)
 BINS.append(1000)
+
+ALLVARS = [
+  ['jet1pt',25,150,1000]
+  ,["mll",25,75,125]
+  ,["mt",30,50,200]
+  ,["njets",10,0,10]
+  ,["lep1pt",25,0,500]
+  ,["ptll",40,100,1000]
+  ,["ptpho",40,100,1000]
+ ]
 categories = [
 	{
             'name':"resolved"
@@ -10,7 +20,7 @@ categories = [
 	   ,"cutstring":"mvamet>250 && mvamet<1000"
 	   ,"varstring":["mvamet",250,1000]
 	   ,"weightname":"weight"
-	   ,"additionalvars":[['jet1pt',25,150,1000]]
+	   ,"additionalvars":ALLVARS[:]
 	   ,"pdfmodel":1
 	   ,"bins":BINS[:]
            ,"recoilMC"  :"recoilfits/recoilfit_Zgj_pfmetraw_2012_mc.root"
@@ -94,7 +104,7 @@ categories = [
 	   ,"varstring":["mvamet",250,1000]
 	   ,"weightname":"weight"
 	   ,"bins":BINS[:]
-	   ,"additionalvars":[['jet1pt',25,150,1000]]
+	   ,"additionalvars":ALLVARS[:]
 	   ,"pdfmodel":1
            ,"recoilMC"  :"recoilfits/recoilfit_Zgj_pfmetraw_2012_mc.root"
            ,"recoilData":"recoilfits/recoilfit_Zgj_pfmetraw_2012_data.root"
@@ -179,7 +189,7 @@ categories = [
 	   ,"varstring":["mvamet",200,1000]
 	   ,"weightname":"weight"
 	   ,"bins":[200.0 , 210.0 , 220.0 , 230.0 , 240.0 , 250.0 , 260.0 , 270.0 , 280.0 , 290.0 , 300.0 , 310.0 , 320.0 , 330.0,340,360,380,420,510,1000]
-  	   ,"additionalvars":[['jet1pt',25,150,1000]]
+	   ,"additionalvars":ALLVARS[:]
 	   ,"pdfmodel":0
            ,"recoilMC"  :"recoilfits/recoilfit_Zgj_pfmetraw_2012_mc.root"
            ,"recoilData":"recoilfits/recoilfit_Zgj_pfmetraw_2012_data.root"

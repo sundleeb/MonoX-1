@@ -67,3 +67,8 @@ python makePlot.py mono-x.root plot_config_combsignal     -d category_monojet  	
 python makePlot.py mono-x.root plot_config_combsignal_jpt -d category_monojet  -v jet1pt  -x "Lead Jet p_{T} (GeV)" -b  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind 
 python makePlot.py mono-x.root plot_config_combsignal_jpt -d category_monojet  -v njets  -o NJETS -x "N Jets" -b  --nospec  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
 
+
+# Finally the photons !
+python makePlot.py mono-x-vtagged.root  plot_photon_config -d category_inclusive -x "photon p_{T} (GeV)" -v "ptpho" -c inclusive 
+python makePlot.py mono-x-vtagged.root  plot_photon_config -d category_boosted -x "photon p_{T} (GeV)" -v "ptpho" -c boosted 
+python makePlot.py mono-x-vtagged.root  plot_photon_config -d category_resolved -x "photon p_{T} (GeV)" -v "ptpho" -c resolved 

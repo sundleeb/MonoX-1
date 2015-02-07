@@ -80,11 +80,11 @@ for ic,config in enumerate(configs) :
  if ":" in x.dataname: 
    fi,datnam = x.dataname.split(":")
    tfi = r.TFile.Open(fi)
-   data = tfi.Get(datnam)
+   dataO = tfi.Get(datnam)
  else:
-   data = di.Get(x.directory+x.dataname)
+   dataO = di.Get(x.directory+x.dataname)
    print x.directory+x.dataname
- data 	    = getNormalizedHist(data,data)
+ data 	    = getNormalizedHist(dataO,dataO)
  data.SetTitle("")
  origlabel = data.GetXaxis().GetTitle()
  #if options.xlab: data.GetXaxis().SetTitle(options.xlab)
@@ -124,6 +124,10 @@ for ic,config in enumerate(configs) :
      tfi = r.TFile.Open(fi)
      tmp = tfi.Get(datnam)
      print "trying...",datnam
+    elif "Purity=" in thist:
+       val = float(thist.split("=")[-1])
+       tmp = dataO.Clone()
+       tmp.Scale(1-val)
     else: 
        tmp = di.Get(x.directory+thist)
        print "trying...",x.directory+thist, "from",di.GetName()
