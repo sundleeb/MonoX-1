@@ -457,10 +457,6 @@ class Category:
      self.channels.append(ch)
    # fit is buggered so need to scale by 1.1
 
-   for i,bl in enumerate(self.channels):
-    if i >= len(self._bins)-1 : break
-    model_mu = self._wspace_out.var("model_mu_cat_%d_bin_%d"%(bl.catid,bl.id))
-    self._wspace_out.var(model_mu.GetName()).setVal(1.1*model_mu.getVal())
    
    for j,cr in enumerate(self._control_regions):
    #save the prefit histos
@@ -470,6 +466,11 @@ class Category:
     cr_pre_hist.SetLineColor(r.kRed)
     self.all_hists.append(cr_pre_hist.Clone())
     self.cr_prefit_hists.append(cr_pre_hist.Clone())
+
+   for i,bl in enumerate(self.channels):
+    if i >= len(self._bins)-1 : break
+    model_mu = self._wspace_out.var("model_mu_cat_%d_bin_%d"%(bl.catid,bl.id))
+    self._wspace_out.var(model_mu.GetName()).setVal(1.1*model_mu.getVal())
    
   def ret_control_regions(self): 
    return self._control_regions
