@@ -428,7 +428,7 @@ class Category:
    	                   ,self._wspace_out.pdf(self._pdf.GetName())
 			   ,self._wspace_out.var(self._norm_orig.GetName())
 			   ,self._wspace_out.pdf(self._pdf_orig.GetName()))
-   self.pdf_ratio = r.RooFormulaVar("ratio_correction_%s"%cname,"Correction for Zvv from dimuon+photon control regions","@0*@1/(@2*@3)",ratioargs)
+   self.pdf_ratio = r.RooFormulaVar("%s_ratio_correction_%s"%(self.GNAME,cname),"Correction from control regions -> Signal Regions","@0*@1/(@2*@3)",ratioargs)
    self._wspace_out._import(self.pdf_ratio)
    self._wspace._import(self.pdf_ratio)
    # finally make a prefit hist 
@@ -628,7 +628,7 @@ class Category:
 
   def save_model(self,diag):
    # Need to make ratio 
-   self.model_hist = r.TH1F("%s_combined_model"%(self.cname),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
+   self.model_hist = r.TH1F("%s_combined_model"%(self.GNAME),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
    diag.generateWeightedTemplate(self.model_hist,self._wspace_out.function(self.pdf_ratio.GetName()),self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
    self.model_hist.SetName("%s_combined_model"%self.GNAME)
    self.model_hist.SetLineWidth(2)
@@ -681,6 +681,7 @@ class Category:
      nb = self.additional_vars[varx][0]; min = self.additional_vars[varx][1]; max = self.additional_vars[varx][2]
      model_hist_vx = r.TH1F("%s_combined_model%s"%(self.GNAME,varx),"combined_model - %s"%(self.cname),nb,min,max)
      error_histogram = r.TH1F("%s_combined_modelERRORSTMP%s"%(self.GNAME,varx),"combined_model - %s"%(self.cname),nb,min,max)
+     print "Generating nominal model for -- ",self.GNAME, " in variable ", varx, " using ", self.pdf_ratio.GetName(), " from dataset", self._target_datasetname
      diag.generateWeightedTemplate(model_hist_vx,self._wspace_out.function(self.pdf_ratio.GetName()),varx,self._wspace_out.var(self._var.GetName()),self._wspace.data(self._target_datasetname))
      histWUp = r.TH1F("%s_combined_model_TMPWEIGHTSUP"%(self.GNAME),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
      self.fillModelHist(histWUp)
