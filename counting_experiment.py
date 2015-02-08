@@ -153,7 +153,6 @@ class Bin:
    self.wspace_out._import(self.mu,r.RooFit.RecycleConflictNodes())
    self.wspace_out._import(self.obs,r.RooFit.RecycleConflictNodes())
    self.wspace_out.factory("Poisson::pdf_%s(observed,mu_%s)"%(self.binid,self.binid))
-   self.wspace_out.var(self.model_mu.GetName()).setVal(1.1*self.model_mu.getVal())
 
 
  def add_to_dataset(self):
@@ -456,7 +455,12 @@ class Category:
      ch.set_initE()  # initialise expected
      ch.add_to_dataset()
      self.channels.append(ch)
+   # fit is buggered so need to scale by 1.1
 
+   for i,bl in enumerate(self.channels):
+    if i >= len(self._bins)-1 : break
+    model_mu = self._wspace_out.var("model_mu_cat_%d_bin_%d"%(bl.catid,bl.id))
+    self._wspace_out.var(model_mu.GetName()).setVal(1.1*model_mu.getVal())
    
    for j,cr in enumerate(self._control_regions):
    #save the prefit histos
@@ -596,7 +600,7 @@ class Category:
    #_fout = r.TFile("combined_model.root","RECREATE")
    #_fout.WriteTObject(self.model_hist)
    self.model_hist.SetName("%s_combined_model"%self.GNAME)
-   histW.SetName("correction_weights_%s"%self.cname)
+   histW.SetName("%s_correction_weights_%s"%(self.GNAME,self.cname))
    histW.SetLineWidth(2)
    histW.SetLineColor(4)
    self.histograms.append(histW)
