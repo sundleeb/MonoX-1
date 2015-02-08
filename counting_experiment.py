@@ -422,7 +422,7 @@ class Category:
      self.sample.defineType("cat_%d_ch_%d_bin_%d"%(self.catid,j,i),10*MAXBINS*catid+MAXBINS*j+i)
      self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
 
-  
+   self._wspace_out.var(self._norm.GetName()).setVal(self._wspace_out.var(self._norm.GetName()).getVal()*1.1) 
    # Now we have to build the ratio (correction) and import to new workspace
    ratioargs = r.RooArgList(self._wspace_out.var(self._norm.GetName())
    	                   ,self._wspace_out.pdf(self._pdf.GetName())
@@ -819,7 +819,7 @@ class Category:
 
     ratio = da_hist.Clone()
     ratio_pre = da_hist.Clone()
-    ratio.GetYaxis().SetRangeUser(0.01,1.99)
+    ratio.GetYaxis().SetRangeUser(0.21,1.79)
     ratio.Divide(cr_hist_noerr)
     ratio_pre.Divide(pre_hist_noerr)
     ratio.GetYaxis().SetTitle("Data/Bkg")
@@ -831,6 +831,8 @@ class Category:
     self.all_hists.append(ratio)
     self.all_hists.append(ratio_pre)
     ratio.GetXaxis().SetTitle("")
+    ratio.SetLineColor(cr_hist.GetLineColor())
+    ratio.SetMarkerColor(cr_hist.GetLineColor())
     ratio.Draw()
     ratio_pre.SetLineColor(pre_hist.GetLineColor())
     ratio_pre.SetMarkerColor(pre_hist.GetLineColor())
