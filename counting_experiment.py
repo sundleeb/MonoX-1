@@ -153,6 +153,7 @@ class Bin:
    self.wspace_out._import(self.mu,r.RooFit.RecycleConflictNodes())
    self.wspace_out._import(self.obs,r.RooFit.RecycleConflictNodes())
    self.wspace_out.factory("Poisson::pdf_%s(observed,mu_%s)"%(self.binid,self.binid))
+   self.wspace_out.var(self.model_mu.GetName()).setVal(1.1*self.model_mu.getVal())
 
 
  def add_to_dataset(self):
