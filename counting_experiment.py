@@ -117,6 +117,8 @@ class Bin:
 
  def setup_expect_var(self):
    # This will be the RooRealVar containing the value of the number of expected events in this bin
+   self.pdf  = self.wspace_out.pdf(self.pdf.GetName())
+  # self.argset = r.RooArgSet(self.wspace_out.var(self.var.GetName())) # <-------------------------- Check this is cool
    self.integral = self.pdf.createIntegral(self.argset,r.RooFit.Range(self.rngename),r.RooFit.NormSet(self.argset))
    self.wspace_out._import(self.integral,r.RooFit.RecycleConflictNodes())
    if not self.wspace_out.function("model_mu_cat_%d_bin_%d"%(self.catid,self.id,)):
@@ -212,6 +214,7 @@ class Bin:
  def Print(self):
    print "Channel/Bin -> ", self.chid,self.binid, ", Var -> ",self.var.GetName(), ", Range -> ", self.xmin,self.xmax 
    print " .... observed = ",self.o, ", expected = ", self.wspace_out.function(self.mu.GetName()).getVal(), " (of which %f is background)"%self.ret_background(), ", scale factor = ", self.wspace_out.function(self.sfactor.GetName()).getVal() 
+   print "..... Model Values from Pdf = ", self.ret_model() 
 
 class Channel:
   # This class holds a "channel" which is as dumb as saying it holds a dataset and scale factors 
@@ -400,19 +403,21 @@ class Category:
    self._norm = r.RooRealVar("%s_%s_norm"%(cname,_target_datasetname),"Norm",_wspace.data(_target_datasetname).sumEntries(),0,100000)
    self._norm.removeMax()
    self._norm_orig= r.RooRealVar("%s_%s_norm_orig"%(cname,_target_datasetname),"Norm_orig",_wspace.data(_target_datasetname).sumEntries(),0,10000)
-   self._norm.setConstant(False)
    self._norm_orig.setConstant(True)
+   self._norm.setConstant(False)
    self._wspace_out._import(self._norm)
    self._wspace_out._import(self._norm_orig)
-   self._wspace_out._import(self._pdf)
-   self._wspace_out._import(self._pdf_orig)
 
    diag.freezeParameters(self._pdf_orig.getParameters(self._data_mc),False)
   
-   self._pdf_orig.fitTo(self._data_mc)  # Just initialises parameters 
-   self._pdf.fitTo(self._data_mc)       # Just initialises parameters 
+   #self._wspace.pdf(self._pdf_orig.GetName()).fitTo(self._data_mc)  # Just initialises parameters 
+   #self._wspace.pdf(self._pdf.GetName()).fitTo(self._data_mc)       # Just initialises parameters 
+   self._pdf_orig.fitTo(self._data_mc)
+   self._pdf.fitTo(self._data_mc)
    # Now we loop over the CR's and bins to produce the counting experiments for this category 
    # A fit of the original pdf to the Zvv data will help kick things off
+   self._wspace_out._import(self._pdf)
+   self._wspace_out._import(self._pdf_orig)
    self._pdf      = self._wspace_out.pdf(_pdfname)
    diag.freezeParameters(self._pdf_orig.getParameters(self._data_mc),True)
    self._norm_orig.setConstant(True)
@@ -422,7 +427,6 @@ class Category:
      self.sample.defineType("cat_%d_ch_%d_bin_%d"%(self.catid,j,i),10*MAXBINS*catid+MAXBINS*j+i)
      self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
 
-   self._wspace_out.var(self._norm.GetName()).setVal(self._wspace_out.var(self._norm.GetName()).getVal()*1.1) 
    # Now we have to build the ratio (correction) and import to new workspace
    ratioargs = r.RooArgList(self._wspace_out.var(self._norm.GetName())
    	                   ,self._wspace_out.pdf(self._pdf.GetName())
@@ -499,7 +503,7 @@ class Category:
      ch.setup_expect_var()
      ch.add_to_dataset()
      self.channels.append(ch)
-
+   
    
    for j,cr in enumerate(self._control_regions):
    #save the prefit histos
@@ -511,6 +515,8 @@ class Category:
     self.cr_prefit_hists.append(cr_pre_hist.Clone())
 
    self.fillModelHist(self.model_prefit_hist)
+
+   self._wspace_out.var(self._norm.GetName()).setVal(self._wspace_out.var(self._norm.GetName()).getVal()*1.1) 
    
   def ret_control_regions(self): 
    return self._control_regions
@@ -663,6 +669,7 @@ class Category:
        self.fillExpectedMinusBkgHistOrig(self._control_regions[cr_i],histDenum)
        histCorrUp = histCorr.Clone()
        histCorr.Divide(histDenum)
+       self.histograms.append(histCorr)
        diag.generateWeightedTemplate(model_tg,histCorr,self._varname,self._varname,self._wspace.data(tg)) 
        # 1) make a weights Up 1 sigma use diff as errors! # -------------------------------------------------------------------------------------
        for b in range(histCorrUp.GetNbinsX()): histCorrUp.SetBinContent(b+1,histCorrUp.GetBinContent(b+1)+histCorrUp.GetBinError(b+1))
