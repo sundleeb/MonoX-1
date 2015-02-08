@@ -222,7 +222,7 @@ for ic,config in enumerate(configs) :
  ratioErr.SetFillColor(r.kGray);
 
  if not options.pull:
-  ratio.GetYaxis().SetRangeUser(0.01,1.99)
+  ratio.GetYaxis().SetRangeUser(0.21,1.79)
   ratio.Divide(totalbkg)
   ratio.GetYaxis().SetTitle("Data/Bkg")
   ratioErr.Divide(totalbkg)

@@ -433,8 +433,6 @@ class Category:
        hist.SetBinContent(i+1,ch.ret_correction())
        hist.SetBinError(i+1,ch.ret_correction_err())
    else : 
-   	print "WHATS the CR ? ", cr_i
-	print self._control_regions
    	self.fillExpectedCorr(self._control_regions[cr_i],hist)
      
    return hist.Clone()
@@ -754,7 +752,7 @@ class Category:
 
     ratio = da_hist.Clone()
     ratio_pre = da_hist.Clone()
-    ratio.GetYaxis().SetRangeUser(0.01,1.99)
+    ratio.GetYaxis().SetRangeUser(0.21,1.79)
     ratio.Divide(cr_hist_noerr)
     ratio_pre.Divide(pre_hist_noerr)
     ratio.GetYaxis().SetTitle("Data/Bkg")
@@ -766,6 +764,8 @@ class Category:
     self.all_hists.append(ratio)
     self.all_hists.append(ratio_pre)
     ratio.GetXaxis().SetTitle("")
+    ratio.SetLineColor(cr_hist.GetLineColor())
+    ratio.SetMarkerColor(cr_hist.GetLineColor())
     ratio.Draw()
     ratio_pre.SetLineColor(pre_hist.GetLineColor())
     ratio_pre.SetMarkerColor(pre_hist.GetLineColor())
