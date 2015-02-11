@@ -6,7 +6,7 @@ r.gROOT.ProcessLine(".L diagonalizer.cc+")
 from ROOT import diagonalizer
 
 
-#fkFactor = r.TFile.Open("/afs/cern.ch/work/n/nckw/public/monojet/Photon_Z_NLO_kfactors.root")
+#fkFactor = r.TFile.Open("/afs/cern.ch/work/n/nckw/public/monojet/Photon_Z_NLO_kfactors_Old.root")
 fkFactor = r.TFile.Open("Photon_Z_NLO_kfactors.root")
 nlo_pho = fkFactor.Get("pho_NLO_LO")
 nlo_zjt = fkFactor.Get("Z_NLO_LO")
@@ -49,7 +49,6 @@ def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
 
   CRs = [
    Channel("W#rightarrow(#mu#nu)+jet",_wspace,out_ws,cid,0,_wspace.data("singlemuon_data"),WScales,"singlemuon_all_background")  # stupid linear fit of Purities, should move to flat 
-  #Channel("Dimuon",_wspace,out_ws,cid,0,_wspace.data(_dimuon_datasetname),ZmmScales,_dimuon_backgroundsname)
   ]
   #Add Systematic ? This time we add them as nuisance parameters.
 
@@ -210,6 +209,31 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
   CRs[1].add_nuisance("xs_backgrounds",0.1,True)   # is a background systematic
 
+  """
+  # Bin by bin nuisances?
+  for b in range(target.GetNbinsX()):
+    err = PhotonScales.GetBinError(b+1)
+    byb_u = PhotonScales.Clone(); byb_u.SetName("photon_weights_%s_%s_stat_error_%s_bin%d_Up"%(nam,nam,"photonCR",b))
+    byb_u.SetBinContent(b+1,PhotonScales.GetBinContent(b+1)+err)
+    byb_d = PhotonScales.Clone(); byb_d.SetName("photon_weights_%s_%s_stat_error_%s_bin%d_Down"%(nam,nam,"photonCR",b))
+    byb_d.SetBinContent(b+1,PhotonScales.GetBinContent(b+1)-err)
+    _fOut.WriteTObject(byb_u)
+    _fOut.WriteTObject(byb_d)
+    print "Adding an error -- ", byb_u.GetName(),err
+    CRs[0].add_nuisance_shape("%s_stat_error_%s_bin%d"%(nam,"photonCR",b),_fOut)
+
+  for b in range(target.GetNbinsX()):
+    err = ZmmScales.GetBinError(b+1)
+    byb_u = ZmmScales.Clone(); byb_u.SetName("zmm_weights_%s_%s_stat_error_%s_bin%d_Up"%(nam,nam,"dimuonCR",b))
+    byb_u.SetBinContent(b+1,ZmmScales.GetBinContent(b+1)+err)
+    byb_d = ZmmScales.Clone(); byb_d.SetName("zmm_weights_%s_%s_stat_error_%s_bin%d_Down"%(nam,nam,"dimuonCR",b))
+    byb_d.SetBinContent(b+1,ZmmScales.GetBinContent(b+1)-err)
+    _fOut.WriteTObject(byb_u)
+    _fOut.WriteTObject(byb_d)
+    print "Adding an error -- ", byb_u.GetName(),err
+    CRs[1].add_nuisance_shape("%s_stat_error_%s_bin%d"%(nam,"dimuonCR",b),_fOut)
+  """
+
   # Make bin-to-bin errors ?!
   # We want to make a combined model which performs a simultaneous fit in all three categories so first step is to build a combined model in all three 
   cat = Category("ZJets",cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,"signal_zjets",CRs,diag)
@@ -229,9 +253,9 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
-categories = ["inclusive","resolved","boosted"]
+#categories = ["inclusive","resolved","boosted"]
 #categories = ["boosted","resolved"]
-#categories = ["inclusive"]
+categories = ["inclusive"]
 _f = r.TFile.Open("mono-x-vtagged.root")
 out_ws = r.RooWorkspace("combinedws")
 out_ws._import = getattr(out_ws,"import")
@@ -257,6 +281,11 @@ for cid,cn in enumerate(cmb_categories):
         channels = cn.ret_channels()
         for ch in channels: ch.Print()
 out_ws.Print('v')
+
+out_ws.data("combinedData").Print("v")
+#for i in range(out_ws.data("combinedData").numEntries()):
+#  args = out_ws.data("combinedData").get(i)
+#  args.Print("v")
 for cid,cn in enumerate(cmb_categories):
    channels = cn.ret_channels()
    for ch in channels: ch.Print()
@@ -301,7 +330,7 @@ for cat in cmb_categories:
    cat.generate_systematic_templates(diag_combined,npars)
    cat.make_post_fit_plots() # Makes Post-fit to CR plots including approximated error bands from fit variations
    # plot additional vars and nonsence like that 
-   cat.save_all_models_internal(diag_combined)
+#   cat.save_all_models_internal(diag_combined)
    cat.save() # make plots, save histograms and canvases
 
 for cid,cn in enumerate(cmb_categories):
