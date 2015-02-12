@@ -65,6 +65,7 @@ def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
   cat.addVar("njets",10,0,10)
   cat.addVar("lep1pt",25,0,500)
   cat.addVar("ptll",40,100,1000)
+  cat.addTarget("signal_wjets",0)
   return cat
 
 def cmodel(cid,nam,_f,_fOut, out_ws, diag):
@@ -218,6 +219,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   cat.addVar("njets",10,0,10)
   cat.addVar("lep1pt",25,0,500)
   cat.addVar("ptll",40,100,1000)
+  cat.addVar("ptpho",40,100,1000)
   cat.addTarget("dimuon_zll",1)
   cat.addTarget("singlemuon_zll",1)
   cat.addTarget("photon_gjet_nlo",0)
