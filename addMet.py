@@ -24,8 +24,8 @@ def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
     for i0 in range(0,iNtuple.GetEntriesFast()):
         iNtuple.GetEntry(i0)
         pPt       = iNtuple.genjetpt * 1.15 # correction factor from gen jet pT to recoil pT
-        #if (iNtuple.GetName()).find('H') > 0:
-        #    pPt       = iNtuple.dmpt
+        if (iNtuple.GetName()).find('H') > 0:
+            pPt       = iNtuple.dmpt
         if iNtuple.genVpt > 5 :
             pPt       = iNtuple.genVpt
         pPhi          = iNtuple.mvametphi#+r.TMath.Pi()
