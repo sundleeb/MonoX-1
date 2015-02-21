@@ -34,6 +34,7 @@ class ModelBuilder {
    save_hists.clear();
    save_datas.clear();
   };
+  void add_cut(std::string, std::string);
   void addvariable(std::string v, int nb, double mn, double mx){
    TH1F *var_hist = new TH1F(Form("base_%s",v.c_str()),Form("Base Hist %s",v.c_str()),nb,mn,mx);
    additional_vars.insert(std::pair<std::string,TH1F*>(v,var_hist));
@@ -84,5 +85,6 @@ class ModelBuilder {
   std::map<std::string, RooDataSet*> save_datas;
 
   std::map<std::string,TH1F*> additional_vars;
+  std::map<std::string,std::string> extracuts;
 };
 #endif

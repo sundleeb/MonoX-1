@@ -2,6 +2,10 @@
 #include "ModelBuilder.h"
 #include "RooCategory.h"
 
+void ModelBuilder::add_cut(std::string region,std::string ecut){
+  extracuts[region]+=ecut;
+}
+
 void ModelBuilder::saveHist(TH1F *histogram){
    fOut->WriteTObject(histogram);
    // also make a RooDataHist and RooHistPdf
@@ -234,9 +238,10 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
    }
 
    // Build a dataset which is all data in control region
-   RooDataSet all_data(Form("%s_all_data",region.c_str()),Form("%s_all_data",region.c_str()),RooArgSet(*x));
-   RooDataSet all_sig_mc(Form("%s_all_signal",region.c_str()),Form("%s_all_signal",region.c_str()),RooArgSet(*x,*w),w->GetName());
-   RooDataSet all_bkg_mc(Form("%s_all_background",region.c_str()),Form("%s_all_background",region.c_str()),RooArgSet(*x,*w),w->GetName());
+   RooArgSet *treevars = (RooArgSet*) wspace->genobj("treevars");
+   RooDataSet all_data(Form("%s_all_data",region.c_str()),Form("%s_all_data",region.c_str()),RooArgSet(*treevars));
+   RooDataSet all_sig_mc(Form("%s_all_signal",region.c_str()),Form("%s_all_signal",region.c_str()),RooArgSet(*treevars),w->GetName());
+   RooDataSet all_bkg_mc(Form("%s_all_background",region.c_str()),Form("%s_all_background",region.c_str()),RooArgSet(*treevars),w->GetName());
 
    for (std::vector<std::pair<std::string,int> >::iterator it_p = cr.procs.begin();
    	it_p!=cr.procs.end();it_p++){
@@ -251,6 +256,7 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
    wspace->import(all_sig_mc);
    wspace->import(all_bkg_mc);
 
+   /*
    // Fit control region MC
    RooFitResult *fit_res_control_mc  = pdf_mc->fitTo(all_sig_mc,RooFit::Save(1),RooFit::SumW2Error(false));
    fit_res_control_mc->SetName(Form("fitResult_%s_all_signal",region.c_str())); fit_res_control_mc->Write();
@@ -340,6 +346,7 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
    plra->GetYaxis()->SetTitle("r(MET) Correction Data/MC");
    plra->Draw();
    can_ra.Write();
+   */
 }
 
 void ModelBuilder::addSample(std::string name, std::string region, std::string process, bool is_mc, bool is_signal){
@@ -376,13 +383,20 @@ void ModelBuilder::addSample(std::string name, std::string region, std::string p
 	}
    }
    /**************************************************************************/
-
+   if (! (wspace->genobj("treevars"))) {
+   	//treevariables.SetName("treevars");
+   	wspace->import(treevariables,"treevars");
+   }
+   
+   std::string lcutstring = cutstring;
+   std::map<std::string,std::string>::iterator it_ecut = extracuts.find(region);
+   if ( it_ecut != extracuts.end() )	lcutstring+=(*it_ecut).second;
    if (is_mc) {
-   	tmp_hist = (TH1F*)generateTemplate(lTmp,(TTree *)fIn->Get(name.c_str()),varstring,weightname,cutstring,Form("_tmphist%s",catname.c_str()));
-        tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(cutstring.c_str()),RooFit::WeightVar(weightname.c_str()));
+   	tmp_hist = (TH1F*)generateTemplate(lTmp,(TTree *)fIn->Get(name.c_str()),varstring,weightname,lcutstring,Form("_tmphist%s",catname.c_str()));
+        tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(lcutstring.c_str()),RooFit::WeightVar(weightname.c_str()));
    } else {
-   	tmp_hist = (TH1F*)generateTemplate(lTmp,(TTree *)fIn->Get(name.c_str()),varstring,"",cutstring,Form("_tmphist%s",catname.c_str()));
-   	tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(cutstring.c_str()));
+   	tmp_hist = (TH1F*)generateTemplate(lTmp,(TTree *)fIn->Get(name.c_str()),varstring,"",lcutstring,Form("_tmphist%s",catname.c_str()));
+   	tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(lcutstring.c_str()));
    }
 
    std::map<std::string,ControlRegion>::iterator it_sample = v_samples.find(region);
