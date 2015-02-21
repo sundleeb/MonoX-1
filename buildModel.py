@@ -39,6 +39,9 @@ for cat_id,cat in enumerate(x.categories):
 
   mb.lTmp = histo_base.Clone()
   
+  if "extra_cuts" in cat.keys():
+   for ecut in cat["extra_cuts"]: mb.add_cut(ecut[0],ecut[1])
+
   # Run through regions and add MC/data processes for each 
   # Each region has 'signal' and 'backgrounds'
   samples = cat['samples'].keys()
@@ -48,7 +51,7 @@ for cat_id,cat in enumerate(x.categories):
       if sample.find('Met') > 0:
           mb.addSample(sample+"_Up"  ,entry[0]+"SYS",entry[1]+"_MetUp"  ,entry[2],entry[3])  # name, region, process, is_mc, is_signal
           mb.addSample(sample+"_Down",entry[0]+"SYS",entry[1]+"_MetDown",entry[2],entry[3])  # name, region, process, is_mc, is_signal
-          
+  
   # Special function to run corrections (need to assume correct datasets were produced in previous step
   mb.run_corrections('ZJets','dimuon')  # need contributing data, 'signal' and backgrounds
   mb.run_corrections('WJets','singlemuon')  # need contributing data, 'signal' and backgrounds
