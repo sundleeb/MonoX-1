@@ -22,7 +22,16 @@ def categoryWeight(iCategory,iSetup,isMC):
   return weight
 
 def correctNtuple(iFile,iSample,iFileName,iScale):
+    lTFile   = r.TFile('recoilfits/Trigger.root')
+    lTriggerData    = lTFile.Get('Data')
+    lTriggerMC      = lTFile.Get('MC')
     lNtuple  = iFile.Get(iSample)
+    addTrigger = False
+    if  lNtuple.GetName().find("Zll_di_muon_controlMet") > -1:
+      addTrigger = True
+    if  lNtuple.GetName().find("Znunu_signalMet") > -1:
+      addTrigger = True
+
     lFile  = r.TFile(iFileName+'Eff','UPDATE')
     lTree = lNtuple.CloneTree(0)
     lTree.SetName (lNtuple.GetName() )
@@ -32,6 +41,13 @@ def correctNtuple(iFile,iSample,iFileName,iScale):
     for i0 in range(0,lNtuple.GetEntriesFast()):
         lNtuple.GetEntry(i0)
         lEff.eff      = lNtuple.weight*iScale
+        #correct the photon data to have additional SF to match MET turn on
+        if addTrigger:
+          pMet = lNtuple.metRaw
+          pEff = lTriggerData.Eval(pMet)/lTriggerMC.Eval(pMet)
+          if pMet > 240: # Above 240 its 1
+            pEff = 1.
+            lEff.eff     = lEff.eff*pEff
         lTree.Fill()
     lTree.Write()
 
