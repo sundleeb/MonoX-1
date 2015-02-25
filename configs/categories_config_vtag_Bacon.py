@@ -32,7 +32,7 @@ categories = [
 		  # Signal Region
 		   "Znunu_signalMet"  	           :['signal','zjets',1,0]
 		  ,"Zll_signalMet"	           :['signal','zll',1,0]
-		  ,"Wjets_signal"  	           :['signal','wjets',1,0]
+		  ,"Wjets_signalMet"  	           :['signal','wjets',1,0]
 		  ,"WW_signalMet"  	           :['signal','dibosons',1,0]
 		  ,"WZ_signalMet"  	           :['signal','dibosons',1,0]
 		  ,"ZZ_signalMet"  	           :['signal','dibosons',1,0]
@@ -64,7 +64,7 @@ categories = [
 		  ,"WW_single_muon_controlMet"     :['singlemuon','dibosons',1,0]
 		  ,"WZ_single_muon_controlMet"     :['singlemuon','dibosons',1,0]
 		  ,"ZZ_single_muon_controlMet"     :['singlemuon','dibosons',1,0]
-		  ,"ttbar_single_muon_control"     :['singlemuon','top',1,0]
+		  ,"ttbar_single_muon_controlMet"     :['singlemuon','top',1,0]
 		  ,"SingleTop_single_muon_controlMet" :['singlemuon','top',1,0]
 		  ,"QCD_single_muon_control"	   :['singlemuon','qcd',1,0]
 		  ,"data_single_muon_control"	   :['singlemuon','data',0,0]
@@ -78,7 +78,7 @@ categories = [
 		  ,"ZZ_photon_controlMet"  	   :['photon','dibosons',1,0]
 		  ,"ttbar_photon_controlMet"   	   :['photon','top',1,0]
                   ,"SingleTop_photon_controlMet"   :['photon','top',1,0]
-		  ,"QCD_photon_control"		   :['photon','qcd',1,0]
+		  ,"QCD_photon_controlMet"		   :['photon','qcd',1,0]
 
 	   	}
                 ,"metsamples": # For Recoil Corrections
@@ -163,7 +163,7 @@ categories = [
 		  ,"ZZ_photon_controlMet"  	   :['photon','dibosons',1,0]
 		  ,"ttbar_photon_controlMet"   	   :['photon','top',1,0]
 		  ,"SingleTop_photon_controlMet"   :['photon','top',1,0]
-                   ,"QCD_photon_control"	   :['photon','qcd',1,0]
+                   ,"QCD_photon_controlMet"	   :['photon','qcd',1,0]
 	   	},
                 "metsamples":
 	   	{ 
@@ -248,7 +248,7 @@ categories = [
 		  ,"ZZ_photon_controlMet"  	   :['photon','dibosons',1,0]
 		  ,"ttbar_photon_controlMet"   	   :['photon','top',1,0]
 		  ,"SingleTop_photon_controlMet"   :['photon','top',1,0]
-                  ,"QCD_photon_control"	           :['photon','qcd',1,0]
+                  ,"QCD_photon_controlMet"	           :['photon','qcd',1,0]
 	   	},
                 "metsamples":
 	   	{
