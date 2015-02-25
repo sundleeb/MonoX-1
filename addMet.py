@@ -6,6 +6,7 @@ gROOT.ProcessLine(
     "struct met_t {\
      Float_t         metV;\
      Float_t         metPhi;\
+     Float_t         metRaw;\
     }" )
     
 def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
@@ -21,6 +22,7 @@ def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
     lMet=met_t()
     lTree.SetBranchAddress( 'mvamet',    AddressOf(lMet,"metV"))
     lTree.SetBranchAddress( 'mvametphi', AddressOf(lMet,"metPhi"))
+    lTree.Branch( 'metRaw',    AddressOf(lMet,"metRaw"),"metRaw/F")
     for i0 in range(0,iNtuple.GetEntriesFast()):
         iNtuple.GetEntry(i0)
         pPt       = iNtuple.genjetpt * 1.15 # correction factor from gen jet pT to recoil pT
@@ -36,6 +38,7 @@ def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
         pMet      = iRecoil.CorrectType1(iNtuple.mvamet,iNtuple.mvametphi,pPt,pPhi,0,0,0,0, iUnc, -iUnc,0)
         lMet.metV   = pMet[0]
         lMet.metPhi = pMet[1]
+        lMet.metRaw = iNtuple.mvamet
         lTree.Fill()
     lTree.Write()
 
