@@ -16,7 +16,8 @@ lBaseFile  = r.TFile.Open(options.file,'UPDATE')
 for sample in lBaseFile.GetListOfKeys():
     print "Sample :",sample.ReadObj().GetName()
     pTree = lBaseFile.Get(sample.ReadObj().GetName())
-    if (sample.ReadObj().GetName().find('di_muon_control') < 0 and  sample.ReadObj().GetName().find('photon_control') < 0) or sample.ReadObj().GetName().find('data_di_muon_control') > 0:
+    sampleName = sample.ReadObj().GetName()
+    if sampleName.find('Zll') < 0 and sampleName.find('Znunu') < 0 and sampleName.find('H') < 0 and sampleName.find('photon') < 0:
       continue
     print "FIXING:",sample.ReadObj().GetName()
     lTree = pTree.CloneTree(0)
@@ -25,7 +26,7 @@ for sample in lBaseFile.GetListOfKeys():
     lEff=eff_t()
     lTree.SetBranchAddress( 'mvamet',    AddressOf(lEff,"metV"))
     isData   = sample.ReadObj().GetName().find('data') > -1
-    isPhoton = sample.ReadObj().GetName().find('Zll_di_muon_control') < 0
+    isPhoton = sample.ReadObj().GetName().find('photon') > -1
     for i0 in range(0,pTree.GetEntriesFast()):
         pTree.GetEntry(i0)
         if isPhoton:
@@ -34,7 +35,12 @@ for sample in lBaseFile.GetListOfKeys():
             else:
                 lEff.metV     = pTree.mvamet+0.032*pTree.ptpho-0.3
         else:
-            lEff.metV         = pTree.mvamet+0.032*pTree.ptll-0.3
+            if pTree.ptll > 1:
+                lEff.metV         = pTree.mvamet+0.032*pTree.ptll-0.3
+            elif pTree.genVpt > 1:
+                lEff.metV         = pTree.mvamet+0.032*pTree.genVpt-0.3
+            else :
+                lEff.metV         = pTree.mvamet+0.032*pTree.genjetpt*1.15-0.3
         lTree.Fill()
     lTree.Write()
     lTree.Write()
