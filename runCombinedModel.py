@@ -18,6 +18,9 @@ nlo_pho_mfUp = fkFactor.Get("pho_NLO_LO_mfUp")
 nlo_zjt_mfUp = fkFactor.Get("Z_NLO_LO_mfUp")
 nlo_pho_mfDown = fkFactor.Get("pho_NLO_LO_mfDown")
 nlo_zjt_mfDown = fkFactor.Get("Z_NLO_LO_mfDown")
+nlo_zjt_pdfUp  = fkFactor.Get("Z_NLO_LO_pdfUp")
+nlo_zjt_pdfDown = fkFactor.Get("Z_NLO_LO_pdfDown")
+
 nlo_ewkUp    = fkFactor.Get("EWK_Up")
 nlo_ewkDown  = fkFactor.Get("EWK_Dwon")
 print "!!!!!",nlo_ewkUp.GetName()," -- ",nlo_ewkDown.GetName()
@@ -52,6 +55,7 @@ def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
   ]
   #Add Systematic ? This time we add them as nuisance parameters.
 
+  CRs[0].add_nuisance("pdf_CT10",0.006)
   CRs[0].add_nuisance("MuonEfficiency",0.01)
   CRs[0].add_nuisance("xs_backgrounds",0.1,True)   # is a background systematic
 
@@ -150,15 +154,25 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   for b in range(Zvv_mfDown.GetNbinsX()): Zvv_mfDown.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv_mfDown,nlo_zjt_mfDown,gvptname,metname,_wspace.data("signal_zjets"))
 
+
+  Zvv_pdfDown = target.Clone(); Zvv_pdfDown.SetName("photon_weights_nom_pdfDown_%s"%nam)
+  for b in range(Zvv_pdfDown.GetNbinsX()): Zvv_pdfDown.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_pdfDown,nlo_zjt_pdfDown,gvptname,metname,_wspace.data("signal_zjets"))
+  Zvv_pdfUp = target.Clone(); Zvv_pdfUp.SetName("photon_weights_nom_pdfUp_%s"%nam)
+  for b in range(Zvv_pdfUp.GetNbinsX()): Zvv_pdfUp.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_pdfUp,nlo_zjt_pdfUp,gvptname,metname,_wspace.data("signal_zjets"))
+
+  # Notice that the EWKUp was calculated on the g/Z ratio and Down is its inverse, so since we are 
+  # here going to correct the Z, we using the Down as the Up :)
   Zvv_ewkDown = target.Clone(); Zvv_ewkDown.SetName("photon_weights_%s_ewk_Down"%nam)
   for b in range(Zvv_ewkDown.GetNbinsX()): Zvv_ewkDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_ewkDown,nlo_ewkDown,gvptname,metname,_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_ewkDown,nlo_ewkUp,gvptname,metname,_wspace.data("signal_zjets"))
 
   Zvv_ewkUp   = target.Clone(); Zvv_ewkUp   .SetName("photon_weights_%s_ewk_Up"%nam)
   for b in range(Zvv_ewkUp.GetNbinsX()): Zvv_ewkUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_ewkUp,nlo_ewkUp,gvptname,metname,_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_ewkUp,nlo_ewkDown,gvptname,metname,_wspace.data("signal_zjets"))
   
-  nlo_ewkFlat = nlo_ewkUp.Clone("ewk_Base")
+  nlo_ewkFlat = nlo_ewkDown.Clone("ewk_Base")
   nlo_ewkFlat.Divide(nlo_ewkFlat)
   Zvv_ewkBase = target.Clone(); Zvv_ewkBase  .SetName("photon_weights_%s_ewk_Base"%nam)
   for b in range(Zvv_ewkBase.GetNbinsX()): Zvv_ewkBase.SetBinContent(b+1,0)
@@ -171,6 +185,9 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_mrDown.Divide(Pho_mrDown); Zvv_mrDown.SetName("photon_weights_%s_mr_Down"%nam);_fOut.WriteTObject(Zvv_mrDown)
   Zvv_mfUp.Divide(Pho_mfUp); 	 Zvv_mfUp.SetName("photon_weights_%s_mf_Up"%nam);_fOut.WriteTObject(Zvv_mfUp)
   Zvv_mfDown.Divide(Pho_mfDown); Zvv_mfDown.SetName("photon_weights_%s_mf_Down"%nam);_fOut.WriteTObject(Zvv_mfDown)
+
+  Zvv_pdfUp.Divide(Pho); 	 Zvv_pdfUp.SetName("photon_weights_%s_pdf_Up"%nam);_fOut.WriteTObject(Zvv_pdfUp)
+  Zvv_pdfDown.Divide(Pho); 	Zvv_pdfDown.SetName("photon_weights_%s_pdf_Down"%nam);_fOut.WriteTObject(Zvv_pdfDown)
   
   # Divide out the nominal photon for the EWK corrections as this is already the relative difference
   Zvv_ewkUp  .Divide(Zvv_ewkBase)
@@ -203,7 +220,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   CRs[0].add_nuisance_shape("mr",_fOut) 
   CRs[0].add_nuisance_shape("mf",_fOut) 
-  CRs[0].add_nuisance_shape("ewk",_fOut) 
+  CRs[0].add_nuisance_shape("pdf",_fOut) 
+  CRs[0].add_nuisance_shape("ewk",_fOut,"SetTo=1") 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
   CRs[1].add_nuisance("MuonEfficiency",0.01)
   CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
@@ -253,9 +271,9 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
-#categories = ["inclusive","resolved","boosted"]
+categories = ["monojet","resolved","boosted"]
 #categories = ["boosted","resolved"]
-categories = ["inclusive"]
+#categories = ["monojet"]
 _f = r.TFile.Open("mono-x-vtagged.root")
 out_ws = r.RooWorkspace("combinedws")
 out_ws._import = getattr(out_ws,"import")
@@ -311,8 +329,8 @@ for cid,cn in enumerate(cmb_categories):
   channels = cn.ret_channels()
   for ch in channels: 
     combined_pdf.addPdf(out_ws.pdf("pdf_%s"%ch.ret_binid()),ch.ret_binid())
-if hasSys: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save(),r.RooFit.ExternalConstraints(ext_constraints))
-else: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save())
+if hasSys: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save(),r.RooFit.ExternalConstraints(ext_constraints),r.RooFit.Strategy(0))
+else: combined_fit_result = combined_pdf.fitTo(out_ws.data("combinedData"),r.RooFit.Save(),r.RooFit.Strategy(0))
 _fOut.WriteTObject(out_ws)
 for cid,cn in enumerate(cmb_categories):
    channels = cn.ret_channels()
@@ -330,7 +348,7 @@ for cat in cmb_categories:
    cat.generate_systematic_templates(diag_combined,npars)
    cat.make_post_fit_plots() # Makes Post-fit to CR plots including approximated error bands from fit variations
    # plot additional vars and nonsence like that 
-#   cat.save_all_models_internal(diag_combined)
+   cat.save_all_models_internal(diag_combined)
    cat.save() # make plots, save histograms and canvases
 
 for cid,cn in enumerate(cmb_categories):

@@ -63,6 +63,8 @@ class diagonalizer {
 
     void getArgSetParameters(RooArgList & params,std::vector<double> &val);
     void setArgSetParameters(RooArgList & params,std::vector<double> &val);
+
+    static const bool verb = false;
 };
 
 diagonalizer::diagonalizer(RooWorkspace *wspace){//, RooAbsPdf *pdf){
@@ -200,6 +202,7 @@ void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::s
 
   // wvar will be the variable to reweight in 
   // var is the variable to be plotted
+  histNew->Sumw2();
   int nevents = data->numEntries();
   //const char *varname = var.GetName();
   for (int ev=0;ev<nevents;ev++){
@@ -211,7 +214,11 @@ void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::s
     double cweight = weight;
     if (pdf_num) { 
 	//std::cout << wvar<< ", " << wval << ", Weight = "<< cweight << " x " << pdf_num->GetBinContent(pdf_num->FindBin(wval)) << std::endl;
-    	cweight *= pdf_num->GetBinContent(pdf_num->FindBin(wval));
+	if (wval >=  pdf_num->GetXaxis()->GetXmin() && wval <  pdf_num->GetXaxis()->GetXmax() ) {
+    	  cweight *= pdf_num->GetBinContent(pdf_num->FindBin(wval));
+	} else{ 
+		if (verb) std::cout << "Event Out of range -> "<< wvar << " = "<< wval << std::endl;
+	}
     } else {
     	std::cout <<"Correction function NULL "<<std::endl;
 	assert(0);
@@ -223,6 +230,7 @@ void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::s
 
 void diagonalizer::generateWeightedTemplate(TH1F *histNew, RooFormulaVar *pdf_num, RooRealVar &var, RooDataSet *data){
 
+  histNew->Sumw2();
   int nevents = data->numEntries();
   const char *varname = var.GetName();
   for (int ev=0;ev<nevents;ev++){
@@ -256,7 +264,12 @@ void diagonalizer::generateWeightedDataset(std::string newname, TH1F *pdf_num, s
     double weight = data->weight();
     if (pdf_num) { 
 //	std::cout << wval << ", old weight" << weight << std::endl;
-    	weight *= pdf_num->GetBinContent(pdf_num->FindBin(wval));
+	if (wval >=  pdf_num->GetXaxis()->GetXmin() && wval <  pdf_num->GetXaxis()->GetXmax() ) {
+    	  weight *= pdf_num->GetBinContent(pdf_num->FindBin(wval));
+	} else {
+
+		if (verb) std::cout << "Event Out of range -> "<< wvar << " = "<< wval << std::endl;
+	}
 //	std::cout << wval << ", new weight" << weight << std::endl;
     } else {
     	std::cout <<"Correction function NULL "<<std::endl;

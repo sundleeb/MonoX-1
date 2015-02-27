@@ -95,7 +95,7 @@ lat->SetTextFont(42);
 
   // Finally make a ratio of the pre->post fit expectation of the Z(vv) template!, bit of a pain but can do it!
   TCanvas *canCorr  = new TCanvas();
-  TH1F *hc = (TH1F*)fi->Get(Form("Wcategory_%s/correction_weights_%s",cats[c].c_str(),cats[c].c_str()));
+  TH1F *hc = (TH1F*)fi->Get(Form("Wcategory_%s/WJets_correction_weights_%s",cats[c].c_str(),cats[c].c_str()));
   hc->SetTitle("");
   hc->GetXaxis()->SetTitle("E_{T}^{miss}");
   hc->GetYaxis()->SetTitle("r(E_{T}^{miss}) - W#mu#nu Correction function");

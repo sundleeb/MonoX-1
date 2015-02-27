@@ -39,7 +39,7 @@ class Bin:
    self.initY     = 0 
    self.initE     = 0 
    self.initB     = 0 
-   self.binerror = 0
+   self.binerror  = 0
    self.binerror_m = 0
 
    self.o	= self.dataset.sumEntries("%s>=%g && %s<%g "%(var.GetName(),xmin,var.GetName(),xmax))
@@ -228,16 +228,16 @@ class Channel:
     print "Looking for systematic shapes ... %s,%s"%(sfup,sfdn)
     self.systematics[sys] = [file.Get(sfup),file.Get(sfdn)]
     
-  def add_systematic_yield(self,sys,kappa):
+  def add_systematic_yield(self,syst,kappa):
     sys.exit("Nothing Will Happen with add_systematic, use add_nuisance")
     sfup = self.scalefactors.GetName()+"_%s_"%sys+"Up"
     sfdn = self.scalefactors.GetName()+"_%s_"%sys+"Down"
-    sfup = self.scalefactors.Clone(); sfup.SetName(self.scalefactors.GetName()+"_%s_"%sys+"Up")
-    sfdn = self.scalefactors.Clone(); sfdn.SetName(self.scalefactors.GetName()+"_%s_"%sys+"Down")
+    sfup = self.scalefactors.Clone(); sfup.SetName(self.scalefactors.GetName()+"_%s_"%syst+"Up")
+    sfdn = self.scalefactors.Clone(); sfdn.SetName(self.scalefactors.GetName()+"_%s_"%syst+"Down")
     # log-normal scalefactors
     sfup.Scale(1+kappa)
     sfdn.Scale(1./(1+kappa))
-    self.systematics[sys] = [sfup,sfdn]
+    self.systematics[syst] = [sfup,sfdn]
   
   def add_nuisance(self,name,size,bkg=False):
     #print "Error, Nuisance parameter model not supported fully for shape variations, dont use it!" 
@@ -313,11 +313,11 @@ class Channel:
   def ret_chid(self):
     return self.chid
 
-  def ret_sfactor(self,i,sys="",direction=1):
-    if sys and sys in self.systematics.keys():
+  def ret_sfactor(self,i,syst="",direction=1):
+    if syst and syst in self.systematics.keys():
       if direction >0 :index=0
       else :index=1
-      return 1./(self.systematics[sys][index].GetBinContent(i+1))
+      return 1./(self.systematics[syst][index].GetBinContent(i+1))
     else: return 1./(self.scalefactors.GetBinContent(i+1))
 
   def ret_background(self):
@@ -470,7 +470,7 @@ class Category:
    for i,bl in enumerate(self.channels):
     if i >= len(self._bins)-1 : break
     model_mu = self._wspace_out.var("model_mu_cat_%d_bin_%d"%(bl.catid,bl.id))
-    self._wspace_out.var(model_mu.GetName()).setVal(1.1*model_mu.getVal())
+    #self._wspace_out.var(model_mu.GetName()).setVal(1.1*model_mu.getVal())
    
   def ret_control_regions(self): 
    return self._control_regions
@@ -493,7 +493,7 @@ class Category:
      	
    # The parameters have changed so re-generate the templates
    # We also re-calculate the expectations in each CR to update the errors for the plotting 
-   leg_var = r.TLegend(0.56,0.42,0.89,0.89)
+   leg_var = r.TLegend(0.56,0.1,0.89,0.91)
    leg_var.SetFillColor(0)
    leg_var.SetTextFont(42)
 
@@ -507,6 +507,7 @@ class Category:
    self.all_hists.append(model_hist_spectrum)
 
    sys_c=0
+   systrats =[]
 
    for par in range(npars):
     hist_up = r.TH1F("%s_combined_model_par_%d_Up"%(self.GNAME,par),"combined_model par %d Up 1 sigma - %s "%(par,self.cname)  ,len(self._bins)-1,array.array('d',self._bins))
@@ -573,16 +574,33 @@ class Category:
     canvr.cd()
     flat.SetTitle("")
     flat.GetXaxis().SetTitle("E_{T}^{miss} (GeV)")
-    flat.GetYaxis().SetRangeUser(0.85,1.2)
+    #flat.GetYaxis().SetRangeUser(0.85,1.2)
     if par==0: flat.Draw("hist")
     self.all_hists.append(flat)
     self.all_hists.append(hist_up_cl)
     self.all_hists.append(hist_dn_cl)
-    hist_up_cl.Draw('histsame')
-    hist_dn_cl.Draw('histsame')
+    systrats.append(hist_up_cl)
+    systrats.append(hist_dn_cl)
+    #hist_up_cl.Draw('histsame')
+    #hist_dn_cl.Draw('histsame')
     leg_var.AddEntry(hist_up_cl,"Parameter %d"%par,"L")
     sys_c+=1
+   
+   # finx maximum 
+   maxdiff = 0
+   for syst in systrats:
+   	max_local = max([syst.GetBinContent(b+1) for b in range(syst.GetNbinsX())])
+	if max_local>maxdiff: maxdiff = max_local
 
+   canvr.cd()
+   dHist = r.TH1F("dummy",";Variation/Nominal;E_{T}^{miss}",1,self._bins[0],self._bins[-1]); 
+   dHist.SetBinContent(1,1)
+   dHist.SetMinimum(1-maxdiff)
+   dHist.SetMaximum(1+maxdiff)
+   dHist.Draw("AXIS")
+   for isy,syst in enumerate(systrats):
+      syst.Draw("histsame") 
+   
    canv.cd() ; leg_var.Draw()
    canvr.cd(); leg_var.Draw()
    self._fout.WriteTObject(canv)
@@ -614,7 +632,9 @@ class Category:
    histW_U = self.makeWeightHists(); 
    for b in range(histW_U.GetNbinsX()): histW_U.SetBinContent(b+1,histW_U.GetBinContent(b+1)+histW_U.GetBinError(b+1)) # now its ~the default correction +1 sigma
    diag.generateWeightedTemplate(error_hist_F,histW_U,self._varname,self._varname,self._wspace.data(self._target_datasetname))
-   for b in range(error_hist_F.GetNbinsX()): self.model_hist.SetBinError(b+1,abs(error_hist_F.GetBinContent(b+1)-self.model_hist.GetBinContent(b+1)))
+   for b in range(error_hist_F.GetNbinsX()): 	
+	sterr = error_hist_F.GetBinError(b+1)
+   	self.model_hist.SetBinError(b+1,(sterr**2+(abs(error_hist_F.GetBinContent(b+1)-self.model_hist.GetBinContent(b+1)))**2)**0.5)
 
 
    for tg_v in self.additional_targets:
@@ -630,7 +650,10 @@ class Category:
      model_tg_errs = r.TH1F("%s_%s_combined_model_ERRORS"%(self.GNAME,tg),"combined_model - %s"%(self.cname),len(self._bins)-1,array.array('d',self._bins))
      diag.generateWeightedTemplate(model_tg_errs,histW_U,self._varname,self._varname,self._wspace.data(tg))
      # Errors are set as 
-     for b in range(model_tg_errs.GetNbinsX()): model_tg.SetBinError(b+1,abs(model_tg_errs.GetBinContent(b+1)-model_tg.GetBinContent(b+1)))
+     for b in range(model_tg_errs.GetNbinsX()): 
+        #add statisticsl part 
+	sterr = model_tg.GetBinError(b+1)
+     	model_tg.SetBinError(b+1,(sterr**2+(abs(model_tg_errs.GetBinContent(b+1)-model_tg.GetBinContent(b+1)))**2)**0.5)
      self.histograms.append(model_tg.Clone())
 
    # Also make a weighted version of each other variable
@@ -643,7 +666,9 @@ class Category:
      model_hist_vx_errs = r.TH1F("%s_combined_model%s_ERRORS"%(self.GNAME,varx),"combined_model - %s"%(self.cname),nb,min,max)
      diag.generateWeightedTemplate(model_hist_vx,histW,self._varname,varx,self._wspace.data(self._target_datasetname))
      diag.generateWeightedTemplate(model_hist_vx_errs,histW_U,self._varname,varx,self._wspace.data(self._target_datasetname))
-     for b in range(model_hist_vx_errs.GetNbinsX()): model_hist_vx.SetBinError(b+1,abs(model_hist_vx_errs.GetBinContent(b+1)-model_hist_vx.GetBinContent(b+1)))
+     for b in range(model_hist_vx_errs.GetNbinsX()): 
+	sterr = model_hist_vx.GetBinError(b+1)
+     	model_hist_vx.SetBinError(b+1,(sterr**2+(abs(model_hist_vx_errs.GetBinContent(b+1)-model_hist_vx.GetBinContent(b+1)))**2)**0.5)
      self.histograms.append(model_hist_vx.Clone())
 
      for tg_v in self.additional_targets:
@@ -656,13 +681,15 @@ class Category:
        model_hist_vx_tg_errs = r.TH1F("%s_%s_combined_model_ERRORS%s"%(self.GNAME,tg,varx),"combined_model - %s"%(self.cname),nb,min,max)
        diag.generateWeightedTemplate(model_hist_vx_tg,histW,self._varname,varx,self._wspace.data(tg))
        diag.generateWeightedTemplate(model_hist_vx_tg_errs,histW_U,self._varname,varx,self._wspace.data(tg))
-       for b in range(model_hist_vx_tg_errs.GetNbinsX()): model_hist_vx_tg.SetBinError(b+1,abs(model_hist_vx_tg_errs.GetBinContent(b+1)-model_hist_vx_tg.GetBinContent(b+1)))
+       for b in range(model_hist_vx_tg_errs.GetNbinsX()): 
+	 sterr = model_hist_vx_tg.GetBinError(b+1)
+       	 model_hist_vx_tg.SetBinError(b+1,(sterr**2+(abs(model_hist_vx_tg_errs.GetBinContent(b+1)-model_hist_vx_tg.GetBinContent(b+1)))**2)**0.5)
        self.histograms.append(model_hist_vx_tg.Clone())
 
   def make_post_fit_plots(self):
    c = r.TCanvas("%sregion_mc_fit_before_after"%self._target_datasetname)
-   hist_original = r.TH1F("%s_OriginalZvv"%(self.cname),"Expected %s Zvv (prefit)"%self.cname,len(self._bins)-1,array.array('d',self._bins)) 
-   hist_post     = r.TH1F("%s_NewZvv"%(self.cname),"Expected %s Zvv (postfit)"%self.cname,len(self._bins)-1,array.array('d',self._bins)) 
+   hist_original = r.TH1F("%s_OriginalZvv"%(self.cname),"",len(self._bins)-1,array.array('d',self._bins)) 
+   hist_post     = r.TH1F("%s_NewZvv"%(self.cname),"",len(self._bins)-1,array.array('d',self._bins)) 
    for i,ch in enumerate(self.channels):
      if i>=len(self._bins)-1: break
      hist_original.SetBinContent(i+1,ch.ret_initY())
@@ -802,5 +829,7 @@ class Category:
    #  self._fout.WriteTObject(self.canvases[canv])
    # finally THE model
    self._fout.WriteTObject(self.model_hist)
+   print "Saving hitograms"
    for hist in self.histograms:
+     print "Saving - ", hist.GetName()
      self._fout.WriteTObject(hist)

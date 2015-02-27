@@ -38,7 +38,7 @@ categories = [
 		  ,"ZZ_signalMet"  	           :['signal','dibosons',1,0]
 		  ,"ttbar_signalMet"   	           :['signal','top',1,0]
 		  ,"SingleTop_signalMet"           :['signal','top',1,0]
-		  ,"QCD_signal"		           :['signal','qcd',1,0]
+		  ,"QCD_signalMet"		    :['signal','qcd',1,0]
 		  ,"ggH125_signalMet"             :['signal','ggH',1,1]
 		  ,"VBFH125_signalMet"            :['signal','vbf',1,1]
 		  ,"WH125_signalMet"              :['signal','wh',1,1]
@@ -121,7 +121,7 @@ categories = [
 		  ,"ZZ_signalMet"  	        :['signal','dibosons',1,0]
 		  ,"ttbar_signalMet"   	        :['signal','top',1,0]
 		  ,"SingleTop_signalMet"        :['signal','top',1,0]
-		  ,"QCD_signal"		        :['signal','qcd',1,0]
+		  ,"QCD_signalMet"		        :['signal','qcd',1,0]
                   ,"ggH125_signalMet"          :['signal','ggH',1,1]
 		  ,"VBFH125_signalMet"         :['signal','vbf',1,1]
 		  ,"WH125_signalMet"   	:['signal','wh',1,1]
@@ -182,9 +182,8 @@ categories = [
                 },
         },                     
     	{
-	    'name':"inclusive"
+	    'name':"monojet"
 	   ,'in_file_name':"monojet-combo.root"
-	   #,'in_file_name':"inclusive-combo.root"
 	   ,"cutstring":"mvamet>200 && mvamet<1000"
 	   ,"varstring":["mvamet",200,1000]
 	   ,"weightname":"weight"
@@ -206,7 +205,7 @@ categories = [
 		  ,"ZZ_signalMet"  	           :['signal','dibosons',1,0]
 		  ,"ttbar_signalMet"   	           :['signal','top',1,0]
 		  ,"SingleTop_signalMet"           :['signal','top',1,0]
-		  ,"QCD_signal"		           :['signal','qcd',1,0]
+		  ,"QCD_signalMet"		           :['signal','qcd',1,0]
 		  ,"ggH125_signalMet"             :['signal','ggH',1,1]
 		  ,"VBFH125_signalMet"            :['signal','vbf',1,1]
 		  ,"WH125_signalMet"   	   :['signal','wh',1,1]

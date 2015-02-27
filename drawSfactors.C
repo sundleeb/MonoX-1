@@ -49,6 +49,7 @@ lat->SetTextFont(42);
   TLegend *ld = new TLegend(0.5,0.65,0.89,0.89);ld->SetFillColor(0);
   ld->AddEntry(&mcfit,"Z(#rightarrow#nu#nu) MC","L");
   ld->AddEntry(&datafit,"Corrected Z(#rightarrow#nu#nu) MC","L");
+  signal_zjetsregion_mc_fit_before_after->SetTitle("");
   signal_zjetsregion_mc_fit_before_after->SetLogy(); 
   signal_zjetsregion_mc_fit_before_after->Draw();
   ld->Draw();
@@ -144,7 +145,7 @@ lat->SetTextFont(42);
   gr->GetXaxis()->SetTitle("E_{T}^{miss}");
   gr->GetYaxis()->SetTitle("r(E_{T}^{miss}) - Z#nu#nu Correction function");
   */
-  TH1F *hc = (TH1F*)fi->Get(Form("category_%s/correction_weights_%s",cats[c].c_str(),cats[c].c_str()));
+  TH1F *hc = (TH1F*)fi->Get(Form("category_%s/ZJets_correction_weights_%s",cats[c].c_str(),cats[c].c_str()));
   hc->SetTitle("");
   hc->GetXaxis()->SetTitle("E_{T}^{miss}");
   hc->GetYaxis()->SetTitle("r(E_{T}^{miss}) - Z#nu#nu Correction function");

@@ -56,12 +56,12 @@ for cat_id,cat in enumerate(x.categories):
   mb.run_corrections('ZJets','dimuon')  # need contributing data, 'signal' and backgrounds
   mb.run_corrections('WJets','singlemuon')  # need contributing data, 'signal' and backgrounds
 
-  mb.apply_corrections('ZJets','signal','zjets',True) # name of correction, process to be applied to  # true at the end means run systematics
-  mb.apply_corrections('WJets','signal','wjets',True) # name of correction, process to be applied to
+#  mb.apply_corrections('ZJets','signal','zjets',True) # name of correction, process to be applied to  # true at the end means run systematics
+#  mb.apply_corrections('WJets','signal','wjets',True) # name of correction, process to be applied to
 
-  mb.apply_corrections('ZJets','dimuon','zll',False) # name of correction, process to be applied to  # true at the end means run systemat
-  mb.apply_corrections('ZJets','singlemuon','zll',False) # name of correction, process to be applied to  # true at the end means run systemat
-  mb.apply_corrections('WJets','singlemuon','wjets',False) # name of correction, process to be applied to
+#  mb.apply_corrections('ZJets','dimuon','zll',False) # name of correction, process to be applied to  # true at the end means run systemat
+#  mb.apply_corrections('ZJets','singlemuon','zll',False) # name of correction, process to be applied to  # true at the end means run systemat
+#  mb.apply_corrections('WJets','singlemuon','wjets',False) # name of correction, process to be applied to
 
   mb.save()
 
