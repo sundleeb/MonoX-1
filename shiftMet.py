@@ -17,7 +17,8 @@ for sample in lBaseFile.GetListOfKeys():
     print "Sample :",sample.ReadObj().GetName()
     pTree = lBaseFile.Get(sample.ReadObj().GetName())
     sampleName = sample.ReadObj().GetName()
-    if sampleName.find('Zll') < 0 and sampleName.find('Znunu') < 0 and sampleName.find('H') < 0 and sampleName.find('photon') < 0:
+    #if sampleName.find('Zll') < 0 and sampleName.find('Znunu') < 0 and sampleName.find('H') < 0 and sampleName.find('photon') < 0:
+    if sampleName.find('Met') < 0  and sampleName.find('photon') < 0:
       continue
     print "FIXING:",sample.ReadObj().GetName()
     lTree = pTree.CloneTree(0)
@@ -25,22 +26,25 @@ for sample in lBaseFile.GetListOfKeys():
     lTree.SetTitle(pTree.GetTitle())
     lEff=eff_t()
     lTree.SetBranchAddress( 'mvamet',    AddressOf(lEff,"metV"))
-    isData   = sample.ReadObj().GetName().find('data') > -1
+    pTree.GetEntry(1)
+    isZll    = sample.ReadObj().GetName().find('di_muon') > -1
     isPhoton = sample.ReadObj().GetName().find('photon') > -1
+    isDM     = pTree.dmpt > 2
+    isGen    = pTree.genVpt > 2
+    isJet    = pTree.genjetpt > 2
+    print "Zll",isZll,"Gamma",isPhoton,"DM",isDM,"Gen",isGen,"Jet",isJet
     for i0 in range(0,pTree.GetEntriesFast()):
         pTree.GetEntry(i0)
         if isPhoton:
-            if isData:
-                lEff.metV     = pTree.mvamet+0.032*pTree.ptpho-0.3
-            else:
-                lEff.metV     = pTree.mvamet+0.032*pTree.ptpho-0.3
-        else:
-            if pTree.ptll > 1:
-                lEff.metV         = pTree.mvamet+0.032*pTree.ptll-0.3
-            elif pTree.genVpt > 1:
-                lEff.metV         = pTree.mvamet+0.032*pTree.genVpt-0.3
-            else :
-                lEff.metV         = pTree.mvamet+0.032*pTree.genjetpt*1.15-0.3
+            lEff.metV         = pTree.mvamet+0.032*pTree.ptpho-0.3
+        elif isZll:
+            lEff.metV         = pTree.mvamet+0.032*pTree.ptll-0.3
+        elif isDM:
+            lEff.metV         = pTree.mvamet+0.032*pTree.dmpt-0.3
+        elif isGen and pTree.genVpt > 1:
+            lEff.metV         = pTree.mvamet+0.032*pTree.genVpt-0.3
+        elif isJet:
+            lEff.metV         = pTree.mvamet+0.032*pTree.genjetpt-0.3
         lTree.Fill()
     lTree.Write()
     lTree.Write()
