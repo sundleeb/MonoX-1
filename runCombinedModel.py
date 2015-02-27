@@ -20,6 +20,9 @@ nlo_pho_mfDown = fkFactor.Get("pho_NLO_LO_mfDown")
 nlo_zjt_mfDown = fkFactor.Get("Z_NLO_LO_mfDown")
 nlo_ewkUp    = fkFactor.Get("EWK_Up")
 nlo_ewkDown  = fkFactor.Get("EWK_Dwon")
+fFFactor = r.TFile.Open("FP_v2.root")
+nlo_FPUp    = fFFactor.Get("FP_Up")
+nlo_FPDown  = fFFactor.Get("FP_Down")
 print "!!!!!",nlo_ewkUp.GetName()," -- ",nlo_ewkDown.GetName()
 
 def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
@@ -163,6 +166,14 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_ewkBase = target.Clone(); Zvv_ewkBase  .SetName("photon_weights_%s_ewk_Base"%nam)
   for b in range(Zvv_ewkBase.GetNbinsX()): Zvv_ewkBase.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv_ewkBase,nlo_ewkFlat,gvptname,metname,_wspace.data("signal_zjets"))
+
+  Zvv_FPDown = target.Clone(); Zvv_FPDown.SetName("photon_weights_%s_fp_Down"%nam)
+  for b in range(Zvv_FPDown.GetNbinsX()): Zvv_FPDown.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_FPDown,nlo_FPDown,"ptll",metname,_wspace.data("signal_zjets"))
+
+  Zvv_FPUp   = target.Clone(); Zvv_FPUp   .SetName("photon_weights_%s_fp_Up"%nam)
+  for b in range(Zvv_FPUp.GetNbinsX()): Zvv_FPUp.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_FPUp,nlo_FPUp,"ptll",metname,_wspace.data("signal_zjets"))
   ##################################################################################################################
 
   # Have to also add one per systematic variation :(, 
@@ -177,9 +188,16 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_ewkDown.Divide(Zvv_ewkBase)
   Zvv_ewkUp  .Multiply(Zvv)
   Zvv_ewkDown.Multiply(Zvv)
-  
+
+  Zvv_FPUp  .Divide(Zvv_ewkBase)
+  Zvv_FPDown.Divide(Zvv_ewkBase)
+  Zvv_FPUp  .Multiply(Zvv)
+  Zvv_FPDown.Multiply(Zvv)
+
   _fOut.WriteTObject(Zvv_ewkDown)
   _fOut.WriteTObject(Zvv_ewkUp)
+  _fOut.WriteTObject(Zvv_FPDown)
+  _fOut.WriteTObject(Zvv_FPUp)
 
   ZmmScales.Divide(Zmm)
   PhotonScales = Zvv.Clone()
@@ -203,8 +221,10 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   CRs[0].add_nuisance_shape("mr",_fOut) 
   CRs[0].add_nuisance_shape("mf",_fOut) 
-  CRs[0].add_nuisance_shape("ewk",_fOut) 
+  CRs[0].add_nuisance_shape("ewk",_fOut,"setTo=-1") 
+  CRs[0].add_nuisance_shape("fp",_fOut)#,"setTo=1") 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
+  #CRs[0].add_nuisance("crap",0.90) 
   CRs[1].add_nuisance("MuonEfficiency",0.01)
   CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
   CRs[1].add_nuisance("xs_backgrounds",0.1,True)   # is a background systematic
@@ -253,9 +273,9 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
-#categories = ["inclusive","resolved","boosted"]
+categories = ["inclusive","resolved","boosted"]
 #categories = ["boosted","resolved"]
-categories = ["inclusive"]
+#categories = ["inclusive"]
 _f = r.TFile.Open("mono-x-vtagged.root")
 out_ws = r.RooWorkspace("combinedws")
 out_ws._import = getattr(out_ws,"import")
