@@ -4,7 +4,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-d","--tdir",default='',help="pick histos from a different directory (will be catgeory of course!)")
 parser.add_option("-c","--cat",default='',help="pick up a category name for $CAT")
-parser.add_option("-v","--var",default='',help="pick up a variable name for $VAR")
+parser.add_option("-v","--var",default='DEFAULT',help="pick up a variable name for $VAR")
 parser.add_option("-o","--outext",default='',help="Add Extension to output name")
 parser.add_option("-x","--xlab",default='',help="Set the Label for X-axis")
 parser.add_option("-b","--batch",default=False,action='store_true',help="always run in batch and save .pdf with config name instead of drawing canvas")
@@ -59,11 +59,13 @@ for ic,config in enumerate(configs) :
   #x.signals[s][0] = x.signals[s][0].replace("$DIRECTORY",options.tdir)
   # replace the Key
   snew  =  s.replace("$CAT",options.cat)
-  snew  =  snew.replace("$VAR",options.var)
+  if options.var!="DEFAULT" : snew  =  snew.replace("$VAR",options.var)
+  print snew
   snew  =  snew.replace("$DIRECTORY",options.tdir)
 
   x.signals[snew] =  x.signals[s]; 
-  x.signals.pop(s)
+  if not s==snew : x.signals.pop(s)
+ print x.signals
 
  for b in x.backgrounds.keys():
   for i in range(len(x.backgrounds[b][0])):
@@ -131,6 +133,8 @@ for ic,config in enumerate(configs) :
     else: 
        tmp = di.Get(x.directory+thist)
        print "trying...",x.directory+thist, "from",di.GetName()
+    if len(x.backgrounds[bkg])>3:  # last one is a scale-factor, from fit?
+       tmp.Scale(x.backgrounds[bkg][3])
     if nullc == 0 : 	
         print "Starting ", tmp.GetName(), tmp.Integral("")
     	nullhist = tmp.Clone()
