@@ -23,6 +23,9 @@ nlo_zjt_pdfDown = fkFactor.Get("Z_NLO_LO_pdfDown")
 
 nlo_ewkUp    = fkFactor.Get("EWK_Up")
 nlo_ewkDown  = fkFactor.Get("EWK_Dwon")
+fFFactor = r.TFile.Open("FP_v2.root")
+nlo_FPUp    = fFFactor.Get("FP_Up")
+nlo_FPDown  = fFFactor.Get("FP_Down")
 print "!!!!!",nlo_ewkUp.GetName()," -- ",nlo_ewkDown.GetName()
 
 def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
@@ -235,6 +238,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   CRs[0].add_nuisance_shape("mr",_fOut) 
   CRs[0].add_nuisance_shape("mf",_fOut) 
+  CRs[0].add_nuisance_shape("pdf",_fOut) 
   CRs[0].add_nuisance_shape("ewk",_fOut,"setTo=-1") 
   CRs[0].add_nuisance_shape("fp",_fOut)#,"setTo=1") 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
@@ -287,7 +291,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
-categories = ["inclusive","resolved","boosted"]
+categories = ["monojet","resolved","boosted"]
 #categories = ["boosted","resolved"]
 #categories = ["inclusive"]
 _f = r.TFile.Open("mono-x-vtagged.root")
