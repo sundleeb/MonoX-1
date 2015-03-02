@@ -8,6 +8,7 @@ from ROOT import diagonalizer
 
 #fkFactor = r.TFile.Open("/afs/cern.ch/work/n/nckw/public/monojet/Photon_Z_NLO_kfactors_Old.root")
 fkFactor = r.TFile.Open("Photon_Z_NLO_kfactors.root")
+#fkFactor = r.TFile.Open("Photon_Z_NLO_kfactors_w80pcorr.root")
 nlo_pho = fkFactor.Get("pho_NLO_LO")
 nlo_zjt = fkFactor.Get("Z_NLO_LO")
 nlo_pho_mrUp = fkFactor.Get("pho_NLO_LO_mrUp")
@@ -18,6 +19,16 @@ nlo_pho_mfUp = fkFactor.Get("pho_NLO_LO_mfUp")
 nlo_zjt_mfUp = fkFactor.Get("Z_NLO_LO_mfUp")
 nlo_pho_mfDown = fkFactor.Get("pho_NLO_LO_mfDown")
 nlo_zjt_mfDown = fkFactor.Get("Z_NLO_LO_mfDown")
+
+nlo_pho_mr2Up = fkFactor.Get("pho_NLO_LO_mr2Up")
+nlo_zjt_mr2Up = fkFactor.Get("Z_NLO_LO_mr2Up")
+nlo_pho_mr2Down = fkFactor.Get("pho_NLO_LO_mr2Down")
+nlo_zjt_mr2Down = fkFactor.Get("Z_NLO_LO_mr2Down")
+nlo_pho_mf2Up = fkFactor.Get("pho_NLO_LO_mf2Up")
+nlo_zjt_mf2Up = fkFactor.Get("Z_NLO_LO_mf2Up")
+nlo_pho_mf2Down = fkFactor.Get("pho_NLO_LO_mf2Down")
+nlo_zjt_mf2Down = fkFactor.Get("Z_NLO_LO_mf2Down")
+
 nlo_zjt_pdfUp  = fkFactor.Get("Z_NLO_LO_pdfUp")
 nlo_zjt_pdfDown = fkFactor.Get("Z_NLO_LO_pdfDown")
 
@@ -27,6 +38,22 @@ fFFactor = r.TFile.Open("FP_v2.root")
 nlo_FPUp    = fFFactor.Get("FP_Up")
 nlo_FPDown  = fFFactor.Get("FP_Down")
 print "!!!!!",nlo_ewkUp.GetName()," -- ",nlo_ewkDown.GetName()
+
+# Make exaggerated versions of the EWK uncertainties
+cenSwap=400
+#nlo_ewkUp_1   = nlo_ewkUp.Clone(); nlo_ewkUp_1.SetName("EWK_Up_1")
+#nlo_ewkDown_1 = nlo_ewkDown.Clone(); nlo_ewkDown_1.SetName("EWK_Down_1")
+nlo_ewkUp2   = nlo_ewkUp.Clone(); nlo_ewkUp2.SetName("EWK_Up_2")
+nlo_ewkDown2 = nlo_ewkDown.Clone(); nlo_ewkDown2.SetName("EWK_Down_2")
+
+for b in range(nlo_ewkUp.GetNbinsX()): 
+   xcen = nlo_ewkUp.GetBinCenter(b+1)
+   if xcen > cenSwap: 
+		nlo_ewkUp.SetBinContent(b+1,1)   
+		nlo_ewkDown.SetBinContent(b+1,1)
+   else:
+		nlo_ewkUp2.SetBinContent(b+1,1)        
+		nlo_ewkDown2.SetBinContent(b+1,1)
 
 def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
 
@@ -157,6 +184,41 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   for b in range(Zvv_mfDown.GetNbinsX()): Zvv_mfDown.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv_mfDown,nlo_zjt_mfDown,gvptname,metname,_wspace.data("signal_zjets"))
 
+  """
+  Pho_mr2Up = target.Clone(); Pho.SetName("photon_weights_denom_mr2Up_%s"%nam)
+  for b in range(Pho_mr2Up.GetNbinsX()): Pho_mr2Up.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Pho_mr2Up,nlo_pho_mr2Up,gvptname,metname,_wspace.data(_gjet_mcname))
+
+  Zvv_mr2Up = target.Clone(); Zvv_mr2Up.SetName("photon_weights_nom_mr2Up_%s"%nam)
+  for b in range(Zvv_mr2Up.GetNbinsX()):Zvv_mr2Up.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_mr2Up,nlo_zjt_mr2Up,gvptname,metname,_wspace.data("signal_zjets"))
+
+  Pho_mr2Down = target.Clone(); Pho.SetName("photon_weights_denom_mr2Down_%s"%nam)
+  for b in range(Pho_mr2Down.GetNbinsX()): Pho_mr2Down.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Pho_mr2Down,nlo_pho_mr2Down,gvptname,metname,_wspace.data(_gjet_mcname))
+
+  Zvv_mr2Down = target.Clone(); Zvv_mr2Down.SetName("photon_weights_nom_mr2Down_%s"%nam)
+  for b in range(Zvv_mr2Down.GetNbinsX()): Zvv_mr2Down.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_mr2Down,nlo_zjt_mr2Down,gvptname,metname,_wspace.data("signal_zjets"))
+
+  Pho_mf2Up = target.Clone(); Pho.SetName("photon_weights_denom_mf2Up_%s"%nam)
+  for b in range(Pho_mf2Up.GetNbinsX()): Pho_mf2Up.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Pho_mf2Up,nlo_pho_mf2Up,gvptname,metname,_wspace.data(_gjet_mcname))
+
+  Zvv_mf2Up = target.Clone(); Zvv_mf2Up.SetName("photon_weights_nom_mf2Up_%s"%nam)
+  for b in range(Zvv_mf2Up.GetNbinsX()): Zvv_mf2Up.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_mf2Up,nlo_zjt_mf2Up,gvptname,metname,_wspace.data("signal_zjets"))
+
+  Pho_mf2Down = target.Clone(); Pho.SetName("photon_weights_denom_mf2Down_%s"%nam)
+  for b in range(Pho_mf2Down.GetNbinsX()): Pho_mf2Down.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Pho_mf2Down,nlo_pho_mf2Down,gvptname,metname,_wspace.data(_gjet_mcname))
+
+  Zvv_mf2Down = target.Clone(); Zvv_mf2Down.SetName("photon_weights_nom_mf2Down_%s"%nam)
+  for b in range(Zvv_mf2Down.GetNbinsX()): Zvv_mf2Down.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_mf2Down,nlo_zjt_mf2Down,gvptname,metname,_wspace.data("signal_zjets"))
+  """
+
+
 
   Zvv_pdfDown = target.Clone(); Zvv_pdfDown.SetName("photon_weights_nom_pdfDown_%s"%nam)
   for b in range(Zvv_pdfDown.GetNbinsX()): Zvv_pdfDown.SetBinContent(b+1,0)
@@ -174,20 +236,34 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_ewkUp   = target.Clone(); Zvv_ewkUp   .SetName("photon_weights_%s_ewk_Up"%nam)
   for b in range(Zvv_ewkUp.GetNbinsX()): Zvv_ewkUp.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv_ewkUp,nlo_ewkDown,gvptname,metname,_wspace.data("signal_zjets"))
-  
+
+  """
+  # Can also split EWK uncertainties ?
+  Zvv_ewkDown2 = target.Clone(); Zvv_ewkDown2.SetName("photon_weights_%s_ewk2_Down"%nam)
+  for b in range(Zvv_ewkDown2.GetNbinsX()): Zvv_ewkDown2.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_ewkDown2,nlo_ewkUp2,gvptname,metname,_wspace.data("signal_zjets"))
+
+  Zvv_ewkUp2   = target.Clone(); Zvv_ewkUp2   .SetName("photon_weights_%s_ewk2_Up"%nam)
+  for b in range(Zvv_ewkUp2.GetNbinsX()): Zvv_ewkUp2.SetBinContent(b+1,0)
+  diag.generateWeightedTemplate(Zvv_ewkUp2,nlo_ewkDown2,gvptname,metname,_wspace.data("signal_zjets"))
+  """
+
   nlo_ewkFlat = nlo_ewkDown.Clone("ewk_Base")
   nlo_ewkFlat.Divide(nlo_ewkFlat)
   Zvv_ewkBase = target.Clone(); Zvv_ewkBase  .SetName("photon_weights_%s_ewk_Base"%nam)
   for b in range(Zvv_ewkBase.GetNbinsX()): Zvv_ewkBase.SetBinContent(b+1,0)
   diag.generateWeightedTemplate(Zvv_ewkBase,nlo_ewkFlat,gvptname,metname,_wspace.data("signal_zjets"))
 
+
+
+
   Zvv_FPDown = target.Clone(); Zvv_FPDown.SetName("photon_weights_%s_fp_Down"%nam)
   for b in range(Zvv_FPDown.GetNbinsX()): Zvv_FPDown.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_FPDown,nlo_FPDown,"ptll",metname,_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_FPDown,nlo_FPDown,gvptname,metname,_wspace.data("signal_zjets"))
 
   Zvv_FPUp   = target.Clone(); Zvv_FPUp   .SetName("photon_weights_%s_fp_Up"%nam)
   for b in range(Zvv_FPUp.GetNbinsX()): Zvv_FPUp.SetBinContent(b+1,0)
-  diag.generateWeightedTemplate(Zvv_FPUp,nlo_FPUp,"ptll",metname,_wspace.data("signal_zjets"))
+  diag.generateWeightedTemplate(Zvv_FPUp,nlo_FPUp,gvptname,metname,_wspace.data("signal_zjets"))
   ##################################################################################################################
 
   # Have to also add one per systematic variation :(, 
@@ -196,6 +272,10 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_mrDown.Divide(Pho_mrDown); Zvv_mrDown.SetName("photon_weights_%s_mr_Down"%nam);_fOut.WriteTObject(Zvv_mrDown)
   Zvv_mfUp.Divide(Pho_mfUp); 	 Zvv_mfUp.SetName("photon_weights_%s_mf_Up"%nam);_fOut.WriteTObject(Zvv_mfUp)
   Zvv_mfDown.Divide(Pho_mfDown); Zvv_mfDown.SetName("photon_weights_%s_mf_Down"%nam);_fOut.WriteTObject(Zvv_mfDown)
+  #Zvv_mr2Up.Divide(Pho_mr2Up); 	 Zvv_mr2Up.SetName("photon_weights_%s_mr2_Up"%nam);_fOut.WriteTObject(Zvv_mr2Up)
+  #Zvv_mr2Down.Divide(Pho_mr2Down); Zvv_mr2Down.SetName("photon_weights_%s_mr2_Down"%nam);_fOut.WriteTObject(Zvv_mr2Down)
+  #Zvv_mf2Up.Divide(Pho_mf2Up); 	 Zvv_mf2Up.SetName("photon_weights_%s_mf2_Up"%nam);_fOut.WriteTObject(Zvv_mf2Up)
+  #Zvv_mf2Down.Divide(Pho_mf2Down); Zvv_mf2Down.SetName("photon_weights_%s_mf2_Down"%nam);_fOut.WriteTObject(Zvv_mf2Down)
 
   Zvv_pdfUp.Divide(Pho); 	 Zvv_pdfUp.SetName("photon_weights_%s_pdf_Up"%nam);_fOut.WriteTObject(Zvv_pdfUp)
   Zvv_pdfDown.Divide(Pho); 	Zvv_pdfDown.SetName("photon_weights_%s_pdf_Down"%nam);_fOut.WriteTObject(Zvv_pdfDown)
@@ -205,6 +285,10 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   Zvv_ewkDown.Divide(Zvv_ewkBase)
   Zvv_ewkUp  .Multiply(Zvv)
   Zvv_ewkDown.Multiply(Zvv)
+  #Zvv_ewkUp2  .Divide(Zvv_ewkBase)
+  #Zvv_ewkDown2.Divide(Zvv_ewkBase)
+  #Zvv_ewkUp2  .Multiply(Zvv)
+  #Zvv_ewkDown2.Multiply(Zvv)
 
   Zvv_FPUp  .Divide(Zvv_ewkBase)
   Zvv_FPDown.Divide(Zvv_ewkBase)
@@ -213,6 +297,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   _fOut.WriteTObject(Zvv_ewkDown)
   _fOut.WriteTObject(Zvv_ewkUp)
+  #_fOut.WriteTObject(Zvv_ewkDown2)
+  #_fOut.WriteTObject(Zvv_ewkUp2)
   _fOut.WriteTObject(Zvv_FPDown)
   _fOut.WriteTObject(Zvv_FPUp)
 
@@ -238,8 +324,11 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   CRs[0].add_nuisance_shape("mr",_fOut) 
   CRs[0].add_nuisance_shape("mf",_fOut) 
+  #CRs[0].add_nuisance_shape("mr2",_fOut) 
+  #CRs[0].add_nuisance_shape("mf2",_fOut) 
   CRs[0].add_nuisance_shape("pdf",_fOut) 
-  CRs[0].add_nuisance_shape("ewk",_fOut,"setTo=-1") 
+  CRs[0].add_nuisance_shape("ewk",_fOut,"SetTo=1") 
+  #CRs[0].add_nuisance_shape("ewk2",_fOut,"SetTo=1") 
   CRs[0].add_nuisance_shape("fp",_fOut)#,"setTo=1") 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
   #CRs[0].add_nuisance("crap",0.90) 
@@ -289,6 +378,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   return cat 
   
 #----------------------------------------------------------------------------------------------------------------------------------------------------------//
+#_fOut = r.TFile("photon_dimuon_exaggeratedErrors.root","RECREATE")
 _fOut = r.TFile("photon_dimuon_combined_model.root","RECREATE")
 # run once per category
 categories = ["monojet","resolved","boosted"]
