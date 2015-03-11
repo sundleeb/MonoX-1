@@ -292,6 +292,9 @@ class Channel:
        vv = float(setv.split("=")[1])
        self.wspace_out.var("nuis_IN_%s"%name).setVal(vv)
        self.wspace_out.var("nuis_%s"%name).setVal(vv)
+      else: 
+      	print "DIRECTIVE %s IN SYSTEMATIC %s, NOT UNDERSTOOD!"%(setv,name)
+	sys.exit()
     self.nuisances.append(name)
 
   def set_wspace(self,w):
@@ -384,8 +387,8 @@ class Category:
      self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
    
 
-  def addTarget(self,vn,CR):
-   self.additional_targets.append([vn,CR])
+  def addTarget(self,vn,CR,correct=True):
+   self.additional_targets.append([vn,CR,correct])
   def addVar(self,vnam,n,xmin,xmax):
    self.additional_vars[vnam] = [n,xmin,xmax]
 
@@ -427,11 +430,16 @@ class Category:
 
   def makeWeightHists(self, cr_i=-1):
    hist = r.TH1F("control_Region_weights","Expected Post-fit/Pre-fit",len(self._bins)-1,array.array('d',self._bins))
-   if cr_i < 0 :
+   if cr_i == -1 :
      for i,ch in enumerate(self.channels):
        if i>=len(self._bins)-1: break
        hist.SetBinContent(i+1,ch.ret_correction())
        hist.SetBinError(i+1,ch.ret_correction_err())
+   elif cr_i== -2 : # no correction 
+     for i,ch in enumerate(self.channels):
+       if i>=len(self._bins)-1: break
+       hist.SetBinContent(i+1,1)
+       hist.SetBinError(i+1,0)
    else : 
    	self.fillExpectedCorr(self._control_regions[cr_i],hist)
      
@@ -579,8 +587,8 @@ class Category:
     self.all_hists.append(flat)
     self.all_hists.append(hist_up_cl)
     self.all_hists.append(hist_dn_cl)
-    systrats.append(hist_up_cl)
-    systrats.append(hist_dn_cl)
+    systrats.append(hist_up_cl.Clone())
+    systrats.append(hist_dn_cl.Clone())
     #hist_up_cl.Draw('histsame')
     #hist_dn_cl.Draw('histsame')
     leg_var.AddEntry(hist_up_cl,"Parameter %d"%par,"L")
@@ -592,11 +600,12 @@ class Category:
    	max_local = max([syst.GetBinContent(b+1) for b in range(syst.GetNbinsX())])
 	if max_local>maxdiff: maxdiff = max_local
 
+   maxdiff-=1
    canvr.cd()
-   dHist = r.TH1F("dummy",";Variation/Nominal;E_{T}^{miss}",1,self._bins[0],self._bins[-1]); 
+   dHist = r.TH1F("dummy",";E_{T}^{miss};Variation/Nominal",1,self._bins[0],self._bins[-1]); 
    dHist.SetBinContent(1,1)
-   dHist.SetMinimum(1-maxdiff)
-   dHist.SetMaximum(1+maxdiff)
+   dHist.SetMaximum(1+1.1*maxdiff)
+   dHist.SetMinimum(1-1.1*maxdiff)
    dHist.Draw("AXIS")
    for isy,syst in enumerate(systrats):
       syst.Draw("histsame") 

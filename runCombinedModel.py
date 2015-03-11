@@ -5,6 +5,9 @@ r.gROOT.SetBatch(1)
 r.gROOT.ProcessLine(".L diagonalizer.cc+")
 from ROOT import diagonalizer
 
+fPurity = r.TFile.Open("photonPurity.root")
+ptphopurity = fPurity.Get("data")
+for b in range(ptphopurity.GetNbinsX()): ptphopurity.SetBinContent(b+1,1-ptphopurity.GetBinContent(b+1))
 
 #fkFactor = r.TFile.Open("/afs/cern.ch/work/n/nckw/public/monojet/Photon_Z_NLO_kfactors_Old.root")
 fkFactor = r.TFile.Open("Photon_Z_NLO_kfactors.root")
@@ -309,6 +312,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   _fOut.WriteTObject(PhotonScales)
   _fOut.WriteTObject(ZmmScales)
 
+  # finally make a photon background dataset 
+  diag.generateWeightedDataset("photon_gjet_backgrounds",ptphopurity,wvarname,"ptpho",_wspace,"photon_data")
 
   _bins = []  # take bins from some histogram
   for b in range(target.GetNbinsX()+1):
@@ -331,9 +336,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   #CRs[0].add_nuisance_shape("ewk2",_fOut,"SetTo=1") 
   CRs[0].add_nuisance_shape("fp",_fOut)#,"setTo=1") 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
-  #CRs[0].add_nuisance("crap",0.90) 
   CRs[1].add_nuisance("MuonEfficiency",0.01)
-  CRs[0].add_nuisance("purity",0.01,True)   # is a background systematic
+  CRs[0].add_nuisance("purity",0.5,True)   # is a background systematic -> 50% is ~1% on 3%
   CRs[1].add_nuisance("xs_backgrounds",0.1,True)   # is a background systematic
 
   """
