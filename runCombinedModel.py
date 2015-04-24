@@ -313,7 +313,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[0].add_nuisance_shape("fp",_fOut) 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
   CRs[1].add_nuisance("MuonEfficiency",0.01)
-  CRs[0].add_nuisance("purity",0.3,True)   # is a background systematic, photon purity ~97+/-1 %  -> relative uncertainty on bkg = 30%
+  CRs[0].add_nuisance("purity",0.5,True)   # is a background systematic -> 50% is ~1% on 3%
   CRs[1].add_nuisance("xs_backgrounds",0.1,True)   # is a background systematic
 
   # Now for each bin in the distribution, we make one EWK uncertainty which is the size of  the Up/Down variation --> Completely uncorrelated between bins

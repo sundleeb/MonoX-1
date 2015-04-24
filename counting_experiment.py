@@ -395,7 +395,6 @@ class Category:
 
   def addTarget(self,vn,CR,correct=True):
    self.additional_targets.append([vn,CR,correct])
-
   def addVar(self,vnam,n,xmin,xmax):
    self.additional_vars[vnam] = [n,xmin,xmax]
 
