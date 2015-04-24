@@ -1,6 +1,6 @@
 MonoX
 =====
-(Note, steps 1,2 and 3 are configured with the config categories_config_vtag_Bacon, 
+(Note, steps 1,2 and 6 are configured with the config categories_config_vtag_Bacon, 
 change to others as you see fit)
 
 Prepare the trees ...
@@ -10,7 +10,9 @@ Prepare the trees ...
   2) python addEff.py categories_config_vtag_Bacon
 
   3) python shiftMet.py --file resolved-combo.root
+  
   4) python shiftMet.py --file boosted-combo.root
+  
   5) python shiftMet.py --file monojet-combo.root
 
 MonoX fitting etc
