@@ -6,11 +6,15 @@ r.gStyle.SetOptStat(0)
 import array
 #infile = r.TFile.Open("mono-x.root") 
 infile = r.TFile.Open("../mono-x-vtagged.root") 
-fkFactor = r.TFile.Open("../Photon_Z_NLO_kfactors.root")
+fkFactor = r.TFile.Open("../Photon_Z_NLO_kfactors_w80pcorr.root")
 nlo_pho = fkFactor.Get("pho_NLO_LO")
 nlo_zjt = fkFactor.Get("Z_NLO_LO")
 nlo_ewkUp    = fkFactor.Get("EWK_Up")
 nlo_ewkDn    = fkFactor.Get("EWK_Dwon")
+
+fFFactor = r.TFile.Open("../FP.root")
+nlo_FPUp    = fFFactor.Get("FP_Up")
+nlo_FPDown  = fFFactor.Get("FP_Down")
 
 #nlo_ewkDn   = nlo_ewkUp.Clone()
 # Make it a correction on the Z by inverting !
@@ -27,6 +31,16 @@ nlo_pho_mfUp = fkFactor.Get("pho_NLO_LO_mfUp")
 nlo_zjt_mfUp = fkFactor.Get("Z_NLO_LO_mfUp")
 nlo_pho_mfDown = fkFactor.Get("pho_NLO_LO_mfDown")
 nlo_zjt_mfDown = fkFactor.Get("Z_NLO_LO_mfDown")
+nlo_pho_mrUp2 = fkFactor.Get("pho_NLO_LO_mr2Up")
+nlo_zjt_mrUp2 = fkFactor.Get("Z_NLO_LO_mr2Up")
+nlo_pho_mrDown2 = fkFactor.Get("pho_NLO_LO_mr2Down")
+nlo_zjt_mrDown2 = fkFactor.Get("Z_NLO_LO_mr2Down")
+nlo_pho_mfUp2 = fkFactor.Get("pho_NLO_LO_mf2Up")
+nlo_zjt_mfUp2 = fkFactor.Get("Z_NLO_LO_mf2Up")
+nlo_pho_mfDown2 = fkFactor.Get("pho_NLO_LO_mf2Down")
+nlo_zjt_mfDown2 = fkFactor.Get("Z_NLO_LO_mf2Down")
+
+
 nlo_zjt_pdfUp   = fkFactor.Get("Z_NLO_LO_pdfUp")
 nlo_zjt_pdfDown = fkFactor.Get("Z_NLO_LO_pdfDown")
 
@@ -51,11 +65,20 @@ for b in range(one.GetNbinsX()): one.SetBinContent(b+1,1)
 Workspace = infile.Get("category_monojet/wspace_monojet")
 diag = diagonalizer(Workspace)
 
+# Make a "photon background"
+fPurity = r.TFile.Open("../photonPurity.root")
+ptphopurity = fPurity.Get("data")
+for b in range(ptphopurity.GetNbinsX()): ptphopurity.SetBinContent(b+1,1-ptphopurity.GetBinContent(b+1))
+diag.generateWeightedDataset("photon_gjet_backgrounds",ptphopurity,"weight","ptpho",Workspace,"photon_data")
+
 photon_d = base.Clone(); photon_d.SetName("photon_data")
 photon_d.Sumw2()
 diag.generateWeightedTemplate(photon_d,one,"mvamet",phoX,Workspace.data("photon_data"))
-photon_b =  photon_d.Clone(); photon_b.SetName("photon_bkg")
-photon_b.Scale(0.03)
+photon_b =   photon_d.Clone(); photon_b.SetName("photon_bkg")
+for b in range(photon_b.GetNbinsX()): photon_b.SetBinContent(b+1,0)
+diag.generateWeightedTemplate(photon_b,one,"mvamet",ZX,Workspace.data("photon_gjet_backgrounds"))
+
+#photon_b.Scale(0.03)
 
 zmm_d = base.Clone(); zmm_d.SetName("zmm_data")
 zmm_d.Sumw2()
@@ -64,11 +87,15 @@ zmm_b = base.Clone(); zmm_b.SetName("zmm_bkg")
 diag.generateWeightedTemplate(zmm_b,one,"mvamet",ZX,Workspace.data("dimuon_all_background"))
 
 # Add 1% muoneff/pho eff uncerts to datapoints
+# Add 1% also for photon backgrounds
 for b in range(photon_d.GetNbinsX()):
   pi = photon_d.GetBinContent(b+1);
   zi = zmm_d.GetBinContent(b+1);
-  photon_d.SetBinError(b+1, ( (photon_d.GetBinError(b+1))**2 + (pi*0.01)**2 )**0.5)
+  photon_d.SetBinError(b+1, ( (photon_d.GetBinError(b+1))**2 + (pi*0.01)**2 + (pi*0.01)**2 )**0.5)
   zmm_d.SetBinError(b+1, ( (zmm_d.GetBinError(b+1))**2 + (zi*0.01)**2 )**0.5)
+
+# Add the FP also (I think its done on the Z) ?
+
 
 #photon_d.Add(photon_b,-1)
 #zmm_d.Add(zmm_b,-1)
@@ -115,10 +142,23 @@ diag.generateWeightedTemplate(photon_mc_mrdn,nlo_pho_mrDown,"genVpt",phoX,Worksp
 diag.generateWeightedTemplate(photon_mc_mfup,nlo_pho_mfUp,"genVpt",phoX,Workspace.data("photon_gjet")) 
 diag.generateWeightedTemplate(photon_mc_mfdn,nlo_pho_mfDown,"genVpt",phoX,Workspace.data("photon_gjet")) 
 
+photon_mc_mrup2 = base.Clone(); photon_mc_mrup2.SetName("photon_mc_mrup2")
+photon_mc_mrdn2 = base.Clone(); photon_mc_mrdn2.SetName("photon_mc_mrdn2")
+photon_mc_mfup2 = base.Clone(); photon_mc_mfup2.SetName("photon_mc_mfup2")
+photon_mc_mfdn2 = base.Clone(); photon_mc_mfdn2.SetName("photon_mc_mfdn2")
+diag.generateWeightedTemplate(photon_mc_mrup2,nlo_pho_mrUp2,"genVpt",phoX,Workspace.data("photon_gjet"))  
+diag.generateWeightedTemplate(photon_mc_mrdn2,nlo_pho_mrDown2,"genVpt",phoX,Workspace.data("photon_gjet")) 
+diag.generateWeightedTemplate(photon_mc_mfup2,nlo_pho_mfUp2,"genVpt",phoX,Workspace.data("photon_gjet")) 
+diag.generateWeightedTemplate(photon_mc_mfdn2,nlo_pho_mfDown2,"genVpt",phoX,Workspace.data("photon_gjet")) 
+
 zmm_mc_mrup = base.Clone(); zmm_mc_mrup.SetName("zmm_mc_mrup")
 zmm_mc_mrdn = base.Clone(); zmm_mc_mrdn.SetName("zmm_mc_mrdn")
 zmm_mc_mfup = base.Clone(); zmm_mc_mfup.SetName("zmm_mc_mfup")
 zmm_mc_mfdn = base.Clone(); zmm_mc_mfdn.SetName("zmm_mc_mfdn")
+zmm_mc_mrup2 = base.Clone(); zmm_mc_mrup2.SetName("zmm_mc_mrup2")
+zmm_mc_mrdn2 = base.Clone(); zmm_mc_mrdn2.SetName("zmm_mc_mrdn2")
+zmm_mc_mfup2 = base.Clone(); zmm_mc_mfup2.SetName("zmm_mc_mfup2")
+zmm_mc_mfdn2 = base.Clone(); zmm_mc_mfdn2.SetName("zmm_mc_mfdn2")
 zmm_mc_pdfup = base.Clone(); zmm_mc_pdfup.SetName("zmm_mc_pdfUP")
 zmm_mc_pdfdn = base.Clone(); zmm_mc_pdfdn.SetName("zmm_mc_pdfDN")
 
@@ -126,6 +166,10 @@ diag.generateWeightedTemplate(zmm_mc_mrup,nlo_zjt_mrUp,"genVpt",ZX,Workspace.dat
 diag.generateWeightedTemplate(zmm_mc_mrdn,nlo_zjt_mrDown,"genVpt",ZX,Workspace.data("dimuon_zll_EWK_only")) 
 diag.generateWeightedTemplate(zmm_mc_mfup,nlo_zjt_mfUp  ,"genVpt",ZX,Workspace.data("dimuon_zll_EWK_only")) 
 diag.generateWeightedTemplate(zmm_mc_mfdn,nlo_zjt_mfDown,"genVpt",ZX,Workspace.data("dimuon_zll_EWK_only")) 
+diag.generateWeightedTemplate(zmm_mc_mrup2,nlo_zjt_mrUp2,"genVpt",ZX,Workspace.data("dimuon_zll_EWK_only")) 
+diag.generateWeightedTemplate(zmm_mc_mrdn2,nlo_zjt_mrDown2,"genVpt",ZX,Workspace.data("dimuon_zll_EWK_only")) 
+diag.generateWeightedTemplate(zmm_mc_mfup2,nlo_zjt_mfUp2  ,"genVpt",ZX,Workspace.data("dimuon_zll_EWK_only")) 
+diag.generateWeightedTemplate(zmm_mc_mfdn2,nlo_zjt_mfDown2,"genVpt",ZX,Workspace.data("dimuon_zll_EWK_only")) 
 #diag.generateWeightedTemplate(zmm_mc_pdfup,nlo_zjt_pdfUp  ,"genVpt",ZX,Workspace.data("dimuon_zll_EWK_only")) 
 #diag.generateWeightedTemplate(zmm_mc_pdfdn,nlo_zjt_pdfDown,"genVpt",ZX,Workspace.data("dimuon_zll_EWK_only")) 
 diag.generateWeightedTemplate(zmm_mc_pdfup,nlo_zjt_pdfUp  ,"genVpt",ZX,Workspace.data("dimuon_zll_EWK_only")) 
@@ -135,10 +179,23 @@ zmm_mc_mrup.Divide(photon_mc_mrup)
 zmm_mc_mrdn.Divide(photon_mc_mrdn)
 zmm_mc_mfup.Divide(photon_mc_mfup)
 zmm_mc_mfdn.Divide(photon_mc_mfdn)
+zmm_mc_mrup2.Divide(photon_mc_mrup2)
+zmm_mc_mrdn2.Divide(photon_mc_mrdn2)
+zmm_mc_mfup2.Divide(photon_mc_mfup2)
+zmm_mc_mfdn2.Divide(photon_mc_mfdn2)
 zmm_mc_pdfup.Divide(photon_mc)
 zmm_mc_pdfdn.Divide(photon_mc)
 
 
+# Footprint correction
+Zvv_FPDown = base.Clone(); Zvv_FPDown.SetName("photon_weights_fp_Down")
+diag.generateWeightedTemplate(Zvv_FPDown,nlo_FPDown,"genVpt",ZX,Workspace.data("dimuon_zll"))
+
+Zvv_FPUp   = base.Clone(); Zvv_FPUp   .SetName("photon_weights_fp_Up")
+diag.generateWeightedTemplate(Zvv_FPUp,nlo_FPUp,"genVpt",ZX,Workspace.data("dimuon_zll"))
+
+Zvv_FPUp.Divide(photon_mc)
+Zvv_FPDown.Divide(photon_mc)
 #########################################################################################################
 
 zmm_mc_lo.Divide(photon_mc_lo)
@@ -168,15 +225,25 @@ for b in range(zmm_mc.GetNbinsX()):
 	diffmc_mf_u = zmm_mc_mfup.GetBinContent(b+1) - cv
 	diffmc_mf_d = zmm_mc_mfdn.GetBinContent(b+1) - cv
 
+	diffmc_mr_u2 = zmm_mc_mrup2.GetBinContent(b+1) - cv
+	diffmc_mr_d2 = zmm_mc_mrdn2.GetBinContent(b+1) - cv
+	diffmc_mf_u2 = zmm_mc_mfup2.GetBinContent(b+1) - cv
+	diffmc_mf_d2 = zmm_mc_mfdn2.GetBinContent(b+1) - cv
+
 	diffmc_pdf_u = zmm_mc_pdfup.GetBinContent(b+1) - cv
 	diffmc_pdf_d = zmm_mc_pdfdn.GetBinContent(b+1) - cv
 
 	derr_mr = 0.5*(abs(diffmc_mr_u)+abs(diffmc_mr_d))
 	derr_mf = 0.5*(abs(diffmc_mf_u)+abs(diffmc_mf_d))
+	derr_mr2 = 0.5*(abs(diffmc_mr_u2)+abs(diffmc_mr_d2))
+	derr_mf2 = 0.5*(abs(diffmc_mf_u2)+abs(diffmc_mf_d2))
 	derr_pdf = 0.5*(abs(diffmc_pdf_u)+abs(diffmc_pdf_d))
 
+	
 	errT+=derr_mr**2
 	errT+=derr_mf**2
+	errT+=derr_mr2**2
+	errT+=derr_mf2**2
 	errT+=derr_pdf**2
 
 	errs.SetBinError(b+1,errT**0.5)

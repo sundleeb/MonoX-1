@@ -9,8 +9,10 @@ signals = {
 key_order = ["QCD","#gamma + jet"]
 
 backgrounds = { 
-		"#gamma + jet":	[["photon_dimuon_combined_model.root:$DIRECTORY/ZJets_photon_gjet_nlo_combined_model$VAR"],		r.kGreen+1,   0]
-		,"QCD":	  	[["Purity=0.97"],		r.kRed+2,   0]
+		"#gamma + jet":		[["photon_dimuon_combined_model.root:$DIRECTORY/ZJets_photon_gjet_nlo_combined_model$VAR"],		r.kGreen+1,   0]
+		#,"QCD":	  	[["Purity=0.97"],		r.kRed+2,   0]
+		,"QCD":	  		[["photon_dimuon_combined_model.root:$DIRECTORY/ZJets_photon_gjet_backgrounds_combined_model$VAR"],		r.kRed+2,   0,0.7]
+		#,"QCD":	  	[["Purity=0.97"],		r.kRed+2,   0]
 	      }
 
 dataname  = "photon_data$VAR"

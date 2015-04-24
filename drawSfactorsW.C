@@ -71,7 +71,7 @@ lat->SetTextFont(42);
   hpho->SetMarkerColor(kBlue+1);
   lat->DrawLatex(0.1,0.92,"#bf{CMS} #it{Simulation}");
   lat->DrawLatex(0.7,0.92,Form("%s category",cats[c].c_str()));
-  hpho->GetYaxis()->SetRangeUser(0.,1.);
+  hpho->GetYaxis()->SetRangeUser(0.,4.);
   hpho->Draw();
   c_pho->SaveAs(Form("wmn_weights_%s.pdf",cats[c].c_str()));
   c_pho->SaveAs(Form("wmn_weights_%s.png",cats[c].c_str()));
@@ -92,6 +92,12 @@ lat->SetTextFont(42);
   lat->DrawLatex(0.7,0.94,Form("%s category",cats[c].c_str()));
   canv_variations->SaveAs(Form("systematic_variations_W_%s.pdf",cats[c].c_str()));
   canv_variations->SaveAs(Form("systematic_variations_W_%s.png",cats[c].c_str()));
+  
+  canv_variations_ratio->Draw();
+  lat->DrawLatex(0.1,0.92,"#bf{CMS} #it{Preliminary}");
+  lat->DrawLatex(0.7,0.94,Form("%s category",cats[c].c_str()));
+  canv_variations_ratio->SaveAs(Form("systematic_variations_W_ratio_%s.pdf",cats[c].c_str()));
+  canv_variations_ratio->SaveAs(Form("systematic_variations_W_ratio_%s.png",cats[c].c_str()));
 
   // Finally make a ratio of the pre->post fit expectation of the Z(vv) template!, bit of a pain but can do it!
   TCanvas *canCorr  = new TCanvas();

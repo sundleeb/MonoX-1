@@ -14,6 +14,8 @@ root -l -q -b 'drawSfactorsW.C("photon_dimuon_combined_model.root","monojet")'
 root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","boosted")'
 root -l -b -q 'drawSfactorsW.C("photon_dimuon_combined_model.root","resolved")'
 
+root -l -b -q 'drawFitResults.C("photon_dimuon_combined_model.root")'
+
 # Make dimuon/single muon CR plots (note for dimuon, the fake MET is obsolete) before and after corrections
 python makePlot.py mono-x-vtagged.root plot_dimuon_config plot_singlemuon_config plot_dimuon_config_nocorrections plot_singlemuon_config_nocorrections -d category_boosted  -x "fake E_{T}^{miss} (GeV)" -b  -c boosted  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
 python makePlot.py mono-x-vtagged.root plot_dimuon_config plot_singlemuon_config plot_dimuon_config_nocorrections plot_singlemuon_config_nocorrections -d category_resolved -x "fake E_{T}^{miss} (GeV)" -b  -c resolved  # -o label -> Will use the Zmumu+gjet CR result for Zvv template, -g == blind  
@@ -69,9 +71,9 @@ python makePlot.py mono-x.root plot_config_combsignal_jpt -d category_monojet  -
 
 
 # Finally the photons !
-python makePlot.py mono-x-vtagged.root  plot_photon_config -d category_monojet -x "photon p_{T} (GeV)" -v "ptpho" -c monojet -b 
-python makePlot.py mono-x-vtagged.root  plot_photon_config -d category_boosted -x "photon p_{T} (GeV)" -v "ptpho" -c boosted -b 
-python makePlot.py mono-x-vtagged.root  plot_photon_config -d category_resolved -x "photon p_{T} (GeV)" -v "ptpho" -c resolved -b
+python makePlot.py mono-x-vtagged.root  plot_photon_config plot_photon_config_nocorrection -d category_monojet -x "photon p_{T} (GeV)" -v "ptpho" -c monojet -b 
+python makePlot.py mono-x-vtagged.root  plot_photon_config plot_photon_config_nocorrection -d category_boosted -x "photon p_{T} (GeV)" -v "ptpho" -c boosted -b 
+python makePlot.py mono-x-vtagged.root  plot_photon_config plot_photon_config_nocorrection -d category_resolved -x "photon p_{T} (GeV)" -v "ptpho" -c resolved -b
 python makePlot.py mono-x-vtagged.root  plot_photon_config plot_photon_config_nocorrection -d category_monojet -x "N Jets" -v njets -c monojet --nolog --nospec -o NJETS -b 
 python makePlot.py mono-x-vtagged.root  plot_photon_config plot_photon_config_nocorrection -d category_boosted -x "N Jets" -v njets -c boosted --nolog --nospec -o NJETS -b
 python makePlot.py mono-x-vtagged.root  plot_photon_config plot_photon_config_nocorrection -d category_resolved -x "N Jets" -v njets -c resolved  --nospec -o NJETS -b

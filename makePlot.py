@@ -51,7 +51,7 @@ for ic,config in enumerate(configs) :
  print "Run Config", config
  x = __import__(config)
  if options.tdir: x.directory = options.tdir
-
+ procs=[]
  # first run through signals, backgrounds and data to check if we need to replace things
  for s in x.signals.keys():
   #x.signals[s][0] = x.signals[s][0].replace("$CAT",options.cat)
@@ -149,6 +149,7 @@ for ic,config in enumerate(configs) :
 
   nullhist = getNormalizedHist(nullhist,data)
   print "	Nevents ", bkg, nullhist.Integral("width")
+  procs.append([bkg,nullhist.Integral("width")])
   nullhist.SetLineColor(1)
   nullhist.SetLineWidth(2)
   nullhist.SetFillColor(x.backgrounds[bkg][1])
@@ -183,9 +184,13 @@ for ic,config in enumerate(configs) :
   x.signals[sig][2].Draw("samehist")
   leg.AddEntry(x.signals[sig][2],x.signals[sig][0],"L")
   print "	Nevents ", tmp.GetName(), tmp.Integral("width")
+  #procs.append([tmp.GetName(),tmp.Integral("width")])
 
  normtotalback = getNormalizedHist(totalbackground,data)
  print "Total Background " , normtotalback.Integral("width")
+ procs.append(["total bkg",normtotalback.Integral("width")])
+ procs.append([data.GetName(), data.Integral("width")])
+
  # now set totalbackground errors to 0 
  for b in range(normtotalback.GetNbinsX()):
    totalbkg.SetBinError(b+1,0)
@@ -274,4 +279,7 @@ for ic,config in enumerate(configs) :
 # if totalsignal.Integral()>0 : print "	Expected Significance (incbkg) ", calculateExpectedSignificance(totalsignal,totalbackground,1), " sigma"
  if options.batch: can.SaveAs("%s_%s%s.pdf"%(config,options.tdir,options.outext))
  if options.batch: can.SaveAs("%s_%s%s.png"%(config,options.tdir,options.outext))
+ print "expectations"
+ for pp in procs:
+   print "%30s   %10.1f"%(pp[0],pp[1])
 if not options.batch:raw_input("Press enter")

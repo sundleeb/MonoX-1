@@ -38,6 +38,7 @@ class Bin:
 
    self.initY     = 0 
    self.initE     = 0 
+   self.initE_precorr = 0 
    self.initB     = 0 
    self.binerror  = 0
    self.binerror_m = 0
@@ -90,9 +91,13 @@ class Bin:
  def set_initY(self,mcdataset):
    self.initY = self.wspace.data(mcdataset).sumEntries("%s>=%g && %s<%g"%(self.var.GetName(),self.xmin,self.var.GetName(),self.xmax),self.rngename)
 
+ def set_initE_precorr(self):
+   self.initE_precorr = self.wspace_out.var("model_mu_cat_%d_bin_%d"%(self.catid,self.id)).getVal()*self.wspace_out.var(self.sfactor.GetName()).getVal()
+
  def set_initE(self):
    self.initE = self.ret_expected()
    self.initB = self.ret_background()
+   self.set_initE_precorr()
 
  def set_label(self,cat):
    self.categoryname = cat.GetName()
@@ -202,6 +207,7 @@ class Bin:
  def Print(self):
    print "Channel/Bin -> ", self.chid,self.binid, ", Var -> ",self.var.GetName(), ", Range -> ", self.xmin,self.xmax , "MODEL MU (prefit/current state)= ",self.initY,"/",self.ret_model()
    print " .... observed = ",self.o, ", expected = ", self.wspace_out.function(self.mu.GetName()).getVal(), " (of which %f is background)"%self.ret_background(), ", scale factor = ", self.wspace_out.function(self.sfactor.GetName()).getVal() 
+   print ", Pre-corrections (nuisance at 0) expected (-bkg) ", self.initE_precorr
 
 class Channel:
   # This class holds a "channel" which is as dumb as saying it holds a dataset and scale factors 
@@ -292,6 +298,9 @@ class Channel:
        vv = float(setv.split("=")[1])
        self.wspace_out.var("nuis_IN_%s"%name).setVal(vv)
        self.wspace_out.var("nuis_%s"%name).setVal(vv)
+      else: 
+      	print "DIRECTIVE %s IN SYSTEMATIC %s, NOT UNDERSTOOD!"%(setv,name)
+	sys.exit()
     self.nuisances.append(name)
 
   def set_wspace(self,w):
@@ -384,8 +393,9 @@ class Category:
      self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
    
 
-  def addTarget(self,vn,CR):
-   self.additional_targets.append([vn,CR])
+  def addTarget(self,vn,CR,correct=True):
+   self.additional_targets.append([vn,CR,correct])
+
   def addVar(self,vnam,n,xmin,xmax):
    self.additional_vars[vnam] = [n,xmin,xmax]
 
@@ -397,12 +407,13 @@ class Category:
        expected_hist.SetBinContent(bc,ch.ret_expected())
        expected_hist.SetBinError(bc,ch.ret_err())
 
-  def fillExpectedCorr(self,cr,expected_hist):
+  def fillExpectedCorr(self,cr,expected_hist,regen=False):
    bc=0
    for i,ch in enumerate(self.channels):
      if ch.chid == cr.chid:
        bc+=1
-       expected_hist.SetBinContent(bc,(ch.ret_expected()-ch.ret_background())/(ch.initE-ch.initB))
+       prefitValue =  ch.initE_precorr if regen else ch.initE - ch.initB
+       expected_hist.SetBinContent(bc,(ch.ret_expected()-ch.ret_background())/(prefitValue))
        expected_hist.SetBinError(bc,ch.ret_err()/(ch.initE-ch.initB))
 
   def fillObservedHist(self,cr,observed_hist):
@@ -425,15 +436,20 @@ class Category:
      if i>=len(self._bins)-1: break
      model_hist.SetBinContent(i+1,ch.ret_model())
 
-  def makeWeightHists(self, cr_i=-1):
+  def makeWeightHists(self, cr_i=-1, regen=False):
    hist = r.TH1F("control_Region_weights","Expected Post-fit/Pre-fit",len(self._bins)-1,array.array('d',self._bins))
-   if cr_i < 0 :
+   if cr_i == -1 :
      for i,ch in enumerate(self.channels):
        if i>=len(self._bins)-1: break
        hist.SetBinContent(i+1,ch.ret_correction())
        hist.SetBinError(i+1,ch.ret_correction_err())
+   elif cr_i== -2 : # no correction 
+     for i,ch in enumerate(self.channels):
+       if i>=len(self._bins)-1: break
+       hist.SetBinContent(i+1,1)
+       hist.SetBinError(i+1,0)
    else : 
-   	self.fillExpectedCorr(self._control_regions[cr_i],hist)
+   	self.fillExpectedCorr(self._control_regions[cr_i],hist,regen)
      
    return hist.Clone()
 
@@ -452,7 +468,7 @@ class Category:
      ch.set_sfactor(cr.ret_sfactor(i))
      # This has to the the last thing
      ch.setup_expect_var()
-     ch.set_initE()  # initialise expected
+     ch.set_initE()  # initialise expected  (but this will be somewhat a "post" state), i.e after fiddling with the nuisance parameters.
      ch.add_to_dataset()
      self.channels.append(ch)
    # fit is buggered so need to scale by 1.1
@@ -470,7 +486,7 @@ class Category:
    for i,bl in enumerate(self.channels):
     if i >= len(self._bins)-1 : break
     model_mu = self._wspace_out.var("model_mu_cat_%d_bin_%d"%(bl.catid,bl.id))
-    #self._wspace_out.var(model_mu.GetName()).setVal(1.1*model_mu.getVal())
+    #self._wspace_out.var(model_mu.GetName()).setVal(1.2*model_mu.getVal())
    
   def ret_control_regions(self): 
    return self._control_regions
@@ -579,24 +595,26 @@ class Category:
     self.all_hists.append(flat)
     self.all_hists.append(hist_up_cl)
     self.all_hists.append(hist_dn_cl)
-    systrats.append(hist_up_cl)
-    systrats.append(hist_dn_cl)
+    systrats.append(hist_up_cl.Clone())
+    systrats.append(hist_dn_cl.Clone())
     #hist_up_cl.Draw('histsame')
     #hist_dn_cl.Draw('histsame')
     leg_var.AddEntry(hist_up_cl,"Parameter %d"%par,"L")
     sys_c+=1
    
-   # finx maximum 
+   # find maximum 
    maxdiff = 0
    for syst in systrats:
    	max_local = max([syst.GetBinContent(b+1) for b in range(syst.GetNbinsX())])
+	#print max_local, maxdiff, syst.GetName()
 	if max_local>maxdiff: maxdiff = max_local
-
+   print "MaxDiff = ", maxdiff 
+   maxdiff-=1
    canvr.cd()
-   dHist = r.TH1F("dummy",";Variation/Nominal;E_{T}^{miss}",1,self._bins[0],self._bins[-1]); 
+   dHist = r.TH1F("dummy",";E_{T}^{miss};Variation/Nominal",1,self._bins[0],self._bins[-1]); 
    dHist.SetBinContent(1,1)
-   dHist.SetMinimum(1-maxdiff)
-   dHist.SetMaximum(1+maxdiff)
+   dHist.SetMaximum(1+1.1*maxdiff)
+   dHist.SetMinimum(1-1.1*maxdiff)
    dHist.Draw("AXIS")
    for isy,syst in enumerate(systrats):
       syst.Draw("histsame") 
@@ -636,12 +654,14 @@ class Category:
 	sterr = error_hist_F.GetBinError(b+1)
    	self.model_hist.SetBinError(b+1,(sterr**2+(abs(error_hist_F.GetBinContent(b+1)-self.model_hist.GetBinContent(b+1)))**2)**0.5)
 
+   # First, I think we want to pull in all of the "pre-fit" targets and make 
+   # them as the denominator, not necessary for the signal region 
 
    for tg_v in self.additional_targets:
      tg = tg_v[0] 
      cr_i = tg_v[1]
-     histW   = self.makeWeightHists(cr_i)
-     histW_U = self.makeWeightHists(cr_i); 
+     histW   = self.makeWeightHists(cr_i,True)
+     histW_U = self.makeWeightHists(cr_i,True); 
      histW.SetName("%s_%s_combined_model_WEIGHTS_CR_FORTARGET"%(self.GNAME,tg))
      self.histograms.append(histW.Clone())
      for b in range(histW_U.GetNbinsX()): histW_U.SetBinContent(b+1,histW_U.GetBinContent(b+1)+histW_U.GetBinError(b+1)) # now its ~the default correction +1 sigma
@@ -674,8 +694,8 @@ class Category:
      for tg_v in self.additional_targets:
        tg = tg_v[0] 
        cr_i = tg_v[1]
-       histW   = self.makeWeightHists(cr_i)
-       histW_U = self.makeWeightHists(cr_i); 
+       histW   = self.makeWeightHists(cr_i,True)
+       histW_U = self.makeWeightHists(cr_i,True); 
        for b in range(histW_U.GetNbinsX()): histW_U.SetBinContent(b+1,histW_U.GetBinContent(b+1)+histW_U.GetBinError(b+1)) # now its ~the default correction +1 sigma
        model_hist_vx_tg = r.TH1F("%s_%s_combined_model%s"%(self.GNAME,tg,varx),"combined_model - %s"%(self.cname),nb,min,max)
        model_hist_vx_tg_errs = r.TH1F("%s_%s_combined_model_ERRORS%s"%(self.GNAME,tg,varx),"combined_model - %s"%(self.cname),nb,min,max)

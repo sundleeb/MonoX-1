@@ -390,7 +390,16 @@ void ModelBuilder::addSample(std::string name, std::string region, std::string p
    
    std::string lcutstring = cutstring;
    std::map<std::string,std::string>::iterator it_ecut = extracuts.find(region);
-   if ( it_ecut != extracuts.end() )	lcutstring+=(*it_ecut).second;
+   if ( it_ecut != extracuts.end() ) {
+   	lcutstring+=" && "+(*it_ecut).second;
+   	// Also allow only a specific process to be cut 
+   }
+   it_ecut = extracuts.find(process);
+   if ( it_ecut != extracuts.end() ) {	
+   	   lcutstring+=" && "+(*it_ecut).second;
+   }
+
+   std::cout << " CUT STRING FOR " << process <<  ", in " << region  << " : " << lcutstring.c_str() << std::endl;
    if (is_mc) {
    	tmp_hist = (TH1F*)generateTemplate(lTmp,(TTree *)fIn->Get(name.c_str()),varstring,weightname,lcutstring,Form("_tmphist%s",catname.c_str()));
         tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(lcutstring.c_str()),RooFit::WeightVar(weightname.c_str()));

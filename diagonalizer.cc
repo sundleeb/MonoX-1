@@ -10,6 +10,8 @@
 #include "TVectorD.h"
 #include "TIterator.h"
 #include "TH2F.h"
+#include "TH1F.h"
+#include "TH1D.h"
 
 // RooFit includes
 #include "RooDataSet.h"
@@ -43,7 +45,7 @@ class diagonalizer {
     void freezeParameters(RooArgSet *args, bool freeze=true);
     void generateWeightedTemplate(TH1F *, RooFormulaVar *, RooRealVar &, RooDataSet *);
     void generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::string wvar, std::string var, RooDataSet *data);
-    void generateWeightedDataset(std::string newname, TH1F *pdf_num, std::string wvarname, std::string wvar, RooWorkspace *wspace, std::string dataname);
+    void generateWeightedDataset(std::string newname, TH1 *pdf_num, std::string wvarname, std::string wvar, RooWorkspace *wspace, std::string dataname);
     TH2F *retCovariance();
     TH2F *retCorrelation();
     
@@ -100,6 +102,7 @@ int diagonalizer::generateVariations(RooFitResult *res_ptr){// std::string dataS
   cov.Print();
   //TVectorD eval;
   TMatrixD evec = cov.EigenVectors(_eval);
+	
   _n_par = _eval.GetNoElements();
   evec.Print();
   _evec.ResizeTo(_n_par,_n_par);
@@ -135,6 +138,18 @@ int diagonalizer::generateVariations(RooFitResult *res_ptr){// std::string dataS
   }
   getArgSetParameters(rooParameters,original_values);
 
+  for (int l=0;l<_n_par;l++){
+    std::cout << Form("Eigenvector %d = ",l); 
+    TIterator *parsit2 = rooParameters.createIterator();
+    int m = 0;
+    while (RooAbsArg *arg = (RooAbsArg*)parsit2->Next()) {
+     RooRealVar *vit = _wspace->var(arg->GetName());
+    //for (int m=0;m<_n_par;m++){
+     std::cout << Form("%.2f",_evec[m][l]) << "*"<<vit->GetName()<<"+";    
+     m++;
+    }
+    std::cout << std::endl;
+  }
   return _n_par;
 }
 void diagonalizer::resetPars(){
@@ -250,7 +265,7 @@ void diagonalizer::generateWeightedTemplate(TH1F *histNew, RooFormulaVar *pdf_nu
   }
   histNew->GetXaxis()->SetTitle(varname);
 }
-void diagonalizer::generateWeightedDataset(std::string newname, TH1F *pdf_num, std::string wvarname, std::string wvar, RooWorkspace *wspace, std::string dataname){
+void diagonalizer::generateWeightedDataset(std::string newname, TH1 *pdf_num, std::string wvarname, std::string wvar, RooWorkspace *wspace, std::string dataname){
 
   RooDataSet *data =(RooDataSet*) wspace->data(dataname.c_str());
   RooArgSet *args = (RooArgSet*)data->get(0);
