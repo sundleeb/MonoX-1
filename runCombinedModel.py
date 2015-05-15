@@ -1,6 +1,7 @@
 #from combineControlRegions import *
 from pullPlot import pullPlot
 from counting_experiment import *
+
 import ROOT as r 
 r.gROOT.SetBatch(1)
 r.gROOT.ProcessLine(".L diagonalizer.cc+")
@@ -75,7 +76,7 @@ def cmodelW(cid,nam,_f,_fOut, out_ws, diag):
   #Add Systematic ? This time we add them as nuisance parameters.
 
   CRs[0].add_nuisance("pdf_CT10",0.006)
-  CRs[0].add_nuisance("MuonEfficiency",0.01)
+  CRs[0].add_nuisance("CMS_eff_m",0.01)
   CRs[0].add_nuisance("xs_backgrounds",0.1,True)   # is a background systematic
 
   for b in range(targetmc.GetNbinsX()):
@@ -312,7 +313,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[0].add_nuisance_shape("pdf",_fOut) 
   CRs[0].add_nuisance_shape("fp",_fOut) 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
-  CRs[1].add_nuisance("MuonEfficiency",0.01)
+  CRs[1].add_nuisance("CMS_eff_m",0.01)
   CRs[0].add_nuisance("purity",0.5,True)   # is a background systematic -> 50% is ~1% on 3%
   CRs[1].add_nuisance("xs_backgrounds",0.1,True)   # is a background systematic
 
@@ -438,6 +439,8 @@ for cid,cn in enumerate(cmb_categories):
 
 nll_ = combined_pdf.createNLL(out_ws.data("combinedData"),r.RooFit.ExternalConstraints(ext_constraints))
 minim = r.RooMinimizer(nll_)
+# Save a Pre-fit snapshot
+out_ws.saveSnapshot("PRE_EXT_FIT_Clean",out_ws.allVars()) 
 
 if hasSys: 
 	minim.migrad()

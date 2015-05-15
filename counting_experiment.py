@@ -247,8 +247,11 @@ class Channel:
   
   def add_nuisance(self,name,size,bkg=False):
     #print "Error, Nuisance parameter model not supported fully for shape variations, dont use it!" 
-    if not(self.wspace_out.var("nuis_%s"%name)): 
-      nuis = r.RooRealVar("nuis_%s"%name,"Nuisance - %s"%name,0,-3,3);
+    if not(self.wspace_out.var("%s"%name)): 
+      #nuis = r.RooRealVar("nuis_%s"%name,"Nuisance - %s"%name,0,-3,3);
+      nuis = r.RooRealVar("%s"%name,"Nuisance - %s"%name,0,-3,3);
+      nuis.setAttribute("NuisanceParameter_EXTERNAL",True);
+      if bkg: nuis.setAttribute("BACKGROUND_NUISANCE",True);
       self.wspace_out._import(nuis)
       cont = r.RooGaussian("const_%s"%name,"Constraint - %s"%name,self.wspace_out.var(nuis.GetName()),r.RooFit.RooConst(0),r.RooFit.RooConst(1));
       self.wspace_out._import(cont)
@@ -257,7 +260,8 @@ class Channel:
     for b in range(self.nbins):
       func = r.RooFormulaVar("sys_function_%s_cat_%d_ch_%d_bin_%d"%(name,self.catid,self.chid,b)\
 	,"Systematic Varation"\
-      	,"@0*%f"%size,r.RooArgList(self.wspace_out.var("nuis_%s"%name)))
+      	#,"@0*%f"%size,r.RooArgList(self.wspace_out.var("nuis_%s"%name)))
+      	,"@0*%f"%size,r.RooArgList(self.wspace_out.var("%s"%name)))
       if not self.wspace_out.function(func.GetName()) :self.wspace_out._import(func)
     # else 
     #  nuis = self.wspace_out.var("nuis_%s"%name)
@@ -265,8 +269,9 @@ class Channel:
     else:   self.nuisances.append(name)
     
   def add_nuisance_shape(self,name,file,setv=""):
-    if not(self.wspace_out.var("nuis_%s"%name)) :
-      nuis = r.RooRealVar("nuis_%s"%name,"Nuisance - %s"%name,0,-3,3);
+    if not(self.wspace_out.var("%s"%name)) :
+      nuis = r.RooRealVar("%s"%name,"Nuisance - %s"%name,0,-3,3);
+      nuis.setAttribute("NuisanceParameter_EXTERNAL",True);
       self.wspace_out._import(nuis)
       nuis_IN = r.RooRealVar("nuis_IN_%s"%name,"Constraint Mean - %s"%name,0,-10,10);
       nuis_IN.setConstant()
@@ -290,14 +295,14 @@ class Channel:
 		,"Systematic Varation"\
 		,"(%f*@0*@0+%f*@0)/%f"%(coeff_a,coeff_b,nsf) \
 		#,"(%f*@0*@0+%f*@0)"%(coeff_a,coeff_b) \
-		,r.RooArgList(self.wspace_out.var("nuis_%s"%name))) # this is now relative deviation, SF-SF_0 = func => SF = SF_0*(1+func/SF_0)
-	self.wspace_out.var("nuis_%s"%name).setVal(0)
+		,r.RooArgList(self.wspace_out.var("%s"%name))) # this is now relative deviation, SF-SF_0 = func => SF = SF_0*(1+func/SF_0)
+	self.wspace_out.var("%s"%name).setVal(0)
         if not self.wspace_out.function(func.GetName()) :self.wspace_out._import(func)
     if setv!="":
       if "SetTo" in setv: 
        vv = float(setv.split("=")[1])
        self.wspace_out.var("nuis_IN_%s"%name).setVal(vv)
-       self.wspace_out.var("nuis_%s"%name).setVal(vv)
+       self.wspace_out.var("%s"%name).setVal(vv)
       else: 
       	print "DIRECTIVE %s IN SYSTEMATIC %s, NOT UNDERSTOOD!"%(setv,name)
 	sys.exit()
