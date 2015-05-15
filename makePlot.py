@@ -24,12 +24,13 @@ from ROOT import calculateExpectedLimit
 fi = r.TFile.Open(args[0])
 di = fi #.Get("mjw_1jet")
 
-def getNormalizedHist(hist, templatehist):
+def getNormalizedHist(hist, templatehist, divideStuff=True):
   nb = hist.GetNbinsX()
   thret = templatehist.Clone()
   for b in range(1,nb+1): 
     sfactor = 1./templatehist.GetBinWidth(b)
     if options.nospec: sfactor = 1
+    if not divideStuff : sfactor=1
     thret.SetBinContent(b,hist.GetBinContent(b)*sfactor)
     thret.SetBinError(b,hist.GetBinError(b)*sfactor)
   thret.GetYaxis().SetTitle("Events/GeV")
@@ -53,18 +54,14 @@ for ic,config in enumerate(configs) :
  if options.tdir: x.directory = options.tdir
  procs=[]
  # first run through signals, backgrounds and data to check if we need to replace things
- for s in x.signals.keys():
-  #x.signals[s][0] = x.signals[s][0].replace("$CAT",options.cat)
-  #x.signals[s][0] = x.signals[s][0].replace("$VAR",options.var)
-  #x.signals[s][0] = x.signals[s][0].replace("$DIRECTORY",options.tdir)
-  # replace the Key
-  snew  =  s.replace("$CAT",options.cat)
-  if options.var!="DEFAULT" : snew  =  snew.replace("$VAR",options.var)
-  print snew
-  snew  =  snew.replace("$DIRECTORY",options.tdir)
+ for sl in x.signals.keys():
+  for si,s in enumerate(x.signals[sl][0]):
+   snew  =  s.replace("$CAT",options.cat)
+   if options.var!="DEFAULT" : snew  =  snew.replace("$VAR",options.var)
+   print snew
+   snew  =  snew.replace("$DIRECTORY",options.tdir)
 
-  x.signals[snew] =  x.signals[s]; 
-  if not s==snew : x.signals.pop(s)
+   x.signals[sl][0][si] = snew; 
  print x.signals
 
  for b in x.backgrounds.keys():
@@ -95,7 +92,9 @@ for ic,config in enumerate(configs) :
  data.GetYaxis().SetTickLength(0.03)
 
  can = r.TCanvas("c_%d"%ic,"c_%d"%ic,800,800)
- leg = r.TLegend(0.7,0.48,0.89,0.89); leg.SetFillColor(0); leg.SetTextFont(42)
+ leg = r.TLegend(0.62,0.48,0.89,0.89); leg.SetFillColor(0); leg.SetTextFont(42)
+ leg.SetTextSize(0.042)
+ leg.SetBorderSize(0)
  leg.AddEntry(data,"Data","PEL")
  legentries = []
  lat = r.TLatex(); lat.SetNDC()
@@ -117,6 +116,7 @@ for ic,config in enumerate(configs) :
  print "	Nevents ", data.GetName(), data.Integral("width")
 
  totalbackground = 0
+ totalbackground_PF = 0
  for bkgtype_i,bkg in enumerate(x.key_order):
   nullhist = 0; nullc = 0
 
@@ -147,7 +147,7 @@ for ic,config in enumerate(configs) :
 	totalbackground.Sumw2();
   else : totalbackground.Add(nullhist)
 
-  nullhist = getNormalizedHist(nullhist,data)
+  nullhist = getNormalizedHist(nullhist,data,False)
   print "	Nevents ", bkg, nullhist.Integral("width")
   procs.append([bkg,nullhist.Integral("width")])
   nullhist.SetLineColor(1)
@@ -165,28 +165,33 @@ for ic,config in enumerate(configs) :
  legentries.reverse()
  for le in legentries: leg.AddEntry(le[0],le[1],le[2])
  thstack.Draw("histFsame")
- totalsignal = 0
- for sig_i,sig in enumerate(x.signals.keys()):
-  if ":" in sig:
+ allsignal = 0
+ for sig_i,sig_t in enumerate(x.signals.keys()):
+  totalsignal = 0
+  for sig_s_i,sig in enumerate(x.signals[sig_t][0]):
+   if ":" in sig:
      fi,datnam = sig.split(":")
      tfi = r.TFile.Open(fi)
-     print "Getting signal %s"%tfi.GetName()+datname
+     print "Getting signal %s"%tfi.GetName()+datnam
      tmp = tfi.Get(datnam)
-  else: 
+   else: 
     print "Getting signal %s"%x.directory+"/"+sig
     tmp = di.Get(x.directory+"/"+sig)
-  if sig_i==0: totalsignal = tmp.Clone()
-  else: totalsignal.Add(tmp)
-  tmp = getNormalizedHist(tmp,data)
-  tmp.SetLineColor(x.signals[sig][1])
-  tmp.SetLineWidth(3)
-  x.signals[sig][2]=tmp.Clone()
-  x.signals[sig][2].Draw("samehist")
-  leg.AddEntry(x.signals[sig][2],x.signals[sig][0],"L")
-  print "	Nevents ", tmp.GetName(), tmp.Integral("width")
-  #procs.append([tmp.GetName(),tmp.Integral("width")])
+   if sig_s_i==0: totalsignal = tmp.Clone()
+   else: totalsignal.Add(tmp)
+  totalsignal = getNormalizedHist(totalsignal,data,False)
+  totalsignal.SetLineColor(x.signals[sig_t][1])
+  totalsignal.SetLineWidth(3)
+  if len(x.signals[sig_t])>3:  # last one is a scale-factor
+       totalsignal.Scale(x.signals[sig_t][3])
+  x.signals[sig_t][2]=totalsignal.Clone()
+  x.signals[sig_t][2].Draw("samehist")
+  leg.AddEntry(x.signals[sig_t][2],sig_t,"L")
+  print "	Nevents ", sig_t, totalsignal.Integral("width")
+   #procs.append([tmp.GetName(),tmp.Integral("width")])
+  allsignal = totalsignal
 
- normtotalback = getNormalizedHist(totalbackground,data)
+ normtotalback = getNormalizedHist(totalbackground,data,False)
  print "Total Background " , normtotalback.Integral("width")
  procs.append(["total bkg",normtotalback.Integral("width")])
  procs.append([data.GetName(), data.Integral("width")])
@@ -200,17 +205,24 @@ for ic,config in enumerate(configs) :
 		data.SetBinContent(b,normtotalback.GetBinContent(b))
 		data.SetBinError(b,((normtotalback.GetBinContent(b))**0.5)/data.GetBinWidth(b))
 
- normtotalback.SetFillStyle(3005);
+ normtotalback.SetFillStyle(3144);
  normtotalback.SetFillColor(1);
  normtotalback.SetMarkerSize(0);
- #normtotalback.Draw("E2same");
+ normtotalback.Draw("E2same");
 
- data.SetMinimum(0.002)
+
  data.SetMarkerColor(r.kBlack)
  data.SetLineColor(1)
  data.SetLineWidth(1)
  data.SetMarkerSize(0.9)
  data.SetMarkerStyle(20)
+ ratio = data.Clone()
+ ratioErr = normtotalback.Clone()
+ ratioErr.SetFillStyle(1001);
+ ratioErr.SetFillColor(r.kGray);
+
+
+ data.SetMinimum(0.002)
  data.Draw("same")
  leg.Draw()
  if not options.nolog: pad1.SetLogy()
@@ -225,13 +237,9 @@ for ic,config in enumerate(configs) :
  pad2.Draw()
  pad2.cd()
 
- ratio = data.Clone()
- ratioErr = normtotalback.Clone()
- ratioErr.SetFillStyle(1001);
- ratioErr.SetFillColor(r.kGray);
 
  if not options.pull:
-  ratio.GetYaxis().SetRangeUser(0.21,1.79)
+  #ratio.GetYaxis().SetRangeUser(0.51,1.49)
   ratio.Divide(totalbkg)
   ratio.GetYaxis().SetTitle("Data/Bkg")
   ratioErr.Divide(totalbkg)
@@ -255,11 +263,21 @@ for ic,config in enumerate(configs) :
 
  # draw the sub-plot 
  #if options.xlab: ratio.GetXaxis().SetTitle(options.xlab)
+ # find the maximum in the ratio/error band 
+ MAX_D = max([ratio.GetBinContent(b+1)+ratio.GetBinError(b+1) for b in range(ratio.GetNbinsX())])
+ MAX_E = max([1+ratioErr.GetBinError(b+1) for b in range(ratio.GetNbinsX())])
+ MIN_D = min([ratio.GetBinContent(b+1)-ratio.GetBinError(b+1) for b in range(ratio.GetNbinsX())])
+ MIN_E = min([1-ratioErr.GetBinError(b+1) for b in range(ratio.GetNbinsX())])
+ MAX = max([MAX_D,MAX_E])
+ MIN = min([MIN_D,MIN_E])
+
  ratio.GetXaxis().SetTitle("")
  ratio.Draw()
+ ratio.SetMaximum(MAX*1.2)
+ ratio.SetMinimum(MIN*0.8)
  if not options.pull : ratioErr.Draw("sameE2")
  ratio.Draw("same")
-
+ 
  if options.pull: line = r.TLine(data.GetXaxis().GetXmin(),0,data.GetXaxis().GetXmax(),0)
  else  :line = r.TLine(data.GetXaxis().GetXmin(),1,data.GetXaxis().GetXmax(),1)
  line.SetLineColor(2)
@@ -274,8 +292,8 @@ for ic,config in enumerate(configs) :
  canvs.append(can)
 #can.SaveAs("metdist.pdf")
  can.Draw()
- if totalsignal != 0 : print "	Expected Significance ", calculateExpectedSignificance(totalsignal,totalbackground), " sigma"
- if totalsignal != 0 : print "	Expected Limit mu  <  ", calculateExpectedLimit(0.01,0.5,totalsignal,totalbackground)
+ if allsignal != 0 : print "	Expected Significance ", calculateExpectedSignificance(totalsignal,totalbackground), " sigma"
+ if allsignal != 0 : print "	Expected Limit mu  <  ", calculateExpectedLimit(0.01,0.5,totalsignal,totalbackground)
 # if totalsignal.Integral()>0 : print "	Expected Significance (incbkg) ", calculateExpectedSignificance(totalsignal,totalbackground,1), " sigma"
  if options.batch: can.SaveAs("%s_%s%s.pdf"%(config,options.tdir,options.outext))
  if options.batch: can.SaveAs("%s_%s%s.png"%(config,options.tdir,options.outext))
