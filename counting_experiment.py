@@ -149,10 +149,10 @@ class Bin:
      self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"(@0*@1)*@2",arglist)
    else: self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"(@0*@1)",arglist)
    # Finally we add in the background 
-   bkgArgList = r.RooArgList(self.pure_mu,self.wspace_out.function(self.b.GetName()))
+   bkgArgList = r.RooArgList(self.pure_mu)
    #if self.constBkg: self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"%f+@0"%self.b,bkgArgList)
    #else : self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0/%f"%self.b,bkgArgList)
-   self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0+@1",bkgArgList)
+   self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0",bkgArgList)
  
    #self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0/(@1*@2)",r.RooArgList(self.integral,self.sfactor,self.pdfFullInt))
    self.wspace_out._import(self.mu,r.RooFit.RecycleConflictNodes())
@@ -196,7 +196,7 @@ class Bin:
  def ret_background(self):
    #if self.constBkg: return self.b
    #else: return (1-self.b)*(self.ret_expected())
-   return self.wspace_out.function(self.b.GetName()).getVal()
+   return 0 #self.wspace_out.function(self.b.GetName()).getVal()
  def ret_correction(self):
    return (self.wspace_out.var(self.model_mu.GetName()).getVal())/self.initY
  def ret_correction_err(self):
@@ -211,13 +211,13 @@ class Bin:
 
 class Channel:
   # This class holds a "channel" which is as dumb as saying it holds a dataset and scale factors 
-  def __init__(self,cname,wspace,wspace_out,catid,id,data,scalefactors,bkg):
+  def __init__(self,cname,wspace,wspace_out,catid,id,data,scalefactors):
     self.catid = catid
     self.chid = id
     self.data = data
     self.scalefactors = scalefactors
     self.chname = "ControlRegion_%d"%self.chid
-    self.backgroundname  = bkg
+    self.backgroundname  = ""
     self.wspace_out = wspace_out
     self.set_wspace(wspace)
     self.nuisances = []
@@ -328,6 +328,7 @@ class Channel:
     return self.chid
 
   def ret_sfactor(self,i,syst="",direction=1):
+    if self.scalefactors.GetBinContent(i+1) == 0 : return 0
     if syst and syst in self.systematics.keys():
       if direction >0 :index=0
       else :index=1
