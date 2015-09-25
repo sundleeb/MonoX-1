@@ -286,9 +286,14 @@ class Channel:
     sysup,sysdn =  file.Get(sfup),file.Get(sfdn)
     # Now we loop through each bin and construct a polynomial function per bin 
     for b in range(self.nbins):
-    	nsf = 1./(self.scalefactors.GetBinContent(b+1))
-	vu = 1./(sysup.GetBinContent(b+1)) - nsf 
-	vd = 1./(sysdn.GetBinContent(b+1)) - nsf  # Note this should be <ve if down is lower, its not a bug
+    	if self.scalefactors.GetBinContent(b+1) == 0 : 
+	 nsf=0
+	 vu=0
+	 vd=0
+	else:
+    	 nsf = 1./(self.scalefactors.GetBinContent(b+1))
+	 vu = 1./(sysup.GetBinContent(b+1)) - nsf 
+	 vd = 1./(sysdn.GetBinContent(b+1)) - nsf  # Note this should be <ve if down is lower, its not a bug
 	coeff_a = 0.5*(vu+vd)
 	coeff_b = 0.5*(vu-vd)
         func = r.RooFormulaVar("sys_function_%s_cat_%d_ch_%d_bin_%d"%(name,self.catid,self.chid,b) \
