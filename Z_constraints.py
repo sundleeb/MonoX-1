@@ -14,7 +14,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   # First define the nominal transfer factors (histograms of signal/control, usually MC 
   # note there are many tools available inside include/diagonalize.h for you to make 
   # special datasets/histograms representing these and systematic effects 
-  # but for now this is just kept simple 
+  # example below for creating shape systematic for photon which is just every bin up/down 30% 
+
   metname = "mvamet"    # Observable variable name 
   targetmc     = _fin.Get("signal_zjets")      # define monimal (MC) of which process this config will model
   controlmc    = _fin.Get("dimuon_zjets")  # defines in / out acceptance
@@ -29,6 +30,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   PhotonScales = targetmc.Clone(); PhotonScales.SetName("photon_weights_%s"%nam)
   PhotonScales.Divide(controlmc_photon)
   _fOut.WriteTObject(PhotonScales)  # always write out to the directory 
+
+
   #######################################################################################################
 
   _bins = []  # take bins from some histogram, can choose anything but this is easy 
@@ -56,6 +59,17 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   # these must be created and writted to the same dirctory as the nominal (fDir)
   CRs[1].add_nuisance("pdf",0.01)
   CRs[1].add_nuisance("CMS_eff_m",0.01)
+
+  PhotonScales_up = PhotonScales.Clone(); PhotonScales_up.SetName("photon_weights_dummy_Up")
+  PhotonScales_dn = PhotonScales.Clone(); PhotonScales_dn.SetName("photon_weights_dummy_Down")
+  for b in range(PhotonScales.GetNbinsX()):
+   PhotonScales_up.SetBinContent(b+1,PhotonScales.GetBinContent(b+1)*1.3)
+   PhotonScales_dn.SetBinContent(b+1,PhotonScales.GetBinContent(b+1)*0.7)
+  _fOut.WriteTObject(PhotonScales_up)
+  _fOut.WriteTObject(PhotonScales_dn)
+
+  CRs[1].add_nuisance_shape("dummy",_fOut) 
+  # CRs[1].add_nuisance_shape("dummy",_fOut,"SetTo=1") # note, there is additional option to set nominal value of parameter, this can also be set later in the datacard of course!
   #######################################################################################################
 
 
