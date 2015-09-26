@@ -46,7 +46,7 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
      expectations = ROOT.RooArgList()
      for b in range(nbins):
        #print "model_mu_cat_%d_bin_%d"%(10*crd+icat,b), wsin_combine.var( "model_mu_cat_%d_bin_%d"%(10*crd+icat,b))
-       expectations.add(wsin_combine.var("model_mu_cat_%d_bin_%d"%(10*crd+icat,b)))
+       expectations.add(wsin_combine.var("model_mu_cat_%s_bin_%d"%(cat+'_'+x.model,b)))
      phist = ROOT.RooParametricHist("%s_signal_%s_model"%(cat,x.model),"Model Shape for %s in Category %s"%(x.model,cat),varl,expectations,samplehist)
      phist_norm = ROOT.RooAddition("%s_norm"%phist.GetName(),"Total number of expected events in %s"%phist.GetName(),expectations)
 
@@ -56,13 +56,14 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
 
      # now loop through the "control regions" for this guy 
      for cid,cn in enumerate(cmb_categories):
-       	if cn.catid != 10*crd+icat : continue
+	print "CHECK", cn.catid,cn.cname
+       	if cn.catid != cat+'_'+x.model : continue
+	if cn.cname  != crn: continue
 	for cr in cn.ret_control_regions():
-	 print "CHECK", cn.catid,cr.chid
          chid = cr.chid
          cr_expectations = ROOT.RooArgList()
          for b in range(nbins):
-          cr_expectations.add(wsin_combine.function("pmu_cat_%d_ch_%d_bin_%d"%(icat+10*crd,chid,b)))
+          cr_expectations.add(wsin_combine.function("pmu_cat_%s_ch_%s_bin_%d"%(cat+'_'+x.model,cr.chid,b)))
          p_phist = ROOT.RooParametricHist("%s_%s_%s_model"%(cat,cr.crname,x.model),"Expected Shape for %s in control region in Category %s"%(cr.crname,cat),varl,cr_expectations,samplehist)
          p_phist_norm = ROOT.RooAddition("%s_norm"%p_phist.GetName(),"Total number of expected events in %s"%p_phist.GetName(),cr_expectations);
          wsin_combine._import(p_phist)

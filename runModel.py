@@ -36,7 +36,7 @@ for crd,crn in enumerate(controlregions_def):
 	x = __import__(crn)
         for cid,cn in enumerate(categories): 
 		_fDir = _fOut.mkdir("%s_category_%s"%(crn,cn))
-		cmb_categories.append(x.cmodel(cid+10*crd,cn,_f,_fDir,out_ws,diag_combined))
+		cmb_categories.append(x.cmodel(cn,crn,_f,_fDir,out_ws,diag_combined))
 
 for cid,cn in enumerate(cmb_categories):
 	cn.init_channels()

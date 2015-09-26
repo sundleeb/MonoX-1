@@ -6,8 +6,8 @@ model = "wjets"
 def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   
   # Some setup
-  _fin = _f.Get("category_%s"%nam)
-  _wspace = _fin.Get("wspace_%s"%nam)
+  _fin = _f.Get("category_%s"%cid)
+  _wspace = _fin.Get("wspace_%s"%cid)
 
 
   # ############################ USER DEFINED ###########################################################
@@ -22,7 +22,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   # Create the transfer factors and save them (not here you can also create systematic variations of these 
   # transfer factors (named with extention _sysname_Up/Down
-  WScales = targetmc.Clone(); WScales.SetName("wmn_weights_%s"%nam)
+  WScales = targetmc.Clone(); WScales.SetName("wmn_weights_%s"%cid)
   WScales.Divide(controlmc)
   _fOut.WriteTObject(WScales)  # always write out to the directory 
   #######################################################################################################
@@ -33,14 +33,12 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   # Here is the important bit which "Builds" the control region, make a list of control regions which 
   # are constraining this process, each "Channel" is created with ...
-  # 	(name,_wspace,out_ws,cid,INTEGER,DATASET,TRANSFERFACTORS) 
+  # 	(name,_wspace,out_ws,cid+'_'+model,TRANSFERFACTORS) 
   # the second and third arguments can be left unchanged, the others instead must be set
-  # note that INTEGER *must* be 0,1,2... increasing with each channel added 
-  # DATASET should be the observed data (pulled as a RooDataHist from the workspace, as shown
   # TRANSFERFACTORS are what is created above, eg WScales
 
   CRs = [
-   Channel("singlemuon",_wspace,out_ws,cid,0,_wspace.data("singlemuon_data"),WScales)
+   Channel("singlemuon",_wspace,out_ws,cid+'_'+model,WScales)
   ]
 
 
@@ -55,6 +53,9 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
 
   cat = Category(model,cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,targetmc.GetName(),CRs,diag)
+  #cat.setDependant("zjets","wjetsdependant")  # Can use this to state that the "BASE" of this is already dependant on another process
+  # EG if the W->lv in signal is dependant on the Z->vv and then the W->mv is depenant on W->lv, then 
+  # give the arguments model,channel name from the config which defines the Z->vv => W->lv map! 
   # Return of course
   return cat
 

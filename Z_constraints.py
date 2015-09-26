@@ -6,8 +6,8 @@ model = "zjets"
 def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   
   # Some setup
-  _fin = _f.Get("category_%s"%nam)
-  _wspace = _fin.Get("wspace_%s"%nam)
+  _fin = _f.Get("category_%s"%cid)
+  _wspace = _fin.Get("wspace_%s"%cid)
 
 
   # ############################ USER DEFINED ###########################################################
@@ -23,11 +23,11 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   controlmc_photon   = _fin.Get("photon_gjet")  # defines in / out acceptance
   # Create the transfer factors and save them (not here you can also create systematic variations of these 
   # transfer factors (named with extention _sysname_Up/Down
-  ZmmScales = targetmc.Clone(); ZmmScales.SetName("zmm_weights_%s"%nam)
+  ZmmScales = targetmc.Clone(); ZmmScales.SetName("zmm_weights_%s"%cid)
   ZmmScales.Divide(controlmc)
   _fOut.WriteTObject(ZmmScales)  # always write out to the directory 
 
-  PhotonScales = targetmc.Clone(); PhotonScales.SetName("photon_weights_%s"%nam)
+  PhotonScales = targetmc.Clone(); PhotonScales.SetName("photon_weights_%s"%cid)
   PhotonScales.Divide(controlmc_photon)
   _fOut.WriteTObject(PhotonScales)  # always write out to the directory 
 
@@ -40,15 +40,13 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 
   # Here is the important bit which "Builds" the control region, make a list of control regions which 
   # are constraining this process, each "Channel" is created with ...
-  # 	(name,_wspace,out_ws,cid,INTEGER,DATASET,TRANSFERFACTORS) 
+  # 	(name,_wspace,out_ws,cid+'_'+model,TRANSFERFACTORS) 
   # the second and third arguments can be left unchanged, the others instead must be set
-  # note that INTEGER *must* be 0,1,2... increasing with each channel added 
-  # DATASET should be the observed data (pulled as a RooDataHist from the workspace, as shown
   # TRANSFERFACTORS are what is created above, eg WScales
 
   CRs = [
-   Channel("photon",_wspace,out_ws,cid,0,_wspace.data("photon_data"),PhotonScales) 
-  ,Channel("dimuon",_wspace,out_ws,cid,1,_wspace.data("dimuon_data"),ZmmScales)
+   Channel("photon",_wspace,out_ws,cid+'_'+model,PhotonScales) 
+  ,Channel("dimuon",_wspace,out_ws,cid+'_'+model,ZmmScales)
   ]
 
 
@@ -60,8 +58,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[1].add_nuisance("pdf",0.01)
   CRs[1].add_nuisance("CMS_eff_m",0.01)
 
-  PhotonScales_up = PhotonScales.Clone(); PhotonScales_up.SetName("photon_weights_dummy_Up")
-  PhotonScales_dn = PhotonScales.Clone(); PhotonScales_dn.SetName("photon_weights_dummy_Down")
+  PhotonScales_up = PhotonScales.Clone(); PhotonScales_up.SetName("photon_weights_%s_dummy_Up"%cid)
+  PhotonScales_dn = PhotonScales.Clone(); PhotonScales_dn.SetName("photon_weights_%s_dummy_Down"%cid)
   for b in range(PhotonScales.GetNbinsX()):
    PhotonScales_up.SetBinContent(b+1,PhotonScales.GetBinContent(b+1)*1.3)
    PhotonScales_dn.SetBinContent(b+1,PhotonScales.GetBinContent(b+1)*0.7)
