@@ -21,6 +21,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   controlmc    = _fin.Get("dimuon_zjets")  # defines in / out acceptance
 
   controlmc_photon   = _fin.Get("photon_gjet")  # defines in / out acceptance
+  controlmc_wlv      = _fin.Get("signal_wjets")  # defines in / out acceptance
+
   # Create the transfer factors and save them (not here you can also create systematic variations of these 
   # transfer factors (named with extention _sysname_Up/Down
   ZmmScales = targetmc.Clone(); ZmmScales.SetName("zmm_weights_%s"%cid)
@@ -31,6 +33,9 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   PhotonScales.Divide(controlmc_photon)
   _fOut.WriteTObject(PhotonScales)  # always write out to the directory 
 
+  WZScales = targetmc.Clone(); WZScales.SetName("wz_weights_%s"%cid)
+  WZScales.Divide(controlmc_wlv)
+  _fOut.WriteTObject(WZScales)  # always write out to the directory 
 
   #######################################################################################################
 
@@ -47,6 +52,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs = [
    Channel("photon",_wspace,out_ws,cid+'_'+model,PhotonScales) 
   ,Channel("dimuon",_wspace,out_ws,cid+'_'+model,ZmmScales)
+  ,Channel("wjetssignal",_wspace,out_ws,cid+'_'+model,WZScales)
   ]
 
 

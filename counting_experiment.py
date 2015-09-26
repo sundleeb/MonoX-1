@@ -93,9 +93,11 @@ class Bin:
    self.initY = self.wspace.data(mcdataset).sumEntries("%s>=%g && %s<%g"%(self.var.GetName(),self.xmin,self.var.GetName(),self.xmax),self.rngename)
 
  def set_initE_precorr(self):
+   return 0 
    self.initE_precorr = self.wspace_out.var("model_mu_cat_%s_bin_%d"%(self.catid,self.id)).getVal()*self.wspace_out.var(self.sfactor.GetName()).getVal()
 
  def set_initE(self):
+   return 0 
    self.initE = self.ret_expected()
    self.initB = self.ret_background()
    self.set_initE_precorr()
@@ -121,13 +123,14 @@ class Bin:
      self.wspace_out._import(self.sfactor,r.RooFit.RecycleConflictNodes())
 
  def setup_expect_var(self,functionalForm=""):
-   
+   print functionalForm 
    if not len(functionalForm): 
     if not self.wspace_out.var("model_mu_cat_%s_bin_%d"%(self.catid,self.id,)):
      self.model_mu = r.RooRealVar("model_mu_cat_%s_bin_%d"%(self.catid,self.id),"Model of N expected events in %d"%self.id,self.initY,0,10000)
      self.model_mu.removeMax()
     else: self.model_mu = self.wspace_out.var("model_mu_cat_%s_bin_%d"%(self.catid,self.id))
    else: 
+    print "OOOH NICE!!!!!!" 
     DEPENDANT = "%s_bin_%d"%(functionalForm,self.id)
     self.model_mu = self.wspace_out.function("pmu_%s"%(DEPENDANT))
 
@@ -486,7 +489,7 @@ class Category:
      # This has to the the last thing 
      # Note, we can have an expected value which is itself a RooFormulaVar 
 
-     if self.isSecondDependant: h.setup_expect_var("cat_%s_%s_ch_%s"%(self.category,self.BASE,self.CONTROL))
+     if self.isSecondDependant: ch.setup_expect_var("cat_%s_%s_ch_%s"%(self.category,self.BASE,self.CONTROL))
      else:  ch.setup_expect_var()
 
      ch.set_initE()  # initialise expected  (but this will be somewhat a "post" state), i.e after fiddling with the nuisance parameters.
