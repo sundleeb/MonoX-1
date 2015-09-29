@@ -240,7 +240,15 @@ class Channel:
     sys.exit("Nothing Will Happen with add_systematic, use add_nuisance")
     sfup = self.scalefactors.GetName()+"_%s_"%sys+"Up"
     sfdn = self.scalefactors.GetName()+"_%s_"%sys+"Down"
-    print "Looking for systematic shapes ... %s,%s"%(sfup,sfdn)
+    print "Looking for systematic shapes ... %s, %s"%(sfup,sfdn)
+    try:
+     print file.Get(sfup).GetName()
+     print file.Get(sfdn).GetName()
+    except AttributeError: 
+     print "Missing one of ", sfup, sfdn, " in ", file.GetName()
+     print "Following is in directory "
+     file.Print()
+     sys.exit()
     self.systematics[sys] = [file.Get(sfup),file.Get(sfdn)]
     
   def add_systematic_yield(self,syst,kappa):
@@ -293,6 +301,14 @@ class Channel:
     sfdn = self.scalefactors.GetName()+"_%s_"%name+"Down"
     print "Looking for systematic shapes ... %s,%s"%(sfup,sfdn)
     sysup,sysdn =  file.Get(sfup),file.Get(sfdn)
+    try:
+     sysup.GetName()
+     sysdn.GetName()
+    except ReferenceError: 
+     print "Missing one of ", sfup, sfdn, " in ", file.GetName()
+     print "Following is in directory "
+     file.ls()
+     sys.exit()
     # Now we loop through each bin and construct a polynomial function per bin 
     for b in range(self.nbins):
     	if self.scalefactors.GetBinContent(b+1) == 0 : 

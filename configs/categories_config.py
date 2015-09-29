@@ -3,7 +3,7 @@
 out_file_name = 'mono-x.root'
 
 # can define any thing useful here which may be common to several categories, eg binning in MET 
-bins = range(200,1200,200)
+bins = range(200,1100,100)
 
 # Define each of the categories in a dictionary of the following form .. 
 #	'name' : the category name 
