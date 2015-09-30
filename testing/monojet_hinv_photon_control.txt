@@ -9,7 +9,7 @@ kmax * number of nuisance parameters
 shapes data_obs    monojet_photon_cr combined_model.root  combinedws:monojet_photon_data 
 #shapes non_prompt  monojet_photon_cr combined_model.root  combinedws:monojet_photon_purity_bkg
 shapes non_prompt  monojet_photon_cr combined_model.root  combinedws:monojet_photon_qcd
-shapes gjet        monojet_photon_cr combined_model.root  combinedws:monojet_photon_gjet_model
+shapes gjet        monojet_photon_cr combined_model.root  combinedws:monojet_photon_zjets_model
 
 -------------------------------------------------------------------------------------------------
 bin 	     monojet_photon_cr

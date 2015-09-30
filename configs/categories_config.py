@@ -41,10 +41,10 @@ monojet_category = {
 		  ,"ttbar_signal"   	           :['signal','top',1,0]
 		  ,"SingleTop_signal"              :['signal','top',1,0]
 		  ,"QCD_signal"		           :['signal','qcd',1,0]
-		  ,"ggH125_signal"                 :['signal','Higgs125',1,1]
-		  ,"VBFH125_signal"                :['signal','Higgs125',1,1]
-		  ,"WH125_signal"   	   	   :['signal','Higgs125',1,1]
-		  ,"ZH125_signal"   	   	   :['signal','Higgs125',1,1]
+		  ,"ggH125_signal"                 :['signal','ggH',1,1]
+		  ,"VBFH125_signal"                :['signal','vbf',1,1]
+		  ,"WH125_signal"   	   	   :['signal','wh',1,1]
+		  ,"ZH125_signal"   	   	   :['signal','zh',1,1]
 		  ,"data_signal"	           :['signal','data',0,0]
 
 		  # Di muon-Control
