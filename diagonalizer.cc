@@ -44,7 +44,7 @@ class diagonalizer {
     void setEigenset(int,int /*>0 = +1, <0=-1*/);
     void freezeParameters(RooArgSet *args, bool freeze=true);
     void generateWeightedTemplate(TH1F *, RooFormulaVar *, RooRealVar &, RooDataSet *);
-    void generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::string wvar, std::string var, RooDataSet *data);
+    void generateWeightedTemplate(TH1F *histNew, TH1 *pdf_num, std::string wvar, std::string var, RooDataSet *data);
     void generateWeightedDataset(std::string newname, TH1 *pdf_num, std::string wvarname, std::string wvar, RooWorkspace *wspace, std::string dataname);
     TH2F *retCovariance();
     TH2F *retCorrelation();
@@ -213,7 +213,7 @@ void diagonalizer::freezeParameters(RooArgSet *args, bool freeze){
       rrv->setConstant(freeze);
   }
 }
-void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1F *pdf_num, std::string wvar, std::string var, RooDataSet *data){
+void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1 *pdf_num, std::string wvar, std::string var, RooDataSet *data){
 
   // wvar will be the variable to reweight in 
   // var is the variable to be plotted

@@ -54,6 +54,7 @@
 #include <iostream>
 
 using namespace std;
+int randC=0;
 
 struct ControlRegion {
   std::string name;
@@ -75,7 +76,7 @@ TH1F *generateTemplate(TH1F *base, TTree *tree, std::string varname, std::string
   // Correction point to point
   TH1F *histNew = (TH1F*) base->Clone("hnew");
   histNew->Sumw2();
-  histNew->SetName(Form("%s%s",tree->GetName(),ext.c_str()));
+  histNew->SetName(Form("%s%s%d",tree->GetName(),ext.c_str(),randC)); randC++;
   if (weightname!="" ) tree->Draw(Form("%s >> %s",varname.c_str(),histNew->GetName()),Form("%s*(%s)",weightname.c_str(),cut.c_str()));
   else tree->Draw(Form("%s >> %s",varname.c_str(),histNew->GetName()),cut.c_str());
   histNew->GetXaxis()->SetTitle(varname.c_str());
