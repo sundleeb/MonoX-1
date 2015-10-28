@@ -28,6 +28,7 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
    keys_local = fdir.GetListOfKeys() 
    for key in keys_local: 
     obj = key.ReadObj()
+    print obj.GetName(), obj.GetTitle(), type(obj)
     if type(obj)!=type(ROOT.TH1F()): continue
     title = obj.GetTitle()
     if title != "base": continue # Forget all of the histos which aren't the observable variable
@@ -35,7 +36,7 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
     if not obj.Integral() > 0 : obj.SetBinContent(1,0.0001) # otherwise Combine will complain!
     print "Creating Data Hist for ", name 
     dhist = ROOT.RooDataHist(cat+"_"+name,"DataSet - %s, %s"%(cat,name),ROOT.RooArgList(varl),obj)
-    dhist.Print("v")
+    #dhist.Print("v")
     wsin_combine._import(dhist)
 
 
@@ -43,6 +44,19 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
    for crd,crn in enumerate(controlregions_def):
      # check the category 
      x = __import__(crn)
+    
+     # Possible to save histograms in the CR def so loop over those that are booked 
+     try:
+      len(x.convertHistograms)
+      for obj in x.convertHistograms: 
+       name = obj.GetName()
+       print "Creating Data Hist for ", name 
+       dhist = ROOT.RooDataHist(cat+"_"+name,"DataSet - %s, %s"%(cat,name),ROOT.RooArgList(varl),obj)
+       #dhist.Print("v")
+       wsin_combine._import(dhist)
+     except: 
+       print "No explicit additional convertHistograms defined"
+
      expectations = ROOT.RooArgList()
      for b in range(nbins):
        #print "model_mu_cat_%d_bin_%d"%(10*crd+icat,b), wsin_combine.var( "model_mu_cat_%d_bin_%d"%(10*crd+icat,b))

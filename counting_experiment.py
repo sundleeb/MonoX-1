@@ -155,8 +155,8 @@ class Bin:
        print "Adding Nuisance ", nuisances[0]
        prod = r.RooFormulaVar("prod_%s"%self.binid,"Delta Change from %s"%nuisances[0],"1+@0",r.RooArgList(self.wspace_out.function("sys_function_%s_%s"%(nuisances[0],self.binid))))
      arglist.add(prod)
-     self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"(@0*@1)*@2",arglist)
-   else: self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"(@0*@1)",arglist)
+     self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"TMath::Max(0,(@0*@1)*@2)",arglist)
+   else: self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"TMath::Max(0,(@0*@1))",arglist)
    # Finally we add in the background 
    bkgArgList = r.RooArgList(self.pure_mu)
    #if self.constBkg: self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"%f+@0"%self.b,bkgArgList)

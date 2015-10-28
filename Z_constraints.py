@@ -2,8 +2,9 @@ import ROOT
 from counting_experiment import *
 # Define how a control region(s) transfer is made by defining *cmodel*, the calling pattern must be unchanged!
 # First define simple string which will be used for the datacard 
+# Second is a list of histos which will addtionally be converted to RooDataHists, leave blank if not needed
 model = "zjets"
-
+convertHistograms = []
 
 # My Function. Just to put all of the complicated part into one function
 def my_function(_wspace,_fin,_fOut,nam,diag):
@@ -13,6 +14,7 @@ def my_function(_wspace,_fin,_fOut,nam,diag):
   wvarname= "weight"
   target     = _fin.Get("signal_zjets")      # define monimal (MC) of which process this config will model
   controlmc    = _fin.Get("dimuon_zll")  # defines in / out acceptance
+  controlmce    = _fin.Get("dielectron_zll")  # defines in / out acceptance
 
   controlmc_photon   = _fin.Get("photon_gjet")  # defines in / out acceptance
   controlmc_wlv      = _fin.Get("signal_wjets")  # defines in / out acceptance
@@ -217,6 +219,37 @@ def my_function(_wspace,_fin,_fOut,nam,diag):
     _fOut.WriteTObject(ewk_u)
     _fOut.WriteTObject(ewk_d)
 
+  controlmc_wlv      = _fin.Get("signal_wjets")  # defines in / out acceptance
+  WZScales = target.Clone(); WZScales.SetName("wz_weights_%s"%nam)
+  WZScales.Divide(controlmc_wlv)
+  _fOut.WriteTObject(WZScales)  # always write out to the directory 
+
+  for b in range(target.GetNbinsX()):
+    ewk_u = WZScales.Clone(); ewk_u.SetName("wz_weights_%s_ewk_W_%s_bin%d_Up"%(nam,nam,b))
+    ewk_d = WZScales.Clone(); ewk_d.SetName("wz_weights_%s_ewk_W_%s_bin%d_Down"%(nam,nam,b))
+    for j in range(target.GetNbinsX()):
+      if j==b: 
+	ewk_u.SetBinContent(j+1,WZScales.GetBinContent(j+1)*1.1)
+	ewk_d.SetBinContent(j+1,WZScales.GetBinContent(j+1)*0.9)
+	break
+    _fOut.WriteTObject(ewk_u)
+    _fOut.WriteTObject(ewk_d)
+
+  # finally make a photon background dataset 
+  fPurity = r.TFile.Open("files/photonPurity.root")
+  ptphopurity = fPurity.Get("data")
+  photon_background = PhotonScales.Clone(); photon_background.SetName("photon_gjet_background")
+  for b in range(ptphopurity.GetNbinsX()): 
+  	ptphopurity.SetBinContent(b+1,1-ptphopurity.GetBinContent(b+1))  # background is 1-purity
+  for b in range(photon_background.GetNbinsX()): 
+  	photon_background.SetBinContent(b+1,0)
+  ptphopurity.Print()
+  diag.generateWeightedTemplate(photon_background,ptphopurity,"ptpho",metname,_wspace.data("photon_data"))
+  #photon_background.SetTitle("base") # --> Makes sure this gets converted to RooDataHist laters
+  #_fin.WriteTObject(photon_background);
+  # store the histogram to be written out later 
+  convertHistograms.append(photon_background)
+
 def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   
   # Some setup
@@ -233,6 +266,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   metname = "mvamet"    # Observable variable name 
   targetmc     = _fin.Get("signal_zjets")      # define monimal (MC) of which process this config will model
   controlmc    = _fin.Get("dimuon_zll")  # defines in / out acceptance
+  controlmce    = _fin.Get("dielectron_zll")  # defines in / out acceptance
 
   controlmc_photon   = _fin.Get("photon_gjet")  # defines in / out acceptance
   controlmc_wlv      = _fin.Get("signal_wjets")  # defines in / out acceptance
@@ -242,6 +276,9 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   ZmmScales = targetmc.Clone(); ZmmScales.SetName("zmm_weights_%s"%cid)
   ZmmScales.Divide(controlmc)
   _fOut.WriteTObject(ZmmScales)  # always write out to the directory 
+  ZeeScales = targetmc.Clone(); ZeeScales.SetName("zee_weights_%s"%cid)
+  ZeeScales.Divide(controlmce)
+  _fOut.WriteTObject(ZeeScales)  # always write out to the directory 
 
   #PhotonScales = targetmc.Clone(); PhotonScales.SetName("photon_weights_%s"%cid)
   #PhotonScales.Divide(controlmc_photon)
@@ -268,7 +305,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs = [
    Channel("photon",_wspace,out_ws,cid+'_'+model,PhotonScales) 
   ,Channel("dimuon",_wspace,out_ws,cid+'_'+model,ZmmScales)
-  ,Channel("wjetssignal",_wspace,out_ws,cid+'_'+model,WZScales)
+  ,Channel("dielectron",_wspace,out_ws,cid+'_'+model,ZeeScales)
+  #,Channel("wjetssignal",_wspace,out_ws,cid+'_'+model,WZScales)
   ]
 
 
@@ -285,6 +323,11 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   CRs[0].add_nuisance_shape("fp",_fOut) 
   CRs[0].add_nuisance("PhotonEfficiency",0.01) 
   CRs[1].add_nuisance("CMS_eff_m",0.01)
+  CRs[2].add_nuisance("CMS_eff_e",0.01)
+
+  # Now for each bin in the distribution, we make one EWK uncertainty which is the size of  the Up/Down variation --> Completely uncorrelated between bins
+  #for b in range(targetmc.GetNbinsX()):
+   # CRs[2].add_nuisance_shape("ewk_W_%s_bin%d"%(cid,b),_fOut)
 
   # Now for each bin in the distribution, we make one EWK uncertainty which is the size of  the Up/Down variation --> Completely uncorrelated between bins
   for b in range(targetmc.GetNbinsX()):
@@ -318,10 +361,25 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
     _fOut.WriteTObject(byb_d)
     print "Adding an error -- ", byb_u.GetName(),err
     CRs[1].add_nuisance_shape("%s_stat_error_%s_bin%d"%(cid,"dimuonCR",b),_fOut)
+
+  for b in range(targetmc.GetNbinsX()):
+    err = ZeeScales.GetBinError(b+1)
+    if not ZeeScales.GetBinContent(b+1)>0: continue 
+    relerr = err/ZeeScales.GetBinContent(b+1)
+    if relerr<0.01: continue
+    byb_u = ZeeScales.Clone(); byb_u.SetName("zee_weights_%s_%s_stat_error_%s_bin%d_Up"%(cid,cid,"dielectronCR",b))
+    byb_u.SetBinContent(b+1,ZeeScales.GetBinContent(b+1)+err)
+    byb_d = ZeeScales.Clone(); byb_d.SetName("zee_weights_%s_%s_stat_error_%s_bin%d_Down"%(cid,cid,"dielectronCR",b))
+    byb_d.SetBinContent(b+1,ZeeScales.GetBinContent(b+1)-err)
+    _fOut.WriteTObject(byb_u)
+    _fOut.WriteTObject(byb_d)
+    print "Adding an error -- ", byb_u.GetName(),err
+    CRs[2].add_nuisance_shape("%s_stat_error_%s_bin%d"%(cid,"dielectronCR",b),_fOut)
   #######################################################################################################
 
 
   cat = Category(model,cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,targetmc.GetName(),CRs,diag)
   # Return of course
+  cat.addTarget("photon_gjet_background",-2)# -2 means dont apply any correction # make histogram for this guy?
   return cat
 
