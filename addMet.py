@@ -4,10 +4,17 @@ import re, array, sys, numpy
 
 gROOT.ProcessLine(
     "struct met_t {\
-     Float_t         metV;\
-     Float_t         metPhi;\
-     Float_t         metRaw;\
+     Double_t         metV;\
+     Double_t         metPhi;\
+     Double_t         metRaw;\
     }" )
+    
+#gROOT.ProcessLine(
+#    "struct met_t {\
+#     Float_t         metV;\
+#     Float_t         metPhi;\
+#     Float_t         metRaw;\
+#    }" )
     
 def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
     postfix='Met'
@@ -30,12 +37,13 @@ def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
             pPt       = iNtuple.dmpt
         if iNtuple.genVpt > 5 :
             pPt       = iNtuple.genVpt
-        pPhi          = iNtuple.mvametphi#+r.TMath.Pi()
+        pPhi          = iNtuple.mvametphi+r.TMath.Pi()
         if iNtuple.genVphi != 0 : 
             pPhi = iNtuple.genVphi
         if pPhi > r.TMath.Pi():
             pPhi = pPhi-r.TMath.Pi()
         pMet      = iRecoil.CorrectType1(iNtuple.mvamet,iNtuple.mvametphi,pPt,pPhi,0,0,0,0, iUnc, -iUnc,0)
+        #print pMet[0],' - ',iNtuple.mvamet
         lMet.metV   = pMet[0]
         lMet.metPhi = pMet[1]
         lMet.metRaw = iNtuple.mvamet

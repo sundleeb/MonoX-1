@@ -33,12 +33,12 @@ class RecoilCorrector
 public:
   RecoilCorrector(string iNameZDat, int iSeed=0xDEADBEEF);
   RecoilCorrector(string iNameZDat1, string iPrefix, int iSeed=0xDEADBEEF);
-  void CorrectAll(float &met,   float &metphi,  double iGenPt, double iGenPhi, double iLepPt, double iLepPhi,float iU1,float iU2,double iFluc,double iScale=0,int njet=0);
-  void Correct   (float &pfmet, float &pfmetphi,float &trkmet, float &trkmetphi, 
+  void CorrectAll(double &met, double &metphi, double iGenPt, double iGenPhi, double iLepPt, double iLepPhi,double &iU1,double &iU2,double iFluc,double iScale=0,int njet=0);
+  void Correct(double &pfmet, double &pfmetphi, double &trkmet, double &trkmetphi, 
 	       double iGenPt, double iGenPhi, double iLepPt, double iLepPhi,double iFluc    ,double iScale=0,int njet=0);
-  double* CorrectType1(float pfmet, float  pfmetphi,double iGenPt,double iGenPhi,double iLepPt,double iLepPhi,float iU1,float iU2,double iFluc,double iScale=0,int njet=0);
-  void CorrectType2(float &pfmet, float  &pfmetphi,double iGenPt,double iGenPhi,double iLepPt,double iLepPhi,float iU1,float iU2,double iFluc,double iScale=0,int njet=0);
-  void CorrectU1U2 (float &pfu1,  float  &pfu2, float &trku1, float &trku2, 
+  void CorrectType1(double &pfmet, double &pfmetphi,double iGenPt,double iGenPhi,double iLepPt,double iLepPhi,double &iU1,double &iU2,double iFluc,double iScale=0,int njet=0);
+  void CorrectType2(double &pfmet, double &pfmetphi,double iGenPt,double iGenPhi,double iLepPt,double iLepPhi,double &iU1,double &iU2,double iFluc,double iScale=0,int njet=0);
+  void CorrectU1U2(double &pfu1, double &pfu2, double &trku1, double &trku2, 
 		   double iGenPt, double iGenPhi, double iLepPt, double iLepPhi,double iFluc,double iScale=0,int njet=0);
   void addDataFile(std::string iNameDat);
   void addMCFile  (std::string iNameMC);
@@ -69,7 +69,7 @@ protected:
 		std::vector<TF1*> &iF1U1U2Corr  ,std::vector<TF1*> &iF2U1U2Corr,std::vector<TF1*> &iF1F2U1Corr,std::vector<TF1*> &iF1F2U2Corr,
 		std::vector<TF1*> &iF1F2U1U2Corr,std::vector<TF1*> &iF1F2U2U1Corr,int iType=2);
 
-  void metDistribution(float &iMet,float &iMPhi,double iGenPt,double iGenPhi,
+  void metDistribution(double &iMet,double &iMPhi,double iGenPt,double iGenPhi,
 		       double iLepPt,double iLepPhi,TRandom1 *iRand,
 		       TF1 *iU1RZFit, 
 		       TF1 *iU1MSZFit, 
@@ -79,9 +79,9 @@ protected:
 		       TF1 *iU2S1ZFit, 
 		       TF1 *iU2S2ZFit, 
 		       TF1 *iU1U2Corr, 
-		       float iU1,float iU2,double iFluc=0,double iScale=0);
+		       double &iU1,double &iU2,double iFluc=0,double iScale=0);
 
-  void metDistribution(float &iPFMet,float &iPFMPhi,float &iTKMet,float &iTKMPhi,
+  void metDistribution(double &iPFMet,double &iPFMPhi,double &iTKMet,double &iTKMPhi,
 		       double iGenPt,double iGenPhi,
 		       double iLepPt,double iLepPhi,TRandom1 *iRand,
 		       TF1 *iU1RZPFFit,  TF1 *iU1RZTKFit, 
@@ -94,16 +94,16 @@ protected:
 		       TF1 *iPFU1U2Corr, TF1 *iTKU1U2Corr,
 		       TF1 *iPFTKU1Corr, TF1 *iPFTKU2Corr,
 		       TF1 *iPFTKU1MCorr,TF1 *iPFTKU2MCorr,
-		       float iU1,float iU2,double iFluc=0,double iScale=0);
+		       double &iU1,double &iU2,double iFluc=0,double iScale=0);
 
-  void metDistributionType1(float &iMet,float &iMPhi,double iGenPt,double iGenPhi,
+  void metDistributionType1(double &iMet,double &iMPhi,double iGenPt,double iGenPhi,
 			    double iLepPt,double iLepPhi,TRandom1 *iRand,
 			    TF1 *iU1RZDatFit,  TF1 *iU1RZMCFit,
 			    TF1 *iU1MSZDatFit, TF1 *iU1MSZMCFit, 
 			    TF1 *iU2MSZDatFit, TF1 *iU2MSZMCFit,
-			    float iU1,float iU2,double iFluc=0,double iScale=0);
+			    double &iU1,double &iU2,double iFluc=0,double iScale=0);
 
-  void metDistributionType2(float &iMet,float &iMPhi,double iGenPt,double iGenPhi,
+  void metDistributionType2(double &iMet,double &iMPhi,double iGenPt,double iGenPhi,
 			    double iLepPt,double iLepPhi,
 			    TF1 *iU1Default,
 			    TF1 *iU1RZDatFit,  TF1 *iU1RZMCFit,
@@ -114,7 +114,7 @@ protected:
 			    TF1 *iU2S1ZDatFit, TF1 *iU2S1ZMCFit,	   
 			    TF1 *iU2S2ZDatFit, TF1 *iU2S2ZMCFit,	   
 			    TF1 *iU1U2ZDatCorr,TF1 *iU1U2ZMCCorr,
-			    float iU1, float iU2,double iFluc=0,double iScale=0);
+			    double &iU1, double &iU2,double iFluc=0,double iScale=0);
   double diGausPVal    (double iVal, double iFrac,double iSimga1,double iSigma2);
   double diGausPInverse(double iPVal,double iFrac,double iSigma1,double iSigma2);
   double calculate(int iMet,double iEPt,double iEPhi,double iWPhi,double iU1,double iU2);
@@ -189,7 +189,7 @@ void RecoilCorrector::addMCFile  (std::string iNameMC) {
   readRecoil(fM2U1Fit,fM2U1RMSSMFit,fM2U1RMS1Fit,fM2U1RMS2Fit,fM2U2Fit,fM2U2RMSSMFit,fM2U2RMS1Fit,fM2U2RMS2Fit,iNameMC,"TK");
   readCorr  (iNameMC ,fM1U1U2Corr,fM2U1U2Corr,fM1M2U1Corr,fM1M2U2Corr,fM1M2U1U2Corr,fM1M2U2U1Corr);
 }
-void RecoilCorrector::CorrectAll(float &met, float  &metphi, double lGenPt, double lGenPhi, double lepPt, double lepPhi,float iU1,float iU2,double iFluc,double iScale,int njet) {
+void RecoilCorrector::CorrectAll(double &met, double &metphi, double lGenPt, double lGenPhi, double lepPt, double lepPhi,double &iU1,double &iU2,double iFluc,double iScale,int njet) {
   fJet = njet; if(njet > 2) fJet = 2;  
   if(fJet >= int(fF1U1Fit.size())) fJet = 0; 
   metDistribution(met,metphi,lGenPt,lGenPhi,lepPt,lepPhi,fRandom,
@@ -204,24 +204,18 @@ void RecoilCorrector::CorrectAll(float &met, float  &metphi, double lGenPt, doub
 		  iU1, iU2,iFluc,iScale
 		  );
 }
-double* RecoilCorrector::CorrectType1(float met, float metphi, double lGenPt, double lGenPhi, double lepPt, double lepPhi,float iU1,float iU2,double iFluc,double iScale,int njet) {
+void RecoilCorrector::CorrectType1(double &met, double &metphi, double lGenPt, double lGenPhi, double lepPt, double lepPhi,double &iU1,double &iU2,double iFluc,double iScale,int njet) {
   fJet = njet; if(njet > 2) fJet = 2;  
   if(fJet >= int(fF1U1Fit.size())) fJet = 0; 
-  float lMet    = met;
-  float lMetPhi = metphi;
-  metDistributionType1(lMet,lMetPhi,lGenPt,lGenPhi,lepPt,lepPhi,fRandom,
+  metDistributionType1(met,metphi,lGenPt,lGenPhi,lepPt,lepPhi,fRandom,
 		       fD1U1Fit     [fJet],fM1U1Fit     [fJet],
 		       fD1U1RMSSMFit[fJet],fM1U1RMSSMFit[fJet],
 		       fD1U2RMSSMFit[fJet],fM1U2RMSSMFit[fJet],
 		       //fF1U1U2Corr  [fJet],fM1U1U2Corr  [fJet], ===> For the future
 		       iU1,iU2,iFluc,iScale
 		       );
-  double *lOMet = new double[2];
-  lOMet[0] = double(lMet);
-  lOMet[1] = double(lMetPhi);
-  return lOMet;
 }
-void RecoilCorrector::CorrectType2(float &met, float &metphi, double lGenPt, double lGenPhi, double lepPt, double lepPhi,float iU1,float iU2,double iFluc,double iScale,int njet) {
+void RecoilCorrector::CorrectType2(double &met, double &metphi, double lGenPt, double lGenPhi, double lepPt, double lepPhi,double &iU1,double &iU2,double iFluc,double iScale,int njet) {
   fJet = njet; if(njet > 2) fJet = 2;  
   if(fJet >= int(fF1U1Fit.size())) fJet = 0; 
   metDistributionType2(met,metphi,lGenPt,lGenPhi,lepPt,lepPhi,fF1U1Fit[fJet],
@@ -235,9 +229,9 @@ void RecoilCorrector::CorrectType2(float &met, float &metphi, double lGenPt, dou
 		       fF1U1U2Corr  [fJet],fM1U1U2Corr  [fJet], 
 		       iU1,iU2,iFluc,iScale);
 }
-void RecoilCorrector::Correct(float &pfmet, float &pfmetphi, float &trkmet, float &trkmetphi, 
+void RecoilCorrector::Correct(double &pfmet, double &pfmetphi, double &trkmet, double &trkmetphi, 
                               double lGenPt, double lGenPhi, double lepPt, double lepPhi,double iFluc,double iScale,int njet) {
-  float lU1 = 0; float lU2 = 0;
+  double lU1 = 0; double lU2 = 0;
   fJet = njet; if(njet > 2) fJet = 2;  
   if(fJet > int(fF1U1Fit.size())) fJet = 0; 
   metDistribution(pfmet,pfmetphi,trkmet,trkmetphi,lGenPt,lGenPhi,lepPt,lepPhi,fRandom,
@@ -255,9 +249,9 @@ void RecoilCorrector::Correct(float &pfmet, float &pfmetphi, float &trkmet, floa
 		  iFluc,              iScale
 		  );
 }
-void RecoilCorrector::CorrectU1U2(float &iPFU1, float &iPFU2, float &iTKU1, float &iTKU2, 
+void RecoilCorrector::CorrectU1U2(double &iPFU1, double &iPFU2, double &iTKU1, double &iTKU2, 
 				  double lGenPt, double lGenPhi, double lepPt, double lepPhi,double iFluc,double iScale,int njet) {
-  float pfmet = 0; float pfmetphi = 0; //double trkmet = 0; double trkmetphi = 0;
+  double pfmet = 0; double pfmetphi = 0; //double trkmet = 0; double trkmetphi = 0;
   fJet = njet; if(njet > 2) fJet = 2;  
   if(fJet > int(fF1U1Fit.size())) fJet = 0; 
   metDistribution(pfmet,pfmetphi,iTKU1,iTKU2,lGenPt,lGenPhi,lepPt,lepPhi,fRandom,
@@ -279,7 +273,7 @@ void RecoilCorrector::CorrectU1U2(float &iPFU1, float &iPFU2, float &iTKU1, floa
 double RecoilCorrector::CorrVal(double iPt, double iVal, Recoil iType) { 
   if(fId == 0 || fId == 1) return iVal;
   switch(iType) {
-  case PFU1   : return iVal*(fD1U1Fit     [fJet]->Eval(iPt)/fM1U1Fit     [fJet]->Eval(iPt));
+  case PFU1   : return iVal*((fD1U1Fit     [fJet]->Eval(iPt)-iPt)/(fM1U1Fit     [fJet]->Eval(iPt)-iPt));
   case PFMSU1 : return iVal*(fD1U1RMSSMFit[fJet]->Eval(iPt)/fM1U1RMSSMFit[fJet]->Eval(iPt));
   case PFS1U1 : return iVal*(fD1U1RMS1Fit [fJet]->Eval(iPt)/fM1U1RMS1Fit [fJet]->Eval(iPt));
   case PFS2U1 : return iVal*(fD1U1RMS2Fit [fJet]->Eval(iPt)/fM1U1RMS2Fit [fJet]->Eval(iPt));
@@ -367,7 +361,7 @@ void RecoilCorrector::readCorr(std::string iName,
   lFile->Close();
 }
 //-----------------------------------------------------------------------------------------------------------------------------------------
-void RecoilCorrector::metDistribution(float &iMet,float &iMPhi,double iGenPt,double iGenPhi,
+void RecoilCorrector::metDistribution(double &iMet,double &iMPhi,double iGenPt,double iGenPhi,
 		                      double iLepPt,double iLepPhi,TRandom1 *iRand,
 		                      TF1 *iU1RZDatFit,
 		                      TF1 *iU1MSZDatFit, 
@@ -377,10 +371,10 @@ void RecoilCorrector::metDistribution(float &iMet,float &iMPhi,double iGenPt,dou
 		                      TF1 *iU2S1ZDatFit, 
 		                      TF1 *iU2S2ZDatFit, 		                      
 		                      TF1 *iU1U2Corr,
-				      float iU1, float iU2,
+				      double &iU1, double &iU2,
 		                      double iFluc,double iScale) {
   double lRescale  = sqrt((TMath::Pi())/2.);		     
-  double pU1       = CorrVal(iGenPt,iU1RZDatFit->Eval(iGenPt),PFU1); //iU1RZDatFit->Eval(iGenPt);//CorrVal(iGenPt,iU1RZDatFit->Eval(iGenPt),PFU1);
+  double pU1       = CorrVal(iGenPt,iU1RZDatFit->Eval(iGenPt)-iGenPt,PFU1); //iU1RZDatFit->Eval(iGenPt);//CorrVal(iGenPt,iU1RZDatFit->Eval(iGenPt),PFU1);
   double pU2       = 0; //Right guys are for cumulants => code deleted
   double pFrac1    = CorrVal(iGenPt,iU1MSZDatFit->Eval(iGenPt),PFMSU1)*lRescale;
   double pFrac2    = CorrVal(iGenPt,iU2MSZDatFit->Eval(iGenPt),PFMSU2)*lRescale;
@@ -441,13 +435,13 @@ void RecoilCorrector::metDistribution(float &iMet,float &iMPhi,double iGenPt,dou
   iU2   = pU2;
   return;
 }
-void RecoilCorrector::metDistributionType1(float &iMet,float &iMPhi,double iGenPt,double iGenPhi,
+void RecoilCorrector::metDistributionType1(double &iMet,double &iMPhi,double iGenPt,double iGenPhi,
 					   double iLepPt,double iLepPhi,TRandom1 *iRand,
 					   TF1 *iU1RZDatFit,  TF1 *iU1RZMCFit,
 					   TF1 *iU1MSZDatFit, TF1 *iU1MSZMCFit, 
 					   TF1 *iU2MSZDatFit, TF1 *iU2MSZMCFit, 		   		   
 					   //TF1 *iU1U2ZDatCorr,TF1 *iU1U2ZMCCorr,
-					   float iU1,float iU2,double iFluc,double iScale) {
+					   double &iU1,double &iU2,double iFluc,double iScale) {
   
   double p1UX  = iMet*cos(iMPhi) + iLepPt*cos(iLepPhi);
   double p1UY  = iMet*sin(iMPhi) + iLepPt*sin(iLepPhi);
@@ -456,9 +450,10 @@ void RecoilCorrector::metDistributionType1(float &iMet,float &iMPhi,double iGenP
   double p1Sin =   (p1UX*sin(iGenPhi) - p1UY*cos(iGenPhi))/p1U;
   iU1   = p1U*p1Cos;//*(pU1*(iGenPt > 10) + (iGenPt > 10)*((1.-iGenPt/10.)*(pU1-1.)+1.));
   iU2   = p1U*p1Sin;
-  if(iGenPt < 4) return;
+
+  if(iLepPt < 4) return;
   double lRescale  = sqrt((TMath::Pi())/2.);		     
-  double pU1       = iU1RZDatFit->Eval(iGenPt)/iU1RZMCFit->Eval(iGenPt);
+  double pU1       = (iU1RZDatFit->Eval(iGenPt)-iGenPt)/(iU1RZMCFit->Eval(iGenPt)-iGenPt);
   double pU2       = 0; //Right guys are for cumulants => code deleted
   double pFrac1    = max( iU1MSZDatFit->Eval(iGenPt)*iU1MSZDatFit->Eval(iGenPt)
 			  -iU1MSZMCFit->Eval(iGenPt)*iU1MSZMCFit ->Eval(iGenPt),0.);
@@ -471,9 +466,9 @@ void RecoilCorrector::metDistributionType1(float &iMet,float &iMPhi,double iGenP
   
   //Uncertainty propagation
   if(iFluc != 0 || iScale != 0) { 
-    double lEUR1    = getError(iGenPt,iU1RZMCFit ,PFU1)  ;
-    double lEU1Frac = getError(iGenPt,iU1MSZMCFit,PFMSU1);
-    double lEU2Frac = getError(iGenPt,iU2MSZMCFit,PFMSU2);
+    double lEUR1    = getError(iGenPt,iU1RZMCFit ,PFU1)  *2.;
+    double lEU1Frac = getError(iGenPt,iU1MSZMCFit,PFMSU1)*2.;
+    double lEU2Frac = getError(iGenPt,iU2MSZMCFit,PFMSU2)*2.;
     //Modify all the different parameters the choice of signs makes it maximal
     //cout << "----> " << lEUR1/iU1RZMCFit->Eval(iGenPt) << endl;
     pU1       = pU1       + iScale*lEUR1/iU1RZMCFit->Eval(iGenPt);             //Recoil
@@ -525,7 +520,7 @@ double RecoilCorrector::diGausPInverse(double iPVal,double iFrac,double iSigma1,
   //cout << "-- Final Val "  <<  (lMin + (lId-0.5)*lDiff/lN2) << " -- " << lId << endl;
   return (lMin + (lId-0.5)*lDiff/lN2);
 }
-void RecoilCorrector::metDistributionType2(float &iMet,float &iMPhi,double iGenPt,double iGenPhi,
+void RecoilCorrector::metDistributionType2(double &iMet,double &iMPhi,double iGenPt,double iGenPhi,
 					   double iLepPt,double iLepPhi,
 					   TF1 *iU1Default,
 					   TF1 *iU1RZDatFit,  TF1 *iU1RZMCFit,
@@ -536,10 +531,10 @@ void RecoilCorrector::metDistributionType2(float &iMet,float &iMPhi,double iGenP
 					   TF1 *iU2S1ZDatFit, TF1 *iU2S1ZMCFit,  		   		   
 					   TF1 *iU2S2ZDatFit, TF1 *iU2S2ZMCFit,  		   		   
 					   TF1 *iU1U2ZDatCorr,TF1 *iU1U2ZMCCorr,
-					   float iU1,float iU2,double iFluc,double iScale) {
-  double pDefU1    = iU1Default->Eval(iGenPt);
+					   double &iU1,double &iU2,double iFluc,double iScale) {
+  double pDefU1    = (iU1Default->Eval(iGenPt)-iGenPt);
   double lRescale  = sqrt((TMath::Pi())/2.);		     
-  double pDU1       = iU1RZDatFit ->Eval(iGenPt);
+  double pDU1       = (iU1RZDatFit ->Eval(iGenPt)-iGenPt);
   //double pDU2       = 0; sPM
   double pDFrac1    = iU1MSZDatFit->Eval(iGenPt)*lRescale;
   double pDSigma1_1 = iU1S1ZDatFit->Eval(iGenPt)*pDFrac1;
@@ -550,8 +545,8 @@ void RecoilCorrector::metDistributionType2(float &iMet,float &iMPhi,double iGenP
   //double pDMean1    = pDFrac1;
   //double pDMean2    = pDFrac2;
  
-  double pMU1       = iU1RZMCFit  ->Eval(iGenPt);
-  //double pMU2       = 0; 
+  double pMU1       = iU1RZMCFit  ->Eval(iGenPt)-iGenPt;
+  double pMU2       = 0; 
   double pMFrac1    = iU1MSZMCFit ->Eval(iGenPt)*lRescale;
   double pMSigma1_1 = iU1S1ZMCFit ->Eval(iGenPt)*pMFrac1;
   double pMSigma1_2 = iU1S2ZMCFit ->Eval(iGenPt)*pMFrac1;
@@ -569,22 +564,22 @@ void RecoilCorrector::metDistributionType2(float &iMet,float &iMPhi,double iGenP
     double lEUS2_1  = getError(iGenPt,iU2S1ZDatFit,PFS1U2);
     double lEUS2_2  = getError(iGenPt,iU2S2ZDatFit,PFS2U2);
     double lEU2Frac = getError(iGenPt,iU2MSZDatFit,PFMSU2);
-
-    //cout << "Err u1    : " << lEU1Frac << " -- " << iFluc << " -- " << pDFrac1 << " -- " << iU1MSZDatFit->GetParError(0) << endl;
-    //cout << "Err u2    : " << lEU2Frac << " -- " << iFluc << " -- " << pDFrac2 << endl;
-    //cout << "Err u1 s1 : " << lEUS1_1 << endl;
-    //cout << "Err u1 s2 : " << lEUS1_2 << endl;
-    //cout << "Err u2 s1 : " << lEUS2_1 << endl;
-    //cout << "Err u2 s2 : " << lEUS2_2 << endl;
-  
+    /*
+    cout << "Err u1    : " << lEU1Frac << " -- " << iFluc << " -- " << pDFrac1 << " -- " << iU1MSZDatFit->GetParError(0) << endl;
+    cout << "Err u2    : " << lEU2Frac << " -- " << iFluc << " -- " << pDFrac2 << endl;
+    cout << "Err u1 s1 : " << lEUS1_1 << endl;
+    cout << "Err u1 s2 : " << lEUS1_2 << endl;
+    cout << "Err u2 s1 : " << lEUS2_1 << endl;
+    cout << "Err u2 s2 : " << lEUS2_2 << endl;
+    */
     //Modify all the different parameters the choice of signs makes it maximal
     pDU1       = pDU1       + iScale*lEUR1;             //Recoil
     pDFrac1    = pDFrac1    + iFluc*(lEU1Frac);        //Mean RMS 
-    pDSigma1_1 = pDSigma1_1 + iFluc*lEU1Frac*lEUS1_1*pDFrac1;    //Sigma 1 smalles sigma
-    pDSigma1_2 = pDSigma1_2 + iFluc*lEU1Frac*lEUS1_2*pDFrac1;    //Sigma 2 (Maximal when oppsite sigma 1)
+    pDSigma1_1 = pDSigma1_1 + iFluc*lEU1Frac;//lEUS1_1*pDFrac1;    //Sigma 1 smalles sigma
+    pDSigma1_2 = pDSigma1_2 + iFluc*lEU1Frac;//lEUS1_2*pDFrac1;    //Sigma 2 (Maximal when oppsite sigma 1)
     pDFrac2    = pDFrac2    + iFluc*(lEU2Frac);        //Mean RMS for U2
-    pDSigma2_1 = pDSigma2_1 + iFluc*lEU2Frac*lEUS2_1*pDFrac2;    //Sigma 1 U2
-    pDSigma2_2 = pDSigma2_2 + iFluc*lEU2Frac*(lEUS2_2)*pDFrac2;
+    pDSigma2_1 = pDSigma2_1 + iFluc*lEU2Frac;//lEUS2_1*pDFrac2;    //Sigma 1 U2
+    pDSigma2_2 = pDSigma2_2 + iFluc*lEU2Frac;//(lEUS2_2)*pDFrac2;
   }
   pDFrac1           = (pDFrac1-pDSigma1_2)/(pDSigma1_1-pDSigma1_2);
   pDFrac2           = (pDFrac2-pDSigma2_2)/(pDSigma2_1-pDSigma2_2);
@@ -603,7 +598,7 @@ void RecoilCorrector::metDistributionType2(float &iMet,float &iMPhi,double iGenP
 
   double p1Charge        = pU1Diff/fabs(pU1Diff);
   double p2Charge        = pU2Diff/fabs(pU2Diff);
-  //double pTU1Diff        = pU1Diff;
+  double pTU1Diff        = pU1Diff;
   // double lMU1U2  = iU1U2ZMCCorr->Eval(iGenPt);
   // pU1Diff                = deCorrelate(pMMean1,lMU1U2,0.,0.,pU1Diff/pMMean1,pU2Diff/pMMean1 ,0.,0.);
   //pU2Diff                = deCorrelate(pMMean2,lMU1U2,0.,0.,pU2Diff/pMMean2,pTU1Diff/pMMean2,0.,0.);
@@ -631,7 +626,7 @@ void RecoilCorrector::metDistributionType2(float &iMet,float &iMPhi,double iGenP
   iU1U2ZDatCorr->Eval(iGenPt);
 }
 
-void RecoilCorrector::metDistribution(float &iPFMet,float &iPFMPhi,float &iTKMet,float &iTKMPhi,
+void RecoilCorrector::metDistribution(double &iPFMet,double &iPFMPhi,double &iTKMet,double &iTKMPhi,
 				      double iGenPt,double iGenPhi,
 		                      double iLepPt,double iLepPhi,TRandom1 *iRand,
 		                      TF1 *iU1RPFFit,   TF1 *iU1RTKFit,
@@ -644,7 +639,7 @@ void RecoilCorrector::metDistribution(float &iPFMet,float &iPFMPhi,float &iTKMet
 		                      TF1 *iPFU1U2Corr, TF1 *iTKU1U2Corr,
 		                      TF1 *iPFTKU1Corr, TF1 *iPFTKU2Corr,
 		                      TF1 *iPFTKU1MCorr,TF1 *iPFTKU2MCorr,
-				      float iU1, float iU2,
+				      double       &iU1, double &iU2,
 				      double iFluc,double iScale) {
   //Important constants re-scaling of sigma on left and mean wpt of W resbos on right
   double lRescale  = sqrt((TMath::Pi())/2.); //double lPtMean = 16.3; //==> tuned for W bosons
@@ -819,6 +814,9 @@ double RecoilCorrector::getError(double iVal,TF1 *iFit,Recoil iType) {
   double lZDat = getFunc(true ,iType)->Eval(iVal);
   double lZMC  = getFunc(false,iType)->Eval(iVal);
   double lWMC  = iFit                ->Eval(iVal);
+  if(iType == PFU1) lZDat-=iVal; 
+  if(iType == PFU1) lZMC -=iVal;
+  if(iType == PFU1) lWMC -=iVal; 
   double lR    = lZDat/lZMC;
   double lER   = lR*lR/lZDat/lZDat*lEZD2 + lR*lR/lZMC/lZMC*lEZM2;
   double lVal  = lR*lR*lEW2 + lWMC*lWMC*lER;
