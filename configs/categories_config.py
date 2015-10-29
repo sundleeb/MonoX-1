@@ -25,10 +25,12 @@ monojet_category = {
 	    'name':"monojet"
 	   ,'in_file_name':"/afs/cern.ch/work/n/nckw/public/monojet/ntuples/weighted/monojet-combo.root"
 	   ,"cutstring":"mvamet>200 && mvamet<1000 && weight<500"
-	   ,"varstring":["mvamet",200,1000]
+            ,"varstring":["mvamet",200,1000]
 	   ,"weightname":"weight"
 	   ,"bins":bins[:]
 	   #,"bins":[200.0 , 210.0 , 220.0 , 230.0 , 240.0 , 250.0 , 260.0 , 270.0 , 280.0 , 290.0 , 300.0 , 310.0 , 320.0 , 330.0,340,360,380,420,510,1000]
+           ,"recoilMC":"recoilfit_gjetsMC_Zu1_pf_v1.root"
+           ,"recoilData":"recoilfit_gjetsData_Zu1_pf_v1.root"
   	   ,"additionalvars":[['jet1pt',25,150,1000]]
 	   ,"pdfmodel":0
 	   ,"samples":
