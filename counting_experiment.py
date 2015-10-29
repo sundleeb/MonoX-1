@@ -17,18 +17,19 @@ def getNormalizedHist(hist):
 
 
 class Bin:
- def __init__(self,catid,chid,id,var,datasetname,wspace,wspace_out,xmin,xmax):
+ def __init__(self,category,catid,chid,id,var,datasetname,wspace,wspace_out,xmin,xmax):
 
+   self.category  = category
    self.chid	  = chid# This is the thing that links two bins from different controls togeher
    self.id        = id
    self.catid	  = catid
-   self.type_id   = 10*MAXBINS*catid+MAXBINS*chid+id
-   self.binid     = "cat_%d_ch_%d_bin_%d"%(catid,chid,id)
+   #self.type_id   = 10*MAXBINS*catid+MAXBINS*chid+id
+   self.binid     = "cat_%s_ch_%s_bin_%d"%(catid,chid,id)
    self.wspace_out = wspace_out
    self.set_wspace(wspace)
 
    self.var	  = self.wspace_out.var(var.GetName())
-   self.dataset   = self.wspace.data(datasetname)
+   #self.dataset   = self.wspace.data(datasetname)
 
    self.rngename = "rnge_%s"%self.binid
    self.var.setRange(self.rngename,xmin,xmax)
@@ -43,7 +44,7 @@ class Bin:
    self.binerror  = 0
    self.binerror_m = 0
 
-   self.o	= self.dataset.sumEntries("%s>=%g && %s<%g "%(var.GetName(),xmin,var.GetName(),xmax))
+   self.o	= 1#self.dataset.sumEntries("%s>=%g && %s<%g "%(var.GetName(),xmin,var.GetName(),xmax))
    self.obs	= self.wspace_out.var("observed")#r.RooRealVar("observed","Observed Events bin",1)
 
    self.argset = r.RooArgSet(wspace.var(self.var.GetName())) # <-------------------------- Check this is cool
@@ -92,9 +93,11 @@ class Bin:
    self.initY = self.wspace.data(mcdataset).sumEntries("%s>=%g && %s<%g"%(self.var.GetName(),self.xmin,self.var.GetName(),self.xmax),self.rngename)
 
  def set_initE_precorr(self):
-   self.initE_precorr = self.wspace_out.var("model_mu_cat_%d_bin_%d"%(self.catid,self.id)).getVal()*self.wspace_out.var(self.sfactor.GetName()).getVal()
+   return 0 
+   self.initE_precorr = self.wspace_out.var("model_mu_cat_%s_bin_%d"%(self.catid,self.id)).getVal()*self.wspace_out.var(self.sfactor.GetName()).getVal()
 
  def set_initE(self):
+   return 0 
    self.initE = self.ret_expected()
    self.initB = self.ret_background()
    self.set_initE_precorr()
@@ -119,11 +122,17 @@ class Bin:
      self.sfactor.setConstant()
      self.wspace_out._import(self.sfactor,r.RooFit.RecycleConflictNodes())
 
- def setup_expect_var(self):
-   if not self.wspace_out.var("model_mu_cat_%d_bin_%d"%(self.catid,self.id,)):
-     self.model_mu = r.RooRealVar("model_mu_cat_%d_bin_%d"%(self.catid,self.id),"Model of N expected events in %d"%self.id,self.initY,0,10000)
+ def setup_expect_var(self,functionalForm=""):
+   print functionalForm 
+   if not len(functionalForm): 
+    if not self.wspace_out.var("model_mu_cat_%s_bin_%d"%(self.catid,self.id,)):
+     self.model_mu = r.RooRealVar("model_mu_cat_%s_bin_%d"%(self.catid,self.id),"Model of N expected events in %d"%self.id,self.initY,0,10000)
      self.model_mu.removeMax()
-   else: self.model_mu = self.wspace_out.var("model_mu_cat_%d_bin_%d"%(self.catid,self.id))
+    else: self.model_mu = self.wspace_out.var("model_mu_cat_%s_bin_%d"%(self.catid,self.id))
+   else: 
+    print "OOOH NICE!!!!!!" 
+    DEPENDANT = "%s_bin_%d"%(functionalForm,self.id)
+    self.model_mu = self.wspace_out.function("pmu_%s"%(DEPENDANT))
 
    arglist = r.RooArgList((self.model_mu),self.wspace_out.var(self.sfactor.GetName()))
 
@@ -146,13 +155,13 @@ class Bin:
        print "Adding Nuisance ", nuisances[0]
        prod = r.RooFormulaVar("prod_%s"%self.binid,"Delta Change from %s"%nuisances[0],"1+@0",r.RooArgList(self.wspace_out.function("sys_function_%s_%s"%(nuisances[0],self.binid))))
      arglist.add(prod)
-     self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"(@0*@1)*@2",arglist)
-   else: self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"(@0*@1)",arglist)
+     self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"TMath::Max(0,(@0*@1)*@2)",arglist)
+   else: self.pure_mu = r.RooFormulaVar("pmu_%s"%self.binid,"Number of expected (signal) events in %s"%self.binid,"TMath::Max(0,(@0*@1))",arglist)
    # Finally we add in the background 
-   bkgArgList = r.RooArgList(self.pure_mu,self.wspace_out.function(self.b.GetName()))
+   bkgArgList = r.RooArgList(self.pure_mu)
    #if self.constBkg: self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"%f+@0"%self.b,bkgArgList)
    #else : self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0/%f"%self.b,bkgArgList)
-   self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0+@1",bkgArgList)
+   self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0",bkgArgList)
  
    #self.mu = r.RooFormulaVar("mu_%s"%self.binid,"Number of expected events in %s"%self.binid,"@0/(@1*@2)",r.RooArgList(self.integral,self.sfactor,self.pdfFullInt))
    self.wspace_out._import(self.mu,r.RooFit.RecycleConflictNodes())
@@ -161,9 +170,10 @@ class Bin:
 
 
  def add_to_dataset(self):
+   return
    # create a dataset called observed
-   self.wspace_out.var("observed").setVal(self.o)
-   self.wspace_out.cat(self.categoryname).setIndex(self.type_id)
+   #self.wspace_out.var("observed").setVal(self.o)
+   #self.wspace_out.cat(self.categoryname).setIndex(self.type_id)
    lv = self.wspace_out.var("observed")
    lc = self.wspace_out.cat("bin_number")
    local_obsargset = r.RooArgSet(lv,lc)
@@ -196,7 +206,7 @@ class Bin:
  def ret_background(self):
    #if self.constBkg: return self.b
    #else: return (1-self.b)*(self.ret_expected())
-   return self.wspace_out.function(self.b.GetName()).getVal()
+   return 0 #self.wspace_out.function(self.b.GetName()).getVal()
  def ret_correction(self):
    return (self.wspace_out.var(self.model_mu.GetName()).getVal())/self.initY
  def ret_correction_err(self):
@@ -211,13 +221,12 @@ class Bin:
 
 class Channel:
   # This class holds a "channel" which is as dumb as saying it holds a dataset and scale factors 
-  def __init__(self,cname,wspace,wspace_out,catid,id,data,scalefactors,bkg):
+  def __init__(self,cname,wspace,wspace_out,catid,scalefactors):
     self.catid = catid
-    self.chid = id
-    self.data = data
+    self.chid = cname
     self.scalefactors = scalefactors
-    self.chname = "ControlRegion_%d"%self.chid
-    self.backgroundname  = bkg
+    self.chname = "ControlRegion_%s"%self.chid
+    self.backgroundname  = ""
     self.wspace_out = wspace_out
     self.set_wspace(wspace)
     self.nuisances = []
@@ -231,7 +240,15 @@ class Channel:
     sys.exit("Nothing Will Happen with add_systematic, use add_nuisance")
     sfup = self.scalefactors.GetName()+"_%s_"%sys+"Up"
     sfdn = self.scalefactors.GetName()+"_%s_"%sys+"Down"
-    print "Looking for systematic shapes ... %s,%s"%(sfup,sfdn)
+    print "Looking for systematic shapes ... %s, %s"%(sfup,sfdn)
+    try:
+     print file.Get(sfup).GetName()
+     print file.Get(sfdn).GetName()
+    except AttributeError: 
+     print "Missing one of ", sfup, sfdn, " in ", file.GetName()
+     print "Following is in directory "
+     file.Print()
+     sys.exit()
     self.systematics[sys] = [file.Get(sfup),file.Get(sfdn)]
     
   def add_systematic_yield(self,syst,kappa):
@@ -258,7 +275,7 @@ class Channel:
 
     # run through all of the bins in the control regions and create a function to interpolate
     for b in range(self.nbins):
-      func = r.RooFormulaVar("sys_function_%s_cat_%d_ch_%d_bin_%d"%(name,self.catid,self.chid,b)\
+      func = r.RooFormulaVar("sys_function_%s_cat_%s_ch_%s_bin_%d"%(name,self.catid,self.chid,b)\
 	,"Systematic Varation"\
       	#,"@0*%f"%size,r.RooArgList(self.wspace_out.var("nuis_%s"%name)))
       	,"@0*%f"%size,r.RooArgList(self.wspace_out.var("%s"%name)))
@@ -284,14 +301,27 @@ class Channel:
     sfdn = self.scalefactors.GetName()+"_%s_"%name+"Down"
     print "Looking for systematic shapes ... %s,%s"%(sfup,sfdn)
     sysup,sysdn =  file.Get(sfup),file.Get(sfdn)
+    try:
+     sysup.GetName()
+     sysdn.GetName()
+    except ReferenceError: 
+     print "Missing one of ", sfup, sfdn, " in ", file.GetName()
+     print "Following is in directory "
+     file.ls()
+     sys.exit()
     # Now we loop through each bin and construct a polynomial function per bin 
     for b in range(self.nbins):
-    	nsf = 1./(self.scalefactors.GetBinContent(b+1))
-	vu = 1./(sysup.GetBinContent(b+1)) - nsf 
-	vd = 1./(sysdn.GetBinContent(b+1)) - nsf  # Note this should be <ve if down is lower, its not a bug
+    	if self.scalefactors.GetBinContent(b+1) == 0 : 
+	 nsf=0
+	 vu=0
+	 vd=0
+	else:
+    	 nsf = 1./(self.scalefactors.GetBinContent(b+1))
+	 vu = 1./(sysup.GetBinContent(b+1)) - nsf 
+	 vd = 1./(sysdn.GetBinContent(b+1)) - nsf  # Note this should be <ve if down is lower, its not a bug
 	coeff_a = 0.5*(vu+vd)
 	coeff_b = 0.5*(vu-vd)
-        func = r.RooFormulaVar("sys_function_%s_cat_%d_ch_%d_bin_%d"%(name,self.catid,self.chid,b) \
+        func = r.RooFormulaVar("sys_function_%s_cat_%s_ch_%s_bin_%d"%(name,self.catid,self.chid,b) \
 		,"Systematic Varation"\
 		,"(%f*@0*@0+%f*@0)/%f"%(coeff_a,coeff_b,nsf) \
 		#,"(%f*@0*@0+%f*@0)"%(coeff_a,coeff_b) \
@@ -321,13 +351,11 @@ class Channel:
   def ret_name(self):
     return self.chname
 
-  def ret_dataset(self):
-    return self.data.GetName()
-
   def ret_chid(self):
     return self.chid
 
   def ret_sfactor(self,i,syst="",direction=1):
+    if self.scalefactors.GetBinContent(i+1) == 0 : return 0
     if syst and syst in self.systematics.keys():
       if direction >0 :index=0
       else :index=1
@@ -359,7 +387,8 @@ class Category:
   ):
    self.GNAME = corrname
    self.cname = cname;
-   self.catid = catid;
+   self.category = catid
+   self.catid = catid+'_'+corrname;
    # A crappy way to store canvases to be saved in the end
    self.canvases = {}
    self.histograms = []
@@ -390,13 +419,16 @@ class Category:
 
    else: self._wspace_out._import(self._var,r.RooFit.RecycleConflictNodes())
    self._var = self._wspace_out.var(self._var.GetName())
-
-   for j,cr in enumerate(self._control_regions):
-    for i,bl in enumerate(self._bins):
-     if i >= len(self._bins)-1 : continue
-     self.sample.defineType("cat_%d_ch_%d_bin_%d"%(self.catid,j,i),10*MAXBINS*catid+MAXBINS*j+i)
-     self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
-   
+   self.isSecondDependant = False
+   #for j,cr in enumerate(self._control_regions):
+   # for i,bl in enumerate(self._bins):
+   #  if i >= len(self._bins)-1 : continue
+   #  self.sample.defineType("cat_%s_ch_%s_bin_%d"%(self.catid,j,i),10*MAXBINS*catid+MAXBINS*j+i)
+   #  self.sample.setIndex(10*MAXBINS*catid+MAXBINS*j+i)
+  def setDependant(self,BASE,CONTROL):
+   self.isSecondDependant = True
+   self.BASE = BASE
+   self.CONTROL = CONTROL
 
   def addTarget(self,vn,CR,correct=True):
    self.additional_targets.append([vn,CR,correct])
@@ -464,14 +496,18 @@ class Category:
     for i,bl in enumerate(self._bins):
      if i >= len(self._bins)-1 : continue
      xmin,xmax = bl,self._bins[i+1]
-     ch = Bin(self.catid,j,i,self._var,cr.ret_dataset(),self._wspace,self._wspace_out,xmin,xmax)
+     ch = Bin(self.category,self.catid,cr.chid,i,self._var,"",self._wspace,self._wspace_out,xmin,xmax)
      ch.set_control_region(cr)
      if cr.has_background(): ch.add_background(cr.ret_background())
      ch.set_label(sample) # should import the sample category label
      ch.set_initY(self._target_datasetname)
      ch.set_sfactor(cr.ret_sfactor(i))
-     # This has to the the last thing
-     ch.setup_expect_var()
+     # This has to the the last thing 
+     # Note, we can have an expected value which is itself a RooFormulaVar 
+
+     if self.isSecondDependant: ch.setup_expect_var("cat_%s_%s_ch_%s"%(self.category,self.BASE,self.CONTROL))
+     else:  ch.setup_expect_var()
+
      ch.set_initE()  # initialise expected  (but this will be somewhat a "post" state), i.e after fiddling with the nuisance parameters.
      ch.add_to_dataset()
      self.channels.append(ch)
@@ -489,7 +525,7 @@ class Category:
 
    for i,bl in enumerate(self.channels):
     if i >= len(self._bins)-1 : break
-    model_mu = self._wspace_out.var("model_mu_cat_%d_bin_%d"%(bl.catid,bl.id))
+    model_mu = self._wspace_out.var("model_mu_cat_%s_bin_%d"%(bl.catid,bl.id))
     #self._wspace_out.var(model_mu.GetName()).setVal(1.2*model_mu.getVal())
    
   def ret_control_regions(self): 

@@ -48,21 +48,7 @@ for cat_id,cat in enumerate(x.categories):
   for sample in samples:
       entry = cat['samples'][sample]
       mb.addSample(sample,entry[0],entry[1],entry[2],entry[3])  # name, region, process, is_mc, is_signal
-      if sample.find('Met') > 0:
-          mb.addSample(sample+"_Up"  ,entry[0]+"SYS",entry[1]+"_MetUp"  ,entry[2],entry[3])  # name, region, process, is_mc, is_signal
-          mb.addSample(sample+"_Down",entry[0]+"SYS",entry[1]+"_MetDown",entry[2],entry[3])  # name, region, process, is_mc, is_signal
   
-  # Special function to run corrections (need to assume correct datasets were produced in previous step
-  mb.run_corrections('ZJets','dimuon')  # need contributing data, 'signal' and backgrounds
-  mb.run_corrections('WJets','singlemuon')  # need contributing data, 'signal' and backgrounds
-
-#  mb.apply_corrections('ZJets','signal','zjets',True) # name of correction, process to be applied to  # true at the end means run systematics
-#  mb.apply_corrections('WJets','signal','wjets',True) # name of correction, process to be applied to
-
-#  mb.apply_corrections('ZJets','dimuon','zll',False) # name of correction, process to be applied to  # true at the end means run systemat
-#  mb.apply_corrections('ZJets','singlemuon','zll',False) # name of correction, process to be applied to  # true at the end means run systemat
-#  mb.apply_corrections('WJets','singlemuon','wjets',False) # name of correction, process to be applied to
-
   mb.save()
 
   # Add any 'cutstring' for future reference

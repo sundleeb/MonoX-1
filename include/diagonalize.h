@@ -92,6 +92,9 @@ TH1F *generateTemplate(TH1F *base, RooFormulaVar *pdf_num, RooRealVar &var, RooD
   else histNew->SetName(Form("%s%s",data->GetName(),ext.c_str()));
   int nevents = data->numEntries();
   const char *varname = var.GetName();
+  const char *plotvarname = var.GetName();
+
+  if (pvar!="") plotvarname = pvar.c_str();
   for (int ev=0;ev<nevents;ev++){
     const RooArgSet *vw = data->get(ev);
     double val = vw->getRealValue(varname);
@@ -114,7 +117,7 @@ TH1F *generateTemplate(TH1F *base, RooFormulaVar *pdf_num, RooRealVar &var, RooD
     }
     histNew->Fill(pval,cweight);
   }
-  histNew->GetXaxis()->SetTitle(varname);
+  histNew->GetXaxis()->SetTitle(plotvarname);
   return histNew;
 }
 
