@@ -4,9 +4,9 @@ import re, array, sys, numpy
 
 gROOT.ProcessLine(
     "struct met_t {\
-     Double_t         metV;\
-     Double_t         metPhi;\
-     Double_t         metRaw;\
+     Float_t         metV;\
+     Float_t         metPhi;\
+     Float_t         metRaw;\
     }" )
     
 #gROOT.ProcessLine(
@@ -42,7 +42,7 @@ def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
             pPhi = iNtuple.genVphi
         if pPhi > r.TMath.Pi():
             pPhi = pPhi-r.TMath.Pi()
-        pMet      = iRecoil.CorrectType1(iNtuple.mvamet,iNtuple.mvametphi,pPt,pPhi,0,0,0,0, iUnc, -iUnc,0)
+        pMet      = iRecoil.CorrectType2(iNtuple.mvamet,iNtuple.mvametphi,pPt,pPhi,0,0,0,0, iUnc, -iUnc,0)
         #print pMet[0],' - ',iNtuple.mvamet
         lMet.metV   = pMet[0]
         lMet.metPhi = pMet[1]

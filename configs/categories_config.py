@@ -21,16 +21,36 @@ bins = [200.0 , 210.0 , 220.0 , 230.0 , 240.0 , 250.0 , 260.0 , 270.0 , 280.0 , 
 
 #  OPTIONAL --> 'extra_cuts': additional cuts maybe specific to this control region (eg ptphoton cuts) if this key is missing, the code will not complain   
  
+ALLMETSAMPLES = [ 
+                    #Di Electron Control Region
+                    "Zll_di_electron_control","Wjets_di_electron_control","WW_di_electron_control","WZ_di_electron_control","ZZ_di_electron_control",
+                    "ttbar_di_electron_control","SingleTop_di_electron_control",
+                    #Single Electron Control Region
+                    "Wjets_single_electron_control","Zll_single_electron_control","WW_single_electron_control","WZ_single_electron_control","ZZ_single_electron_control","ttbar_single_electron_control",
+                    "SingleTop_single_electron_control",
+                    #Di Muon Control Region
+                    "Zll_di_muon_control","Wjets_di_muon_control","WW_di_muon_control","WZ_di_muon_control","ZZ_di_muon_control",
+                    "ttbar_di_muon_control","SingleTop_di_muon_control",
+                    #Single Muon Control Region
+                    "Wjets_single_muon_control","Zll_single_muon_control","WW_single_muon_control","WZ_single_muon_control","ZZ_single_muon_control","ttbar_single_muon_control",
+                    "SingleTop_single_muon_control","QCD_single_muon_control",
+                    #Photon Control Region
+                    "Photon_photon_control","ttbar_photon_control",#"Wjets_photon_control","Zll_photon_control","WW_photon_control","ZZ_photon_control","ttbar_photon_control","SingleTop_photon_control",
+                    "QCD_photon_control",
+                    #Signal Region
+                    "Wjets_signal","Zll_signal","WW_signal","WZ_signal","ZZ_signal","ttbar_signal","SingleTop_signal","QCD_signal","Znunu_signal"
+                    #"ggH125_signal"    	,"VBFH125_signal"   	,"WH125_signal"   	,"ZH125_signal",
+		]
 monojet_category = {
 	    'name':"monojet"
-	   ,'in_file_name':"/afs/cern.ch/work/n/nckw/public/monojet/ntuples/weighted/monojet-combo.root"
+	   ,'in_file_name':"monojet-combo-electron.root"
 	   ,"cutstring":"mvamet>200 && mvamet<1000 && weight<500"
             ,"varstring":["mvamet",200,1000]
 	   ,"weightname":"weight"
 	   ,"bins":bins[:]
 	   #,"bins":[200.0 , 210.0 , 220.0 , 230.0 , 240.0 , 250.0 , 260.0 , 270.0 , 280.0 , 290.0 , 300.0 , 310.0 , 320.0 , 330.0,340,360,380,420,510,1000]
-           ,"recoilMC":"recoilfit_gjetsMC_Zu1_pf_v1.root"
-           ,"recoilData":"recoilfit_gjetsData_Zu1_pf_v1.root"
+           ,"recoilMC":"recoilfits/recoilfit_gjetsMC_Zu1_pf_v1.root"
+           ,"recoilData":"recoilfits/recoilfit_gjetsData_Zu1_pf_v1.root"
   	   ,"additionalvars":[['jet1pt',25,150,1000]]
 	   ,"pdfmodel":0
 	   ,"samples":
@@ -84,5 +104,6 @@ monojet_category = {
 		  ,"SingleTop_photon_controlMet"   :['photon','top',1,0]
                   ,"QCD_photon_controlMet"	   :['photon','qcd',1,0]
 	   	},
+                "metsamples":ALLMETSAMPLES[:] # For Recoil Corrections
 }
 categories = [monojet_category]

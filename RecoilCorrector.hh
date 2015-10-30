@@ -37,7 +37,7 @@ public:
   void Correct(double &pfmet, double &pfmetphi, double &trkmet, double &trkmetphi, 
 	       double iGenPt, double iGenPhi, double iLepPt, double iLepPhi,double iFluc    ,double iScale=0,int njet=0);
   void CorrectType1(double &pfmet, double &pfmetphi,double iGenPt,double iGenPhi,double iLepPt,double iLepPhi,double &iU1,double &iU2,double iFluc,double iScale=0,int njet=0);
-  void CorrectType2(double &pfmet, double &pfmetphi,double iGenPt,double iGenPhi,double iLepPt,double iLepPhi,double &iU1,double &iU2,double iFluc,double iScale=0,int njet=0);
+  double* CorrectType2(double pfmet, double pfmetphi,double iGenPt,double iGenPhi,double iLepPt,double iLepPhi,double iU1,double iU2,double iFluc,double iScale=0,int njet=0);
   void CorrectU1U2(double &pfu1, double &pfu2, double &trku1, double &trku2, 
 		   double iGenPt, double iGenPhi, double iLepPt, double iLepPhi,double iFluc,double iScale=0,int njet=0);
   void addDataFile(std::string iNameDat);
@@ -215,10 +215,12 @@ void RecoilCorrector::CorrectType1(double &met, double &metphi, double lGenPt, d
 		       iU1,iU2,iFluc,iScale
 		       );
 }
-void RecoilCorrector::CorrectType2(double &met, double &metphi, double lGenPt, double lGenPhi, double lepPt, double lepPhi,double &iU1,double &iU2,double iFluc,double iScale,int njet) {
+double* RecoilCorrector::CorrectType2(double pfmet, double pfmetphi, double lGenPt, double lGenPhi, double lepPt, double lepPhi,double iU1,double iU2,double iFluc,double iScale,int njet) {
   fJet = njet; if(njet > 2) fJet = 2;  
   if(fJet >= int(fF1U1Fit.size())) fJet = 0; 
-  metDistributionType2(met,metphi,lGenPt,lGenPhi,lepPt,lepPhi,fF1U1Fit[fJet],
+  double lMet    = pfmet;
+  double lMetPhi = pfmetphi;
+  metDistributionType2(lMet,lMetPhi,lGenPt,lGenPhi,lepPt,lepPhi,fF1U1Fit[fJet],
 		       fD1U1Fit     [fJet],fM1U1Fit     [fJet],
 		       fD1U1RMSSMFit[fJet],fM1U1RMSSMFit[fJet],
 		       fD1U1RMS1Fit [fJet],fM1U1RMS1Fit [fJet],
@@ -228,6 +230,10 @@ void RecoilCorrector::CorrectType2(double &met, double &metphi, double lGenPt, d
 		       fD1U2RMS2Fit [fJet],fM1U2RMS2Fit [fJet],
 		       fF1U1U2Corr  [fJet],fM1U1U2Corr  [fJet], 
 		       iU1,iU2,iFluc,iScale);
+  double *lOMet = new double[2];
+  lOMet[0] = double(lMet);
+  lOMet[1] = double(lMetPhi);
+  return lOMet;
 }
 void RecoilCorrector::Correct(double &pfmet, double &pfmetphi, double &trkmet, double &trkmetphi, 
                               double lGenPt, double lGenPhi, double lepPt, double lepPhi,double iFluc,double iScale,int njet) {

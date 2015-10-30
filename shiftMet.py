@@ -15,30 +15,30 @@ gROOT.ProcessLine(
 #    }" )
 
 parser = OptionParser()
-parser.add_option('--file'       ,action='store',type='string',dest='file'      ,default='boosted-combo.root',  help='File to Correct')
-parser.add_option('--fileM'      ,action='store',type='string',dest='file'      ,default='boosted-combo.root',  help='RecoilFitMu')
-parser.add_option('--fileG'      ,action='store',type='string',dest='file'      ,default='boosted-combo.root',  help='RecoilFitGamma')
+parser.add_option('--file'       ,action='store',type='string',dest='file'      ,default='boosted-combo.root',                       help='File to Correct')
+parser.add_option('--fileM'      ,action='store',type='string',dest='fileM'     ,default='recoilfits/recoilfit_zmmData_pf_v2.root',  help='RecoilFitMu')
+parser.add_option('--fileG'      ,action='store',type='string',dest='fileG'     ,default='recoilfits/recoilfit_gjetsData_pf_v1.root',help='RecoilFitGamma')
 (options,args) = parser.parse_args()
 
 
-lFileM = r.TFile(fileM)
+lFileM = r.TFile(options.fileM)
 U1M  = lFileM.FindObjectAny("PFu1Mean_0")
-lFileG = r.TFile(fileG)
+lFileG = r.TFile(options.fileG)
 U1G  = lFileG.FindObjectAny("PFu1Mean_0")
 
 def unc2(iFit,iVal):
     lE2 = iFit.GetParError(0) + iVal*iFit.GetParError(1) + iVal*iVal*iFit.GetParError(2)
     if abs(iFit.GetParError(3)) > 0:
-        lE2 += iVal*iVal*iVal*     iFit->GetParError(3)
-    if abs(iFit->GetParError(4)) > 0:
-        lE2 += iVal*iVal*iVal*iVal*iFit->GetParError(4)
-    if abs(iFit->GetParError(5)) > 0 && iFit->GetParameter(3) == 0:
-        lE2 += iVal*iVal*               iFit->GetParError(5)
-    if abs(iFit->GetParError(5)) > 0 && iFit->GetParameter(3) != 0:
-        lE2 += iVal*iVal*iVal*iVal*iVal*iFit->GetParError(5);
-    if abs(iFit->GetParError(6)) > 0:
-        lE2 += iVal*iVal*iVal*iVal*iVal*iVal*iFit->GetParError(6)
-  return lE2;
+        lE2 += iVal*iVal*iVal*     iFit.GetParError(3)
+    if abs(iFit.GetParError(4)) > 0:
+        lE2 += iVal*iVal*iVal*iVal*iFit.GetParError(4)
+    if abs(iFit.GetParError(5)) > 0 and iFit.GetParameter(3) == 0:
+        lE2 += iVal*iVal*               iFit.GetParError(5)
+    if abs(iFit.GetParError(5)) > 0 and iFit.GetParameter(3) != 0:
+        lE2 += iVal*iVal*iVal*iVal*iVal*iFit.GetParError(5)
+    if abs(iFit.GetParError(6)) > 0:
+        lE2 += iVal*iVal*iVal*iVal*iVal*iVal*iFit.GetParError(6)
+    return lE2
 
 def combinedUnc(iFit0,iFit1,iVal):
     return sqrt(unc2(iFit0,iVal)+unc2(iFit1,iVal))
@@ -53,7 +53,10 @@ def adjust(met,metphi,vphi,shiftAdd,shiftSub,unc=0):
     lShift.SetPtEtaPhiM(abs(shift),0,vphi,0)
     if shift < 0:
         lShift.RotateZ(r.TMath.Pi())
-    lVec -= lShift
+    lVec += lShift
+    #if met > 450:
+    #    print met,"  - ",shift,shiftAdd,shiftSub,lShift.Pt()
+    return lVec.Pt()
 
 lBaseFile  = r.TFile.Open(options.file,'UPDATE')
 for sample in lBaseFile.GetListOfKeys():
@@ -64,7 +67,7 @@ for sample in lBaseFile.GetListOfKeys():
         continue
     if sampleName.find('single_electron') > 0: 
         continue
-    if sampleName.find('data') ==  0: 
+    if sampleName.find('data') <  0: 
         continue
     print "FIXING:",sample.ReadObj().GetName()
     lTree = pTree.CloneTree(0)
@@ -104,6 +107,8 @@ for sample in lBaseFile.GetListOfKeys():
             lEff.metV         = adjust(pTree.mvamet,pTree.mvametphi,pTree.genjetphi,U1G.Eval(pTree.genjetpt),U1M.Eval(pTree.genjetpt))
             lEff.metVUp       = adjust(pTree.mvamet,pTree.mvametphi,pTree.genjetphi,U1G.Eval(pTree.genjetpt),U1M.Eval(pTree.genjetpt),   combinedUnc(U1G,U1M,pTree.genjetpt))
             lEff.metVDown     = adjust(pTree.mvamet,pTree.mvametphi,pTree.genjetphi,U1G.Eval(pTree.genjetpt),U1M.Eval(pTree.genjetpt),-1*combinedUnc(U1G,U1M,pTree.genjetpt))
+        #if pTree.mvamet > 450:
+        #    print pTree.mvamet," - ",lEff.metV,pTree.ptpho
         lTree.Fill()
     lTree.Write()
     lTree.Write()
