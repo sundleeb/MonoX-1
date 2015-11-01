@@ -17,11 +17,11 @@ gROOT.ProcessLine(
 #    }" )
     
 def correctNtuple(iNtuple,iRecoil,iFileName,iUnc):
-    postfix='Met'
+    postfix='_Met'
     if iUnc == 1:
-        postfix += '_Up'
+        postfix += 'Up'
     if iUnc == -1:
-        postfix += '_Down'
+        postfix += 'Down'
     lFile  = r.TFile(iFileName,'UPDATE')
     lTree = iNtuple.CloneTree(0)
     lTree.SetName (iNtuple.GetName() +postfix)
