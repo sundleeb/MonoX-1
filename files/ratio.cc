@@ -49,9 +49,9 @@ TH1F** drawScale(std::string iLabel0,TTree *iTree0,std::string iWeight0,std::str
   TH1F**lH = new TH1F*[2];
   for(int i0 = 0; i0 < 2; i0++) {
     std::stringstream pWeight;
-    if(i0 == 0) pWeight << "*scale00*";
-    if(i0 == 1) pWeight << "*scale22*";
-    std::stringstream pLabel0; pLabel0 << iLabel0 << "scale" << i0;
+    if(i0 == 0) pWeight << "scale00*(abs(scale00) < 5)*";
+    if(i0 == 1) pWeight << "scale22*(abs(scale22) < 5)*";
+    std::stringstream pLabel0; pLabel0 << iLabel0 << "scale" << i0;;
     if(fabs(iId0) == 1) lH[i0]     = drawNew(pLabel0.str(),iTree0,iWeight0+pWeight.str(),iCut0,iId0 < 0);
     if(fabs(iId0) == 0) lH[i0]     = drawOld(pLabel0.str(),iTree0,iWeight0+pWeight.str(),iCut0);
   }
