@@ -279,6 +279,7 @@ class Channel:
 	,"Systematic Varation"\
       	#,"@0*%f"%size,r.RooArgList(self.wspace_out.var("nuis_%s"%name)))
       	,"@0*%f"%size,r.RooArgList(self.wspace_out.var("%s"%name)))
+      print "Hi Z:", "sys_function_%s_cat_%s_ch_%s_bin_%d"%(name,self.catid,self.chid,b),"Systematic Varation","@0*%f"%size
       if not self.wspace_out.function(func.GetName()) :self.wspace_out._import(func)
     # else 
     #  nuis = self.wspace_out.var("nuis_%s"%name)
@@ -316,8 +317,8 @@ class Channel:
 	 vu=0
 	 vd=0
 	else:
-         print "ZEYNEP:", self.scalefactors.GetBinContent(b+1)
-         print "ZEYNEP:",sysup.GetBinContent(b+1), sysdn.GetBinContent(b+1)
+         print "ZEYNEP scalefactor  :", self.scalefactors.GetName(), self.scalefactors.GetBinContent(b+1)
+         print "ZEYNEP sys up / down:", sysup.GetBinContent(b+1), sysdn.GetBinContent(b+1)
     	 nsf = 1./(self.scalefactors.GetBinContent(b+1))
 	 vu = 1./(sysup.GetBinContent(b+1)) - nsf 
 
