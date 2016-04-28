@@ -436,6 +436,10 @@ class Category:
 
    self._wspace = _wspace
    self._wspace_out = _wspace_out
+   
+   self._wspace_out._import = SafeWorkspaceImporter(self._wspace_out)
+   self._wspace._import = SafeWorkspaceImporter(self._wspace)
+
    #self.diag = diag
    self.additional_vars = {}
    self.additional_targets = []
@@ -527,8 +531,11 @@ class Category:
      
    return hist.Clone()
 
-  def init_channels(self):
+  def init_channels(self):    
+   print "self._wspace_out.Print(V)", self._wspace_out.Print("V")
    sample = self._wspace_out.cat("bin_number") #r.RooCategory("bin_number","bin_number")
+   print "zeynep sample", sample, self._wspace_out.cat("bin_number")
+
    #for j,cr in enumerate(self._control_regions):
    for j,cr in enumerate(self._control_regions):
     for i,bl in enumerate(self._bins):
