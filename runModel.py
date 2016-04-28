@@ -53,6 +53,7 @@ for crd,crn in enumerate(controlregions_def):
 		cmb_categories.append(x.cmodel(cn,crn,_f,_fDir,out_ws,diag_combined))
 
 for cid,cn in enumerate(cmb_categories):
+        print "Run Model: cid, cn", cid,cn
 	cn.init_channels()
         channels = cn.ret_channels()
 

@@ -70,7 +70,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   # Bin by bin nuisances to cover statistical uncertainties ...
   for b in range(target.GetNbinsX()):
     err = PhotonScales.GetBinError(b+1)
-    print "ZEYNEP MISSING Z:", b+1, PhotonScales.GetBinContent(b+1), err
+    #print "ZEYNEP MISSING Z:", b+1, PhotonScales.GetBinContent(b+1), err
     if not PhotonScales.GetBinContent(b+1)>0: continue 
     relerr = err/PhotonScales.GetBinContent(b+1)
     if relerr<0.01: continue
@@ -80,7 +80,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
     byb_d.SetBinContent(b+1,PhotonScales.GetBinContent(b+1)-err)
     _fOut.WriteTObject(byb_u)
     _fOut.WriteTObject(byb_d)
-    print "Adding an error -- ", byb_u.GetName(),err
+    print "Adding an error -- ", byb_u.GetName(),err , "%s_stat_error_%s_bin%d"%(cid,"photonCR",b)
     CRs[0].add_nuisance_shape("%s_stat_error_%s_bin%d"%(cid,"photonCR",b),_fOut)
 
   for b in range(target.GetNbinsX()):

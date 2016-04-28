@@ -61,10 +61,10 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   # Statistical uncertainties too!, one per bin 
   for b in range(targetmc.GetNbinsX()):
     err = WScales.GetBinError(b+1)
-    print "ZEYNEP MISSING:", b+1, WScales.GetBinContent(b+1), err
+    #print "ZEYNEP MISSING:", b+1, WScales.GetBinContent(b+1), err
     if not WScales.GetBinContent(b+1)>0: continue 
     relerr = err/WScales.GetBinContent(b+1)
-    print "ZEYNEP MISSING:", b+1, WScales.GetBinContent(b+1), err, relerr
+    #print "ZEYNEP MISSING:", b+1, WScales.GetBinContent(b+1), err, relerr
     if relerr<0.001: continue
     byb_u = WScales.Clone(); byb_u.SetName("wmn_weights_%s_%s_stat_error_%s_bin%d_Up"%(cid,cid,"singlemuonCR",b))
     byb_u.SetBinContent(b+1,WScales.GetBinContent(b+1)+err)
