@@ -2,6 +2,8 @@ import ROOT as r
 import sys
 import array 
 
+from HiggsAnalysis.CombinedLimit.ModelTools import *
+
 MAXBINS=100
 
 def getNormalizedHist(hist):
@@ -25,7 +27,10 @@ class Bin:
    self.catid	  = catid
    #self.type_id   = 10*MAXBINS*catid+MAXBINS*chid+id
    self.binid     = "cat_%s_ch_%s_bin_%d"%(catid,chid,id)
+
    self.wspace_out = wspace_out
+   self.wspace_out._import = SafeWorkspaceImporter(self.wspace_out)
+
    self.set_wspace(wspace)
 
    self.var	  = self.wspace_out.var(var.GetName())
@@ -119,7 +124,8 @@ class Bin:
 
  def set_wspace(self,w):
    self.wspace = w
-   self.wspace._import = getattr(self.wspace,"import") # workaround: import is a python keyword
+   #self.wspace._import = getattr(self.wspace,"import") # workaround: import is a python keyword
+   self.wspace._import = SafeWorkspaceImporter(self.wspace)
 
 
  def set_sfactor(self,val):
@@ -246,6 +252,7 @@ class Channel:
     self.chname = "ControlRegion_%s"%self.chid
     self.backgroundname  = ""
     self.wspace_out = wspace_out
+    self.wspace_out._import = SafeWorkspaceImporter(self.wspace_out)
     self.set_wspace(wspace)
     self.nuisances = []
     self.bkg_nuisances = []
@@ -370,7 +377,8 @@ class Channel:
 
   def set_wspace(self,w):
    self.wspace = w
-   self.wspace._import = getattr(self.wspace,"import") # workaround: import is a python keyword
+   self.wspace._import = SafeWorkspaceImporter(self.wspace)
+   #self.wspace._import = getattr(self.wspace,"import") # workaround: import is a python keyword
   
   def ret_bkg_nuisances(self):
     return self.bkg_nuisances
