@@ -117,13 +117,30 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
     print "Adding an error -- ", byb_u.GetName(),err
     CRs[2].add_nuisance_shape("%s_stat_error_%s_bin%d"%(cid,"dielectronCR",b),_fOut)
 
+  for b in range(target.GetNbinsX()):
+    err = WZScales.GetBinError(b+1)
+    if not WZScales.GetBinContent(b+1)>0: continue 
+    relerr = err/WZScales.GetBinContent(b+1)
+    if relerr<0.01: continue
+    byb_u = WZScales.Clone(); byb_u.SetName("w_weights_%s_%s_stat_error_%s_bin%d_Up"%(cid,cid,"wzCR",b))
+    byb_u.SetBinContent(b+1,WZScales.GetBinContent(b+1)+err)
+    byb_d = WZScales.Clone(); byb_d.SetName("w_weights_%s_%s_stat_error_%s_bin%d_Down"%(cid,cid,"wzCR",b))
+    if (WZScales.GetBinContent(b+1)-err > 0):
+      byb_d.SetBinContent(b+1,WZScales.GetBinContent(b+1)-err)
+    else:
+      byb_d.SetBinContent(b+1,1)
+    _fOut.WriteTObject(byb_u)
+    _fOut.WriteTObject(byb_d)
+    print "Adding an error -- ", byb_u.GetName(),err
+    CRs[3].add_nuisance_shape("%s_stat_error_%s_bin%d"%(cid,"wzCR",b),_fOut)
+
 
   #######################################################################################################
   
   CRs[0].add_nuisance_shape("renscale",_fOut) 
   CRs[0].add_nuisance_shape("facscale",_fOut) 
   CRs[0].add_nuisance_shape("pdf",_fOut) 
-  CRs[0].add_nuisance("PhotonEff",0.02) 
+  #CRs[0].add_nuisance("PhotonEff",0.02) 
   #CRs[1].add_nuisance("DimuonEff",0.02)
   #CRs[2].add_nuisance("DielEff",0.04)
   
@@ -158,7 +175,8 @@ def my_function(_wspace,_fin,_fOut,nam,diag):
   _gjet_mcname 	     = "gjets_gjets"
   GJet               = _fin.Get("gjets_gjets")
 
-  fztoa = r.TFile.Open("files/atoz_unc.root")
+  #fztoa = r.TFile.Open("files/atoz_unc.root")
+  fztoa = r.TFile.Open("files/new/atoz_unc.root")
   
   ztoa_renscale_up   = fztoa.Get("znlo1_over_anlo1_renScaleUp")
   ztoa_renscale_down = fztoa.Get("znlo1_over_anlo1_renScaleDown")
@@ -222,7 +240,8 @@ def my_function(_wspace,_fin,_fOut,nam,diag):
   PhotonScales = Zvv.Clone()
   _fOut.WriteTObject(PhotonScales)
 
-  fztoaewk = r.TFile.Open("files/atoz_ewkunc.root")
+  #fztoaewk = r.TFile.Open("files/atoz_ewkunc.root")
+  fztoaewk = r.TFile.Open("files/new/atoz_unc.root")
   ztoa_ewk_up   = fztoaewk.Get("a_ewkcorr_overz_Upcommon")
   ztoa_ewk_down = fztoaewk.Get("a_ewkcorr_overz_Downcommon")
 
@@ -264,16 +283,17 @@ def my_function(_wspace,_fin,_fOut,nam,diag):
   #################################################################################################################
   ### Now lets do the same thing for W
 
-  fztow = r.TFile.Open("files/wtoz_unc.root")
-  
-  ztow_renscale_up   = fztow.Get("znlo012_over_wnlo012_renScaleUp")
-  ztow_renscale_down = fztow.Get("znlo012_over_wnlo012_renScaleDown")
+  #fztow = r.TFile.Open("files/wtoz_unc.root")
+  fztow = r.TFile.Open("files/new/wtoz_unc.root") 
 
-  ztow_facscale_up   = fztow.Get("znlo012_over_wnlo012_facScaleUp")
-  ztow_facscale_down = fztow.Get("znlo012_over_wnlo012_facScaleDown")
+  ztow_renscale_up   = fztow.Get("znlo1_over_wnlo1_renScaleUp")
+  ztow_renscale_down = fztow.Get("znlo1_over_wnlo1_renScaleDown")
 
-  ztow_pdf_up   = fztow.Get("znlo012_over_wnlo012_pdfUp")
-  ztow_pdf_down = fztow.Get("znlo012_over_wnlo012_pdfDown")
+  ztow_facscale_up   = fztow.Get("znlo1_over_wnlo1_facScaleUp")
+  ztow_facscale_down = fztow.Get("znlo1_over_wnlo1_facScaleDown")
+
+  ztow_pdf_up   = fztow.Get("znlo1_over_wnlo1_pdfUp")
+  ztow_pdf_down = fztow.Get("znlo1_over_wnlo1_pdfDown")
 
   WSpectrum = controlmc_w.Clone(); WSpectrum.SetName("w_spectrum_%s_"%nam)
   ZvvSpectrum 	 = target.Clone(); ZvvSpectrum.SetName("zvv_spectrum_%s_"%nam)
@@ -322,7 +342,8 @@ def my_function(_wspace,_fin,_fOut,nam,diag):
   wratio_pdf_down.Divide(Wsig)
   _fOut.WriteTObject(wratio_pdf_down)
 
-  fztowewk = r.TFile.Open("files/wtoz_ewkunc.root")
+  #fztowewk = r.TFile.Open("files/wtoz_ewkunc.root")
+  fztowewk = r.TFile.Open("files/new/wtoz_unc.root")
   ztow_ewk_up   = fztowewk.Get("w_ewkcorr_overz_Upcommon")
   ztow_ewk_down = fztowewk.Get("w_ewkcorr_overz_Downcommon")
 

@@ -1,8 +1,8 @@
 void dropBranches(){
 
     //Get old file, old tree and set top branch address
-    TFile *oldfile = new TFile("monojet_final_full.root");
-    TFile *newfile = new TFile("monojet_final.root","recreate");
+    TFile *oldfile = new TFile("monojet_final.root");
+    TFile *newfile = new TFile("monojet_final_slim.root","recreate");
     
     TIter next (oldfile->GetListOfKeys());
     TKey *key;

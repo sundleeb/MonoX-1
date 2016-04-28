@@ -311,7 +311,7 @@ void ModelBuilder::run_corrections(std::string correction_name,std::string regio
    */
 }
 
-void ModelBuilder::addSample(std::string name, std::string region, std::string process, bool is_mc, bool is_signal){
+void ModelBuilder::addSample(std::string name, std::string region, std::string process, bool is_mc, bool is_signal, bool saveDataset){
  
    TH1F *tmp_hist;
 
@@ -358,10 +358,10 @@ void ModelBuilder::addSample(std::string name, std::string region, std::string p
    std::cout << " CUT STRING FOR " << process <<  ", in " << region  << " : " << lcutstring.c_str() << std::endl;
    if (is_mc) {
        tmp_hist = (TH1F*)generateTemplate(lTmp,(TTree *)fIn->Get(name.c_str()),varstring,weightname,lcutstring,Form("_tmphist%s",catname.c_str()));
-       tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(lcutstring.c_str()),RooFit::WeightVar(weightname.c_str()));
+       if (saveDataset)  tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(lcutstring.c_str()),RooFit::WeightVar(weightname.c_str()));
    } else {
        tmp_hist = (TH1F*)generateTemplate(lTmp,(TTree *)fIn->Get(name.c_str()),varstring,"",lcutstring,Form("_tmphist%s",catname.c_str()));
-       tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(lcutstring.c_str()));
+       if (saveDataset)  tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(lcutstring.c_str()));
    }
    
    std::map<std::string,ControlRegion>::iterator it_sample = v_samples.find(region);
@@ -377,13 +377,15 @@ void ModelBuilder::addSample(std::string name, std::string region, std::string p
        bool proc_exists = has_process((*it_sample).second,process);
        if (proc_exists){
            save_hists[pRegion+std::string("_")+process]->Add(tmp_hist);
-           save_datas[pRegion+std::string("_")+process]->append(*tmp_data);
-           std::cout << "Adding to existing sample -- " <<pRegion+std::string("_")+process << " -> " <<  name.c_str() << ", dataset=" << tmp_data->sumEntries()  << " histogram=" <<tmp_hist->Integral() << std::endl; 
+           if (saveDataset) {
+               save_datas[pRegion+std::string("_")+process]->append(*tmp_data);
+               std::cout << "Adding to existing sample -- " <<pRegion+std::string("_")+process << " -> " <<  name.c_str() << ", dataset=" << tmp_data->sumEntries()  << " histogram=" <<tmp_hist->Integral() << std::endl; 
+           }
        } else {
            tmp_hist->SetName(Form("%s_%s",pRegion.c_str(),process.c_str()));
-           tmp_data->SetName(Form("%s_%s",pRegion.c_str(),process.c_str()));
+           if (saveDataset)  tmp_data->SetName(Form("%s_%s",pRegion.c_str(),process.c_str()));
            save_hists[pRegion+std::string("_")+process] = tmp_hist;
-           save_datas[pRegion+std::string("_")+process] = tmp_data;   
+           if (saveDataset)  save_datas[pRegion+std::string("_")+process] = tmp_data;   
            ((*it_sample).second).procs.push_back(std::pair<std::string,int> (process,type));
          
        }
@@ -396,9 +398,11 @@ void ModelBuilder::addSample(std::string name, std::string region, std::string p
        
        tmp_hist->SetName(Form("%s_%s",pRegion.c_str(),process.c_str()));
        save_hists.insert(std::pair<std::string,TH1F*> (pRegion+std::string("_")+process,tmp_hist));
-       
-       tmp_data->SetName(Form("%s_%s",pRegion.c_str(),process.c_str()));
-       save_datas.insert(std::pair<std::string,RooDataSet*> (pRegion+std::string("_")+process,tmp_data));
+       if (saveDataset) {
+           tmp_data->SetName(Form("%s_%s",pRegion.c_str(),process.c_str()));
+           save_datas.insert(std::pair<std::string,RooDataSet*> (pRegion+std::string("_")+process,tmp_data));
+       }
    } 
    
+
 }

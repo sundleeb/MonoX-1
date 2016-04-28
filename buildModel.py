@@ -38,7 +38,6 @@ for cat_id,cat in enumerate(x.categories):
 
   # create a template histogram from bins
   bins = cat["bins"]
-  print "ZEYNEP", bins, len(bins)-1, array.array('d',bins)
   histo_base = r.TH1F("base_%d"%cat_id,"base"
         ,len(bins)-1
 	,array.array('d',bins))
@@ -53,7 +52,7 @@ for cat_id,cat in enumerate(x.categories):
   samples = cat['samples'].keys()
   for sample in samples:
       entry = cat['samples'][sample]
-      mb.addSample(sample,entry[0],entry[1],entry[2],entry[3])  # name, region, process, is_mc, is_signal  
+      mb.addSample(sample,entry[0],entry[1],entry[2],entry[3],1)  # name, region, process, is_mc, is_signal  
   mb.save()
 
   # Add any 'cutstring' for future reference

@@ -1,7 +1,7 @@
 import ROOT
 ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
 
-def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categories,controlregions_def,renameVariable=""):
+def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categories,controlregions_def):
 
 #wsout_combine = ROOT.RooWorkspace("mono-x-ws","mono-x-ws")
 #wsout_combine._import = getattr(wsout_combine,"import") # workaround: import is a python keyword
@@ -15,31 +15,19 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
    wlocal = fdir.Get("wspace_%s"%cat)
 
    # pick up the number of bins FROM one of the usual guys 
-   samplehistos = fdir.GetListOfKeys()
-   for s in samplehistos: 
-     obj = s.ReadObj()
-     if type(obj)!=type(ROOT.TH1F()): continue
-     if obj.GetTitle() != "base": continue # Forget all of the histos which aren't the observable variable
-     samplehist = obj
-     break
+   samplehist = fdir.Get("signal_data")
    nbins = samplehist.GetNbinsX()
    varname = samplehist.GetXaxis().GetTitle()
 
+   # import a Renamed copy of the variable ...
    varl = wlocal.var(varname)
-
-   if renameVariable!="": 
-    varl.SetName(renameVariable)
-
-   else:
-    # import a Renamed copy of the variable ...
-    varnameext = varname+"_%s"%cat
-    varl.SetName(varnameext)
+   varnameext = varname+"_%s"%cat
+   varl.SetName(varnameext)
 
    # Keys in the fdir 
    keys_local = fdir.GetListOfKeys() 
    for key in keys_local: 
     obj = key.ReadObj()
-    print obj.GetName(), obj.GetTitle(), type(obj)
     if type(obj)!=type(ROOT.TH1F()): continue
     title = obj.GetTitle()
     if title != "base": continue # Forget all of the histos which aren't the observable variable
@@ -47,7 +35,7 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
     if not obj.Integral() > 0 : obj.SetBinContent(1,0.0001) # otherwise Combine will complain!
     print "Creating Data Hist for ", name 
     dhist = ROOT.RooDataHist(cat+"_"+name,"DataSet - %s, %s"%(cat,name),ROOT.RooArgList(varl),obj)
-    #dhist.Print("v")
+    dhist.Print("v")
     wsin_combine._import(dhist)
 
 
@@ -55,19 +43,6 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
    for crd,crn in enumerate(controlregions_def):
      # check the category 
      x = __import__(crn)
-    
-     # Possible to save histograms in the CR def so loop over those that are booked 
-     try:
-      len(x.convertHistograms)
-      for obj in x.convertHistograms: 
-       name = obj.GetName()
-       print "Creating Data Hist for ", name 
-       dhist = ROOT.RooDataHist(cat+"_"+name,"DataSet - %s, %s"%(cat,name),ROOT.RooArgList(varl),obj)
-       #dhist.Print("v")
-       wsin_combine._import(dhist)
-     except: 
-       print "No explicit additional convertHistograms defined"
-
      expectations = ROOT.RooArgList()
      for b in range(nbins):
        #print "model_mu_cat_%d_bin_%d"%(10*crd+icat,b), wsin_combine.var( "model_mu_cat_%d_bin_%d"%(10*crd+icat,b))
@@ -89,9 +64,6 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
          cr_expectations = ROOT.RooArgList()
          for b in range(nbins):
           cr_expectations.add(wsin_combine.function("pmu_cat_%s_ch_%s_bin_%d"%(cat+'_'+x.model,cr.chid,b)))
-         print "%s_%s_%s_model"%(cat,cr.crname,x.model)
-         cr_expectations.Print()
-         print "Look here", samplehist.GetNbinsX(), cr_expectations.getSize()
          p_phist = ROOT.RooParametricHist("%s_%s_%s_model"%(cat,cr.crname,x.model),"Expected Shape for %s in control region in Category %s"%(cr.crname,cat),varl,cr_expectations,samplehist)
          p_phist_norm = ROOT.RooAddition("%s_norm"%p_phist.GetName(),"Total number of expected events in %s"%p_phist.GetName(),cr_expectations);
          wsin_combine._import(p_phist)
@@ -105,3 +77,4 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
     if par.getAttribute("BACKGROUND_NUISANCE"): continue # these aren't in fact used for combine
     print par.GetName(), "param", par.getVal(), "1" 
   #print "Done -- Combine Ready Workspace inside ",fout.GetName()
+
