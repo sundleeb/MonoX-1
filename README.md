@@ -1,3 +1,5 @@
+root6 setup testing
+
 MonoX
 =====
 MonoX fitting etc
