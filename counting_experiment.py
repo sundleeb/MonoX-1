@@ -107,6 +107,7 @@ class Bin:
 
  def set_initY(self,mcdataset):
    self.initY = self.wspace.data(mcdataset).sumEntries("%s>=%g && %s<%g"%(self.var.GetName(),self.xmin,self.var.GetName(),self.xmax),self.rngename)
+   print "DAVID", self.initY, self.rngename, self.xmin, self.xmax
 
  def set_initE_precorr(self):
    return 0 
@@ -532,15 +533,17 @@ class Category:
    return hist.Clone()
 
   def init_channels(self):    
-   print "self._wspace_out.Print(V)", self._wspace_out.Print("V")
+   #print "self._wspace_out.Print(V)", self._wspace_out.Print("V")
    sample = self._wspace_out.cat("bin_number") #r.RooCategory("bin_number","bin_number")
-   print "zeynep sample", sample, self._wspace_out.cat("bin_number")
+   #print "zeynep sample", sample, self._wspace_out.cat("bin_number")
 
    #for j,cr in enumerate(self._control_regions):
    for j,cr in enumerate(self._control_regions):
     for i,bl in enumerate(self._bins):
      if i >= len(self._bins)-1 : continue
      xmin,xmax = bl,self._bins[i+1]
+     if i==len(self._bins)-2:
+       xmax = 999999.
      ch = Bin(self.category,self.catid,cr.chid,i,self._var,"",self._wspace,self._wspace_out,xmin,xmax)
      ch.set_control_region(cr)
      if cr.has_background(): ch.add_background(cr.ret_background())

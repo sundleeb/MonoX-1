@@ -24,7 +24,7 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
      break
    nbins = samplehist.GetNbinsX()
    varname = samplehist.GetXaxis().GetTitle()
-
+   
    varl = wlocal.var(varname)
 
    if renameVariable!="": 
@@ -50,7 +50,6 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
     #dhist.Print("v")
     wsin_combine._import(dhist)
 
-
    # next Add in the V-jets backgrounds MODELS
    for crd,crn in enumerate(controlregions_def):
      # check the category 
@@ -69,9 +68,10 @@ def convertToCombineWorkspace(wsin_combine,f_simple_hists,categories,cmb_categor
        print "No explicit additional convertHistograms defined"
 
      expectations = ROOT.RooArgList()
-     for b in range(nbins):
+     for b in range(nbins+1):
        #print "model_mu_cat_%d_bin_%d"%(10*crd+icat,b), wsin_combine.var( "model_mu_cat_%d_bin_%d"%(10*crd+icat,b))
        expectations.add(wsin_combine.var("model_mu_cat_%s_bin_%d"%(cat+'_'+x.model,b)))
+       #print "DAVID", b, expectations.Print("V"),wsin_combine.var("model_mu_cat_%s_bin_%d"%(cat+'_'+x.model,b)).getVal()
      phist = ROOT.RooParametricHist("%s_signal_%s_model"%(cat,x.model),"Model Shape for %s in Category %s"%(x.model,cat),varl,expectations,samplehist)
      phist_norm = ROOT.RooAddition("%s_norm"%phist.GetName(),"Total number of expected events in %s"%phist.GetName(),expectations)
 

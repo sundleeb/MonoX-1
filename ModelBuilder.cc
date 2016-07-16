@@ -9,52 +9,7 @@ void ModelBuilder::add_cut(std::string region,std::string ecut){
 void ModelBuilder::saveHist(TH1F *histogram){
    fOut->WriteTObject(histogram);
 }
-const char * ModelBuilder::turnon(RooWorkspace *ws,RooRealVar &x,std::string ext){
 
-   ext += catname;
-   RooRealVar eff_mu(Form("eff_mu_%s",ext.c_str()),"eff decay param mu",240,200.,300.);
-   RooRealVar eff_sig(Form("eff_sig_%s",ext.c_str()),"eff decay param sigma ",10,0.,20.);
-   RooRealVar frac(Form("frac_%s",ext.c_str()),"Fraction",0.8,0,1);
-
-   RooRealVar m1(Form("plaw_p_%s",ext.c_str()),"p",-4.,-15.,0.);
-   RooGenericPdf *pdf_pow = new RooGenericPdf(Form("doubleExponential_powerlaw%s",ext.c_str()), Form("doubleExponential_powerlaw%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,m1));
-   RooLognormal *pdf_l = new RooLognormal(Form("doubleExponential_log%s",ext.c_str()), Form("doubleExponential_log%s",ext.c_str()),x,eff_mu,eff_sig);
-   RooAddPdf *pdf = new RooAddPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),RooArgList(*pdf_pow,*pdf_l),RooArgList(frac));
-   ws->import(*pdf);
-   return pdf->GetName(); 
-}
-
-const char * ModelBuilder::powerlaw(RooWorkspace *ws,RooRealVar &x,std::string ext){
-   ext += catname;
-   RooRealVar p(Form("p_%s",ext.c_str()),"p",-2.,-10.,0.01);
-   ws->import(p);
-   RooGenericPdf *pdf = new RooGenericPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),"TMath::Power(@0,@1)",RooArgList(x,*(ws->var(p.GetName()))));
-   ws->import(*pdf);
-   return pdf->GetName(); 
-}
-
-const char * ModelBuilder::doubleexp(RooWorkspace *ws,RooRealVar &x,std::string ext){ 
-   ext += catname;
-   // Double exponential model
-   RooRealVar frac(Form("f_%s",ext.c_str()),"f",0.8,0.,1.);
-   RooRealVar m1(Form("m1_%s",ext.c_str()),"m1",-0.002,-0.1,0.0);
-   RooRealVar m2(Form("m2_%s",ext.c_str()),"m2",-0.001,-0.1,0.0);
-
-   RooExponential exp1(Form("exp1_%s",ext.c_str()),Form("exp1_%s",ext.c_str()),x,m1);
-   RooExponential exp2(Form("exp2_%s",ext.c_str()),Form("exp2_%s",ext.c_str()),x,m2);
-
-   RooAddPdf *sumexp = new RooAddPdf(Form("doubleExponential_%s",ext.c_str()), Form("doubleExponential_%s",ext.c_str()),RooArgList(exp1,exp2),RooArgList(frac));
-   ws->import(*sumexp);
-   return sumexp->GetName(); 
-}
-
-const char * ModelBuilder::singleexp(RooWorkspace *ws,RooRealVar &x,std::string ext){ 
-   ext += catname;
-   RooRealVar m1(Form("m3_%s",ext.c_str()),"m3",-0.02,-0.3,0.05);
-   RooExponential* exp1 =new RooExponential(Form("doubleExponential_%s",ext.c_str()),Form("exp3_%s",ext.c_str()),x,m1);
-   ws->import(*exp1);
-   return exp1->GetName(); 
-}
 void ModelBuilder::save(){
   std::map<std::string, TH1F*>::iterator it = save_hists.begin();
   for (;it!=save_hists.end();it++){
@@ -152,165 +107,6 @@ void ModelBuilder::apply_corrections(std::string correction, std::string region,
 
 }
 
-void ModelBuilder::run_corrections(std::string correction_name,std::string region){
-
-
-   // First find the region some variables the region
-   ControlRegion cr = v_samples[region];
-   // get the format from the first sample
-   if (!cr.procs.size()) { 
-   	std::cout << "Error, no processes for Region " << region << std::endl;
-	assert(0);
-   }
-
-   fOut->cd();
-   RooRealVar *x = wspace->var(varstring.c_str());
-   RooRealVar *w = wspace->var(weightname.c_str());
-
-   RooAbsPdf *pdf 	       ;
-   RooAbsPdf *pdf_mc 	       ;
-   RooAbsPdf *pdf_background_mc;
-
-   // Build and fit the model for the background
-   if (_pdfmodel==0){  // Double exponential
-    std::cout << "Using Double Exponential for fitting functions -- " << _pdfmodel << std::endl;
-     pdf 	       = wspace->pdf(doubleexp(wspace,*x,Form("%s_data",cr.name.c_str())));
-     pdf_mc 	       = wspace->pdf(doubleexp(wspace,*x,Form("%s_mc",cr.name.c_str())));
-     pdf_background_mc = wspace->pdf(doubleexp(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
-   } else if (_pdfmodel==1) {
-     // Why not use one power law for the resolved (lower stat) case?
-     std::cout << "Using PowerLaw for fitting functions -- " <<  _pdfmodel <<std::endl;
-     pdf 		= wspace->pdf(powerlaw(wspace,*x,Form("%s_data",cr.name.c_str())));
-     pdf_mc 	   	= wspace->pdf(powerlaw(wspace,*x,Form("%s_mc",cr.name.c_str())));
-     pdf_background_mc = wspace->pdf(powerlaw(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
-   
-   } else if (_pdfmodel==2) {
-    std::cout << "Using PowerLaw + Log-normal for fitting functions -- " << _pdfmodel <<std::endl;
-     pdf 		= wspace->pdf(turnon(wspace,*x,Form("%s_data",cr.name.c_str())));
-     pdf_mc 	   	= wspace->pdf(turnon(wspace,*x,Form("%s_mc",cr.name.c_str())));
-     pdf_background_mc  = wspace->pdf(turnon(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
-   } else if (_pdfmodel==3) {
-     std::cout << "Using Single Exponential for fitting functions -- " << _pdfmodel << std::endl;
-     pdf 	       = wspace->pdf(singleexp(wspace,*x,Form("%s_data"  ,cr.name.c_str())));
-     pdf_mc 	       = wspace->pdf(singleexp(wspace,*x,Form("%s_mc"    ,cr.name.c_str())));
-     pdf_background_mc = wspace->pdf(singleexp(wspace,*x,Form("%s_bkg_mc",cr.name.c_str())));
-   } else {
-	std::cout << "! No Pdf Model for type " << _pdfmodel << std::endl;
-	assert(0);
-   }
-
-   // Build a dataset which is all data in control region
-   RooArgSet *treevars = (RooArgSet*) wspace->genobj("treevars");
-   RooDataSet all_data(Form("%s_all_data",region.c_str()),Form("%s_all_data",region.c_str()),RooArgSet(*treevars));
-   RooDataSet all_sig_mc(Form("%s_all_signal",region.c_str()),Form("%s_all_signal",region.c_str()),RooArgSet(*treevars),w->GetName());
-   RooDataSet all_bkg_mc(Form("%s_all_background",region.c_str()),Form("%s_all_background",region.c_str()),RooArgSet(*treevars),w->GetName());
-
-   for (std::vector<std::pair<std::string,int> >::iterator it_p = cr.procs.begin();
-   	it_p!=cr.procs.end();it_p++){
-	int type = (*it_p).second;
-	std::string prc = (*it_p).first;
-	std::cout << "Adding DataSet -- " << cr.name+std::string("_")+prc << " For fitting of the region - " << region << " type " << type << ", sum-weights = " << (*save_datas[cr.name+std::string("_")+prc]).sumEntries() << std::endl; 
-	if (type==0)	 all_data.append(*save_datas[cr.name+std::string("_")+prc]);
-	else if (type>0) all_bkg_mc.append(*save_datas[cr.name+std::string("_")+prc]);
-	else if (type<0) all_sig_mc.append(*save_datas[cr.name+std::string("_")+prc]);
-   }
-   wspace->import(all_data);
-   wspace->import(all_sig_mc);
-   wspace->import(all_bkg_mc);
-
-   /*
-   // Fit control region MC
-   RooFitResult *fit_res_control_mc  = pdf_mc->fitTo(all_sig_mc,RooFit::Save(1),RooFit::SumW2Error(false));
-   fit_res_control_mc->SetName(Form("fitResult_%s_all_signal",region.c_str())); fit_res_control_mc->Write();
-
-   // Fit background MC and then fix it
-   pdf_background_mc->fitTo(all_bkg_mc,RooFit::SumW2Error(true)); // we dont use the errors so who cares about sumW2?
-   freezeParameters(pdf_background_mc->getParameters(RooArgSet(*x)));
-   
-   // Now fit the Zvv Data 
-   double nbkgcont = all_bkg_mc.sumEntries();
-   double ncont    = all_data.sumEntries()-nbkgcont;
-
-   RooRealVar num_contamination(Form("num_contamination_%s",region.c_str()),Form("num_contamination_%s",region.c_str()),nbkgcont,0,10E10);
-   num_contamination.setConstant();
-   RooRealVar num(Form("num_%s",region.c_str()),Form("num_%s",region.c_str()),ncont,0,10E10);
-   //num.setConstant(true);// Float in the fit -> additional parameter
-
-   RooAddPdf model(Form("model_%s",region.c_str()),Form("model_%s",region.c_str()),RooArgList(*pdf_background_mc,*pdf),RooArgList(num_contamination,num));
-
-   RooFitResult *fit_res_control = model.fitTo(all_data,RooFit::Save(1),RooFit::Strategy(2));
-   fit_res_control->SetName(Form("fitResult_%s",correction_name.c_str())); fit_res_control->Write();
-
-   // Find the scale of ndata/nmc to normalize the yields
-   double nmontecarlo = all_sig_mc.sumEntries();
-   double ndata = num.getVal();
-   RooRealVar num_MC(Form("num_MC_sigproc_%s",region.c_str()),Form("num_MC_sigproc_%s",region.c_str()),nmontecarlo); num_MC.setConstant();
-   //RooRealVar scalef(Form("scalef_%s",region.c_str()),"scalef",ndata/nmontecarlo);
-   RooFormulaVar scalef(Form("scalef_%s",region.c_str()),"@0/@1",RooArgList(num,num_MC));
-   // uncomment make this ONLY a shape correction!
-   // scalef.setVal(1);
-   //scalef.setConstant(true);
-
-   std::cout << region << " N Control Data (all) == " << all_data.sumEntries()       << std::endl;
-   std::cout << region << " N Control Bkg  == " << nbkgcont    << std::endl;
-   std::cout << region << " N Control MC   == " << nmontecarlo << std::endl;
-
-   // Plot the fits
-   TCanvas can_datafit(Form("%s_datafit",region.c_str()),"Data Fit",800,600); 
-   RooPlot *pl = x->frame();
-   all_bkg_mc.plotOn(pl,RooFit::MarkerStyle(kOpenCircle));
-   all_data.plotOn(pl);
-   model.plotOn(pl);
-   model.plotOn(pl,RooFit::Components(pdf_background_mc->GetName()),RooFit::LineStyle(kDashed),RooFit::LineColor(1));
-   model.plotOn(pl,RooFit::VisualizeError(*fit_res_control,2),RooFit::FillColor(kYellow));
-   model.plotOn(pl,RooFit::VisualizeError(*fit_res_control,1),RooFit::FillColor(kGreen) );
-   model.plotOn(pl);
-   all_bkg_mc.plotOn(pl,RooFit::MarkerStyle(kOpenCircle));
-   all_data.plotOn(pl);
-   //model.paramOn(pl);
-   pl->SetMinimum(0.001);
-   pl->SetTitle("");
-   pl->GetXaxis()->SetTitle("fake MET (GeV)");
-   pl->Draw();
-   can_datafit.SetLogy();
-   can_datafit.Write();
-
-   TCanvas can_mcfit(Form("%s_mcfit",region.c_str()),"MC Fit",800,600); 
-   RooPlot *plmc = x->frame();
-   all_sig_mc.plotOn(plmc,RooFit::MarkerColor(kBlack));
-   pdf_mc->plotOn(plmc,RooFit::LineStyle(1),RooFit::LineColor(2));
-   //pdf_mc->paramOn(plmc);
-   plmc->SetMinimum(0.001);
-   plmc->SetTitle("");
-   plmc->GetXaxis()->SetTitle("fake MET (GeV)");
-   plmc->Draw();
-   can_mcfit.SetLogy();
-   can_mcfit.Write();
-
-   TCanvas can_mcdatafit(Form("%s_mcdatafit",region.c_str()),"MC and Data Fits",800,600); 
-   RooPlot *plmcdata = x->frame();
-   pdf_mc->plotOn(plmcdata,RooFit::LineColor(2),RooFit::Normalization(nmontecarlo));
-   pdf->plotOn(plmcdata,RooFit::Normalization(ndata));
-   plmcdata->SetMinimum(0.001);
-   plmcdata->GetXaxis()->SetTitle("fake MET (GeV)");
-   plmcdata->Draw();
-   can_mcdatafit.Write();
-
-   // Import the correction and the models 
-   RooFormulaVar ratio(Form("%s",correction_name.c_str()),"@0*@1/@2",RooArgList(scalef,*pdf,*pdf_mc));
-   wspace->import(ratio);
-   wspace->import(num);
-
-   TCanvas can_ra(Form("%s_ratio",region.c_str()),"MC Fit",800,600); 
-   RooPlot *plra = x->frame();
-   ratio.plotOn(plra,RooFit::LineStyle(1));
-   plra->SetTitle("");
-   plra->GetYaxis()->SetTitle("r(MET) Correction Data/MC");
-   plra->Draw();
-   can_ra.Write();
-   */
-}
-
 void ModelBuilder::addSample(std::string name, std::string region, std::string process, bool is_mc, bool is_signal, bool saveDataset){
  
    TH1F *tmp_hist;
@@ -324,6 +120,7 @@ void ModelBuilder::addSample(std::string name, std::string region, std::string p
    std::cout << "Appending Sample " << name << std::endl;
 
    RooDataSet *tmp_data;
+
    RooRealVar *var    = wspace->var(varstring.c_str());
    RooRealVar *weight = wspace->var(weightname.c_str());
 
@@ -359,10 +156,13 @@ void ModelBuilder::addSample(std::string name, std::string region, std::string p
    std::cout << " CUT STRING FOR " << process <<  ", in " << region  << " : " << lcutstring.c_str() << std::endl;
    if (is_mc) {
        tmp_hist = (TH1F*)generateTemplate(lTmp,(TTree *)fIn->Get(name.c_str()),varstring,weightname,lcutstring,Form("_tmphist%s",catname.c_str()));
+       // Zeynep Test
+       tmp_hist = DrawOverflow(tmp_hist);
        if (saveDataset)  tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(lcutstring.c_str()),RooFit::WeightVar(weightname.c_str()));
    } else {
        tmp_hist = (TH1F*)generateTemplate(lTmp,(TTree *)fIn->Get(name.c_str()),varstring,"",lcutstring,Form("_tmphist%s",catname.c_str()));
        if (saveDataset)  tmp_data = new RooDataSet("tmpdata","dataset",treevariables,RooFit::Import(*(TTree*)fIn->Get(name.c_str())),RooFit::Cut(lcutstring.c_str()));
+       tmp_hist = DrawOverflow(tmp_hist);
    }
    
    std::map<std::string,ControlRegion>::iterator it_sample = v_samples.find(region);
