@@ -27,6 +27,8 @@
 // RooStats includes
 #include "RooWorkspace.h"
 
+#include "include/diagonalize.h"
+
 #include <string>
 #include <vector>
 #include <map>
@@ -228,7 +230,7 @@ void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1 *pdf_num, std::st
     double wval  = vw->getRealValue(wvar.c_str());
     double cweight = weight;
     if (pdf_num) { 
-	//std::cout << wvar<< ", " << wval << ", Weight = "<< cweight << " x " << pdf_num->GetBinContent(pdf_num->FindBin(wval)) << std::endl;
+        //std::cout <<"Zeynep" << wvar<< ", " << wval << ", Weight = "<< cweight << " x " << pdf_num->GetBinContent(pdf_num->FindBin(wval)) << std::endl;
 	if (wval >=  pdf_num->GetXaxis()->GetXmin() && wval <  pdf_num->GetXaxis()->GetXmax() ) {
     	  cweight *= pdf_num->GetBinContent(pdf_num->FindBin(wval));
 	} else{ 
@@ -241,6 +243,7 @@ void diagonalizer::generateWeightedTemplate(TH1F *histNew, TH1 *pdf_num, std::st
     histNew->Fill(val,cweight);
   }
   histNew->GetXaxis()->SetTitle(var.c_str());
+  histNew = DrawOverflow(histNew);
 }
 
 void diagonalizer::generateWeightedTemplate(TH1F *histNew, RooFormulaVar *pdf_num, RooRealVar &var, RooDataSet *data){
