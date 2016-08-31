@@ -107,7 +107,6 @@ class Bin:
 
  def set_initY(self,mcdataset):
    self.initY = self.wspace.data(mcdataset).sumEntries("%s>=%g && %s<%g"%(self.var.GetName(),self.xmin,self.var.GetName(),self.xmax),self.rngename)
-   print "DAVID", self.initY, self.rngename, self.xmin, self.xmax
 
  def set_initE_precorr(self):
    return 0 
@@ -361,7 +360,7 @@ class Channel:
 		,r.RooArgList(self.wspace_out.var("%s"%name))) # this is now relative deviation, SF-SF_0 = func => SF = SF_0*(1+func/SF_0)
 
         if (coeff_a == 0): 
-          print "Hi Nick adding attribute temp", func.GetName()          
+          #print "Hi Nick adding attribute temp", func.GetName()          
           func.setAttribute("temp",True)
 
 	self.wspace_out.var("%s"%name).setVal(0)

@@ -2,7 +2,7 @@ import ROOT
 from counting_experiment import *
 # Define how a control region(s) transfer is made by defining cmodel provide, the calling pattern must be unchanged!
 # First define simple string which will be used for the datacard 
-model = "wjets"
+model = "wg"
 def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   
   # Some setup
@@ -15,11 +15,11 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   # note there are many tools available inside include/diagonalize.h for you to make 
   # special datasets/histograms representing these and systematic effects 
   # but for now this is just kept simple 
-  processName  = "WJets" # Give a name of the process being modelled
-  metname      = "met"    # Observable variable name 
-  targetmc     = _fin.Get("signal_wjets")      # define monimal (MC) of which process this config will model
-  controlmc    = _fin.Get("Wmn_wjets")  # defines in / out acceptance
-  controlmc_e  = _fin.Get("Wen_wjets")  # defines in / out acceptance
+  processName  = "wg" # Give a name of the process being modelled
+  metname      = "phoPtHighMet"    # Observable variable name 
+  targetmc     = _fin.Get("signal_wg")      # define monimal (MC) of which process this config will model
+  controlmc    = _fin.Get("singlemu_wg")  # defines in / out acceptance
+  controlmc_e  = _fin.Get("singleel_wg")  # defines in / out acceptance
 
   # Create the transfer factors and save them (not here you can also create systematic variations of these 
   # transfer factors (named with extention _sysname_Up/Down
@@ -55,16 +55,11 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   # note, the code will LOOK for something called NOMINAL_name_Up and NOMINAL_name_Down, where NOMINAL=WScales.GetName()
   # these must be created and writted to the same dirctory as the nominal (fDir)
 
-  #CRs[0].add_nuisance("SingleMuonEff",0.01)
-  #CRs[1].add_nuisance("SingleElEff",0.02)
-
   # Statistical uncertainties too!, one per bin 
   for b in range(targetmc.GetNbinsX()):
     err = WScales.GetBinError(b+1)
-    #print "ZEYNEP MISSING:", b+1, WScales.GetBinContent(b+1), err
     if not WScales.GetBinContent(b+1)>0: continue 
     relerr = err/WScales.GetBinContent(b+1)
-    #print "ZEYNEP MISSING:", b+1, WScales.GetBinContent(b+1), err, relerr
     if relerr<0.001: continue
     byb_u = WScales.Clone(); byb_u.SetName("wmn_weights_%s_%s_stat_error_%s_bin%d_Up"%(cid,cid,"singlemuonCR",b))
     byb_u.SetBinContent(b+1,WScales.GetBinContent(b+1)+err)
@@ -93,9 +88,11 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   #######################################################################################################
 
   cat = Category(model,cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,targetmc.GetName(),CRs,diag)
-  cat.setDependant("zjets","wjetssignal")  # Can use this to state that the "BASE" of this is already dependant on another process
+
+  #cat.setDependant("zjets","wjetssignal")  # Can use this to state that the "BASE" of this is already dependant on another process
   # EG if the W->lv in signal is dependant on the Z->vv and then the W->mv is depenant on W->lv, then 
   # give the arguments model,channel name from the config which defines the Z->vv => W->lv map! 
   # Return of course
+
   return cat
 

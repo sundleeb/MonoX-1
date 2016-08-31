@@ -1,0 +1,50 @@
+imax * number of bins
+jmax * number of processes minus 1
+kmax * number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes *                         monophoton_diel    combined_model.root combinedws:monophoton_diel_$PROCESS
+shapes data_obs                  monophoton_diel    combined_model.root combinedws:monophoton_diel_data
+shapes zg                        monophoton_diel    combined_model.root combinedws:monophoton_diel_zg_model
+shapes *                         monophoton_dimu    combined_model.root combinedws:monophoton_dimu_$PROCESS
+shapes data_obs                  monophoton_dimu    combined_model.root combinedws:monophoton_dimu_data
+shapes zg                        monophoton_dimu    combined_model.root combinedws:monophoton_dimu_zg_model
+shapes *                         monophoton_signal  combined_model.root combinedws:monophoton_signal_$PROCESS
+shapes data_obs                  monophoton_signal  combined_model.root combinedws:monophoton_signal_data
+shapes dm_v500_1                 monophoton_signal  combined_model.root combinedws:monophoton_signal_dm_v500_1
+shapes wg                        monophoton_signal    combined_model.root combinedws:monophoton_signal_wg_model
+shapes zg                        monophoton_signal    combined_model.root combinedws:monophoton_signal_zg_model
+shapes *                         monophoton_singleel  combined_model.root combinedws:monophoton_singleel_$PROCESS
+shapes data_obs                  monophoton_singleel  combined_model.root combinedws:monophoton_singleel_data
+shapes wg                        monophoton_singleel  combined_model.root combinedws:monophoton_singleelectron_wg_model
+shapes *                         monophoton_singlemu  combined_model.root combinedws:monophoton_singlemu_$PROCESS
+shapes data_obs                  monophoton_singlemu  combined_model.root combinedws:monophoton_singlemu_data
+shapes wg                        monophoton_singlemu  combined_model.root combinedws:monophoton_singlemuon_wg_model
+
+----------------------------------------------------------------------------------------------------------------------------------
+bin          monophoton_signal  monophoton_dimu  monophoton_diel  monophoton_singlemu  monophoton_singleel
+observation  -1.0               -1.0             -1.0             -1.0                 -1.0               
+----------------------------------------------------------------------------------------------------------------------------------
+bin          monophoton_signal   monophoton_signal   monophoton_signal  monophoton_signal  monophoton_signal  monophoton_signal  monophoton_signal  monophoton_signal  monophoton_signal  monophoton_dimu  monophoton_dimu  monophoton_dimu  monophoton_dimu  monophoton_diel  monophoton_diel  monophoton_diel  monophoton_diel  monophoton_singleel  monophoton_singleel  monophoton_singleel  monophoton_singleel  monophoton_singlemu  monophoton_singlemu  monophoton_singlemu  monophoton_singlemu
+process      dm_v500_1           efake               gjets              halo               hfake              minor              vvg                wg                 zg                 tt               vvg              zg               zjets            tt               vvg              zg               zjets            top                  vvg                  zgamm                wg                   top                  vvg                  zgamm                wg
+process      -1                   1                   2                  3                  4                  5                  6                  7                  8                  9                6                8                10               9                6                8                10               11                  6                    12                   7                    11                   6                    12                   7
+rate         -1                   -1                  -1                 -1                 -1                 -1                 -1                 1.0                1.0                -1               -1               1.0              -1               -1               -1               1.0              -1               -1                  -1                   -1                   1.0                  -1                   -1                   -1                   1.0
+----------------------------------------------------------------------------------------------------------------------------------
+lumi lnN     1.04                 -                   1.04               -                  -                  1.04               1.04               -                  -                  1.04             1.04             -                1.04             1.04             1.04             -                1.04             1.04                1.04                 1.04                 -                    1.04                  1.04                 1.04                - 
+----------------------------------------------------------------------------------------------------------------------------------
+
+monophoton_stat_error_dimuCR_bin0 param 0.0 1
+monophoton_stat_error_dimuCR_bin1 param 0.0 1
+monophoton_stat_error_dimuCR_bin2 param 0.0 1
+monophoton_stat_error_dimuCR_bin3 param 0.0 1
+monophoton_stat_error_dielCR_bin0 param 0.0 1
+monophoton_stat_error_dielCR_bin1 param 0.0 1
+monophoton_stat_error_dielCR_bin2 param 0.0 1
+monophoton_stat_error_dielCR_bin3 param 0.0 1
+monophoton_stat_error_singlemuonCR_bin0 param 0.0 1
+monophoton_stat_error_singlemuonCR_bin1 param 0.0 1
+monophoton_stat_error_singlemuonCR_bin2 param 0.0 1
+monophoton_stat_error_singlemuonCR_bin3 param 0.0 1
+monophoton_stat_error_singleelectronCR_bin0 param 0.0 1
+monophoton_stat_error_singleelectronCR_bin1 param 0.0 1
+monophoton_stat_error_singleelectronCR_bin2 param 0.0 1
+monophoton_stat_error_singleelectronCR_bin3 param 0.0 1
