@@ -17,12 +17,12 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   # example below for creating shape systematic for photon which is just every bin up/down 30% 
 
   metname    = "met"          # Observable variable name 
-  gvptname   = "genBos_pt"    # Weights are in generator pT
+  gvptname   = "genBosonPt"    # Weights are in generator pT
 
   target             = _fin.Get("signal_zjets")      # define monimal (MC) of which process this config will model
-  controlmc          = _fin.Get("Zmm_zll")           # defines Zmm MC of which process will be controlled by
-  controlmc_photon   = _fin.Get("gjets_gjets")       # defines Gjets MC of which process will be controlled by
-  controlmc_e        = _fin.Get("Zee_zll")           # defines Zmm MC of which process will be controlled by
+  controlmc          = _fin.Get("dimuon_zll")           # defines Zmm MC of which process will be controlled by
+  controlmc_photon   = _fin.Get("singlephoton_gjets")       # defines Gjets MC of which process will be controlled by
+  controlmc_e        = _fin.Get("dielectron_zll")           # defines Zmm MC of which process will be controlled by
   controlmc_w        = _fin.Get("signal_wjets")
 
   # Create the transfer factors and save them (not here you can also create systematic variations of these 
@@ -164,16 +164,16 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
 def my_function(_wspace,_fin,_fOut,nam,diag):
 
   metname    = "met"          # Observable variable name 
-  gvptname   = "genBos_pt"    # Weights are in generator pT
+  gvptname   = "genBosonPt"    # Weights are in generator pT
 
   target             = _fin.Get("signal_zjets")      # define monimal (MC) of which process this config will model
-  controlmc          = _fin.Get("Zmm_zll")           # defines Zmm MC of which process will be controlled by
-  controlmc_photon   = _fin.Get("gjets_gjets")       # defines Gjets MC of which process will be controlled by
+  controlmc          = _fin.Get("dimuon_zll")           # defines Zmm MC of which process will be controlled by
+  controlmc_photon   = _fin.Get("singlephoton_gjets")       # defines Gjets MC of which process will be controlled by
 
   controlmc_w        = _fin.Get("signal_wjets")
 
-  _gjet_mcname 	     = "gjets_gjets"
-  GJet               = _fin.Get("gjets_gjets")
+  _gjet_mcname 	     = "singlephoton_gjets"
+  GJet               = _fin.Get("singlephoton_gjets")
 
   #fztoa = r.TFile.Open("files/atoz_unc.root")
   fztoa = r.TFile.Open("files/new/atoz_unc.root")

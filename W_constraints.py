@@ -18,8 +18,8 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   processName  = "WJets" # Give a name of the process being modelled
   metname      = "met"    # Observable variable name 
   targetmc     = _fin.Get("signal_wjets")      # define monimal (MC) of which process this config will model
-  controlmc    = _fin.Get("Wmn_wjets")  # defines in / out acceptance
-  controlmc_e  = _fin.Get("Wen_wjets")  # defines in / out acceptance
+  controlmc    = _fin.Get("singlemuon_wjets")  # defines in / out acceptance
+  controlmc_e  = _fin.Get("singleelectron_wjets")  # defines in / out acceptance
 
   # Create the transfer factors and save them (not here you can also create systematic variations of these 
   # transfer factors (named with extention _sysname_Up/Down
