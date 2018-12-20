@@ -1,0 +1,50 @@
+Control Region Datacard -- monojet_0tag_photon_control.txt
+
+imax * number of bins
+jmax * number of processes minus 1
+kmax * number of nuisance parameters
+
+-------------------------------------------------------------------------------------------------
+shapes *         pho       ../../../combined_model_monojet.root combinedws:monojet_0tag_singlephoton_$PROCESS combinedws:monojet_0tag_photon_$PROCESS_$SYSTEMATIC
+shapes data_obs  pho       ../../../combined_model_monojet.root combinedws:monojet_0tag_singlephoton_data
+shapes gjets     pho       ../../../combined_model_monojet.root combinedws:monojet_0tag_singlephoton_gjets
+-------------------------------------------------------------------------------------------------
+bin 	     pho
+observation  -1 
+--------------------------------------------------------------------------------------------------------------------------------------------------
+bin			pho     pho
+process			gjets   qcd
+process			6       7
+rate			1       -1
+------------------------------------------
+lumi       lnN          1.025   1.025
+ak4_jec   lnN		-    1.04
+veto_tau   lnN		1.03 1.03
+met	   lnN		1.05 1.05
+---------------------------------------------------------------
+# Parametric uncertainties associated to control regions fits
+gjetspassphoton rateParam pho gjets  (1.0*@0*@1) btag,mistag
+mettrig param 0.0 1
+monojet_0tag_stat_error_photonCR_bin0 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin1 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin2 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin3 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin4 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin5 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin6 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin7 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin8 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin9 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin10 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin11 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin12 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin13 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin14 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin15 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin16 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin17 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin18 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin19 param 0.0 1
+monojet_0tag_stat_error_photonCR_bin20 param 0.0 1
+btag param 0.0 1
+mistag param 0.0 1

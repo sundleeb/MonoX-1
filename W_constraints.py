@@ -93,7 +93,7 @@ def cmodel(cid,nam,_f,_fOut, out_ws, diag):
   #######################################################################################################
 
   cat = Category(model,cid,nam,_fin,_fOut,_wspace,out_ws,_bins,metname,targetmc.GetName(),CRs,diag)
-  cat.setDependant("zjets","wjetssignal")  # Can use this to state that the "BASE" of this is already dependant on another process
+ # cat.setDependant("zjets","wjetssignal")  # Can use this to state that the "BASE" of this is already dependant on another process
   # EG if the W->lv in signal is dependant on the Z->vv and then the W->mv is depenant on W->lv, then 
   # give the arguments model,channel name from the config which defines the Z->vv => W->lv map! 
   # Return of course

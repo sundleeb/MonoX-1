@@ -18,7 +18,7 @@
 # systematics will expect samples with sample_sys_Up/Down but will skip if not found 
 
 signals = {}
-with open('../../../../Panda_Analysis/CMSSW_8_0_29/src/PandaAnalysis/LPC_T3/merging/signals.txt', 'r') as signal_file:
+with open('../../../../Panda_Analysis/CMSSW_8_0_29/src/PandaAnalysis/LPC_T3/merging/signals_mj3.txt', 'r') as signal_file:
                 for line in signal_file:
                     name = line.rstrip()
                     signals[name+'_signal'] = ['signal',name+'_signal',1,1]

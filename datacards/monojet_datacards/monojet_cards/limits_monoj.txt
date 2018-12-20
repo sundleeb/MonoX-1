@@ -1,0 +1,3 @@
+med hs dm twosigdown onesigdown exp onesigup twosigup
+Mjet1DM_LO_MZprime_1000_Mhs_50_Mchi_100     
+Mjet1DM_LO_MZprime_1000_Mhs_50_Mchi_250     
